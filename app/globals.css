@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary:        #007A87;
+  --color-primary-dark:   #00555E;
+  --color-primary-light:  #B5E1E5;
+  --color-secondary:       #BE8B55;
+  --color-secondary-dark:  #765530;
+  --color-secondary-light: #E0C8AE;
+  --color-accent:        #28A745;
+  --color-accent-dark:   #198754;
+  --color-accent-light:  #91EFA6;
+  --color-alert:        #AE1914;
+  --color-alert-dark:   #8C1915;
+  --color-alert-light:  #EBCDCC;
+  --color-orange:  #FFAE00;
+  --color-purple:  #A6AAFF;
+  --color-grey-900: #2D2D2D;
+  --color-grey-800: #616161;
+  --color-grey-600: #9E9E9E;
+  --color-grey-400: #BDBDBD;
+  --color-grey-200: #EEEEEE;
+  --color-grey-100: #F7F7F5;
+  --color-white:    #FFFFFF;
+  --page-width: 768px; /* max-w-3xl = 48rem = 768px */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-grey-900);
+  background-color: #F0F4F4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle texture for bg */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 20%, rgba(0,122,135,0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(190,139,85,0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Smooth transitions globally */
+*, *::before, *::after {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
