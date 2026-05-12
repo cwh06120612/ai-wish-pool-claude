@@ -264,10 +264,25 @@ export default function BoardPage() {
 
   const visibleLevels = ANNOYANCE_ORDER.filter(level => filtered.some(s => s.annoyanceLevel === level));
 
+  function getPersonalInfo() {
+    try {
+      const raw = localStorage.getItem("ai-wish-personal-info");
+      if (raw) {
+        const info = JSON.parse(raw);
+        return {
+          name: info.name ?? "",
+          dept: info.departmentPath ? info.departmentPath.join(" > ") : "",
+        };
+      }
+    } catch {}
+    return { name: "", dept: "" };
+  }
+
   function handleLike(id: string) {
     const isLiked = likedIds.has(id);
     if (isLiked) {
-      decrementLikeAsync(id);
+      const { name } = getPersonalInfo();
+      decrementLikeAsync(id, name || undefined);
       const next = new Set(likedIds);
       next.delete(id);
       setLikedIds(next);
@@ -275,7 +290,9 @@ export default function BoardPage() {
       setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: Math.max(0, s.likeCount - 1) } : s));
       if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: Math.max(0, prev.likeCount - 1) } : null);
     } else {
-      incrementLikeAsync(id);
+      const { name, dept } = getPersonalInfo();
+      const liker = name ? { name, dept } : undefined;
+      incrementLikeAsync(id, liker);
       const next = new Set(likedIds).add(id);
       setLikedIds(next);
       localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));

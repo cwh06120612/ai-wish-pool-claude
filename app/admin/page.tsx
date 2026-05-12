@@ -30,6 +30,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [modalId, setModalId] = useState<string | null>(null);
+  const [showLikers, setShowLikers] = useState(false);
   const [editState, setEditState] = useState<Partial<Submission>>({});
   const [search, setSearch] = useState("");
   const [adminFilterStatus, setAdminFilterStatus] = useState("");
@@ -50,6 +51,7 @@ export default function AdminPage() {
     const s = submissions.find((s) => s.id === id);
     if (!s) return;
     setModalId(id);
+    setShowLikers(false);
     setEditState({
       category: s.category,
       status: s.status,
@@ -281,18 +283,28 @@ export default function AdminPage() {
                 <StatusBadge status={s.status} />
                 <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.annoyanceLevel}</span>
                 <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.frequency}</span>
-                <span className="flex items-center gap-1 text-xs text-[#9E9E9E]"><ThumbsUp size={11} />{s.likeCount}</span>
+                <button type="button" onClick={() => setShowLikers(v => !v)}
+                  className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-colors ${
+                    showLikers ? "bg-[#007A87] text-white" : "text-[#9E9E9E] hover:bg-[#F0F4F4]"
+                  }`}>
+                  <ThumbsUp size={11} />{s.likeCount}
+                  {s.likers?.length ? <span className="text-[10px]">▾</span> : null}
+                </button>
               </div>
-              {!!(s.likers?.length) && (
+
+              {showLikers && (
                 <div className="px-5 pb-3 flex-shrink-0">
-                  <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">共鳴者</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(s.likers ?? []).map((l, i) => (
-                      <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">
-                        {l.name}{l.dept ? ` · ${l.dept}` : ""}
-                      </span>
-                    ))}
-                  </div>
+                  {s.likers?.length ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {s.likers.map((l, i) => (
+                        <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">
+                          {l.name}{l.dept ? ` · ${l.dept.split(" > ").slice(-1)[0]}` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#9E9E9E]">尚無共鳴者資料</p>
+                  )}
                 </div>
               )}
               <div className="border-t border-[#F0F4F4]" />
