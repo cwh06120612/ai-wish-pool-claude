@@ -388,7 +388,7 @@ export default function AdminPage() {
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-[#2D2D2D]">認同者名單</h3>
+                  <h3 className="text-sm font-bold text-[#2D2D2D]">認同者</h3>
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-xs text-[#9E9E9E] line-clamp-1 flex-1">{s.problemTitle}</p>
                     <span className="flex items-center gap-1 text-xs flex-shrink-0">
@@ -417,7 +417,7 @@ export default function AdminPage() {
                 <p className="text-xs text-[#9E9E9E]">另有 <span className="font-semibold text-[#2D2D2D]">{anonymous}</span> 人未留下資料</p>
               )}
               {s.likeCount === 0 && (
-                <p className="text-xs text-[#9E9E9E] text-center py-2">尚無認同</p>
+                <p className="text-xs text-[#9E9E9E] text-center py-2">尚未有人認同</p>
               )}
             </div>
           </div>
