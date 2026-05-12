@@ -174,7 +174,7 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           <button onClick={onLike}
             className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${isLiked ? "bg-[#007A87] text-white hover:bg-[#00555E]" : "bg-[#F0F4F4] text-[#616161] hover:bg-[#B5E1E5]/40 hover:text-[#007A87]"}`}>
             <ThumbsUp size={15} />
-            {isLiked ? "已共鳴・點此取消" : "我也有這個困擾"}
+            {isLiked ? "已認同・點此取消" : "我也有這個困擾"}
             <span className={`text-xs font-bold ${isLiked ? "text-white/80" : "text-[#2D2D2D]"}`}>{item.likeCount}</span>
           </button>
         </div>
@@ -244,7 +244,7 @@ export default function BoardPage() {
 
   const statuses = [...new Set(allItems.map(s => s.status))].filter(Boolean);
   const statusOptions = [{ value: "", label: "全部狀態" }, ...statuses.map(s => ({ value: s, label: s }))];
-  const sortOptions = [{ value: "newest", label: "由新至舊" }, { value: "oldest", label: "由舊至新" }, { value: "likes", label: "最多共鳴" }];
+  const sortOptions = [{ value: "newest", label: "由新至舊" }, { value: "oldest", label: "由舊至新" }, { value: "likes", label: "最多認同" }];
   const hasFilters = !!filterStatus;
 
   const filtered = allItems

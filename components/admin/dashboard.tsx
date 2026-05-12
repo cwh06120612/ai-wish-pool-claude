@@ -327,7 +327,7 @@ export function Dashboard({ submissions }: { submissions: Submission[] }) {
 
       {/* Dept + Top liked */}
       <div>
-        <SectionTitle>部門 · 最多共鳴</SectionTitle>
+        <SectionTitle>部門 · 最多認同</SectionTitle>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white border border-[#E0E0E0]/80 rounded-2xl p-5 shadow-sm">
             <p className="text-sm font-semibold text-[#2D2D2D] mb-4">部門需求排行</p>
