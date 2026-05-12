@@ -294,17 +294,32 @@ export default function AdminPage() {
 
               {showLikers && (
                 <div className="px-5 pb-3 flex-shrink-0">
-                  {s.likers?.length ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {s.likers.map((l, i) => (
-                        <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">
-                          {l.name}{l.dept ? ` · ${l.dept.split(" > ").slice(-1)[0]}` : ""}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[#9E9E9E]">尚無共鳴者資料</p>
-                  )}
+                  {(() => {
+                    const likers = s.likers ?? [];
+                    const named = likers.filter(l => l.name);
+                    const anonymous = s.likeCount - likers.length;
+                    return (
+                      <div>
+                        {named.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {named.map((l, i) => (
+                              <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">
+                                {l.name}{l.dept ? ` · ${l.dept.split(" > ").slice(-1)[0]}` : ""}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {anonymous > 0 && (
+                          <p className="text-xs text-[#9E9E9E]">
+                            另有 <span className="font-semibold text-[#2D2D2D]">{anonymous}</span> 人未留下資料
+                          </p>
+                        )}
+                        {likers.length === 0 && anonymous <= 0 && (
+                          <p className="text-xs text-[#9E9E9E]">尚無共鳴者資料</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
               <div className="border-t border-[#F0F4F4]" />
