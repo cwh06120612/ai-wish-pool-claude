@@ -387,18 +387,20 @@ export default function AdminPage() {
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setLikersModalId(null)} />
             <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-bold text-[#2D2D2D]">共鳴者名單</h3>
-                  <p className="text-xs text-[#9E9E9E] mt-0.5 line-clamp-1">{s.problemTitle}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-[#9E9E9E] line-clamp-1 flex-1">{s.problemTitle}</p>
+                    <span className="flex items-center gap-1 text-xs flex-shrink-0">
+                      <ThumbsUp size={11} className="text-[#007A87]" />
+                      <span className="font-bold text-[#007A87]">{s.likeCount}</span>
+                      <span className="text-[#9E9E9E]">人</span>
+                    </span>
+                  </div>
                 </div>
-                <button onClick={() => setLikersModalId(null)} className="p-1.5 rounded-lg hover:bg-[#F0F4F4]">
+                <button onClick={() => setLikersModalId(null)} className="p-1.5 rounded-lg hover:bg-[#F0F4F4] ml-2 flex-shrink-0">
                   <X size={15} className="text-[#9E9E9E]" />
                 </button>
-              </div>
-              <div className="flex items-center gap-1.5 mb-3 text-xs text-[#9E9E9E]">
-                <ThumbsUp size={12} className="text-[#007A87]" />
-                <span className="font-bold text-[#007A87]">{s.likeCount}</span>
-                <span>人共鳴</span>
               </div>
               {named.length > 0 && (
                 <div className="mb-3">
