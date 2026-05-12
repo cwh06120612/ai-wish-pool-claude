@@ -5,6 +5,9 @@ import { SiteNav } from "@/components/site-nav";
 export const metadata: Metadata = {
   title: "AI 許願池",
   description: "把工作中最麻煩的問題收集起來，讓數位創新處評估 AI 解決方案",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

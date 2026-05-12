@@ -390,7 +390,7 @@ function SidebarTOC({ problems }: { problems: { id: string; problemTitle: string
       {top.map(s => (
         <button key={s.id} type="button" onClick={() => scrollTo(s.id)}
           className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left hover:bg-white hover:shadow-sm transition-all group">
-          <span className="text-[10px] font-bold text-[#BE8B55] bg-[#EDDDCA] px-1.5 py-0.5 rounded flex-shrink-0">{s.step}</span>
+          <span className="text-[10px] font-bold text-[#007A87] bg-[#B5E1E5]/50 px-1.5 py-0.5 rounded flex-shrink-0">{s.step}</span>
           <p className="text-xs font-medium text-[#616161] group-hover:text-[#2D2D2D] truncate">{s.label}</p>
         </button>
       ))}
@@ -414,7 +414,7 @@ function SidebarTOC({ problems }: { problems: { id: string; problemTitle: string
         {bottom.map(s => (
           <button key={s.id} type="button" onClick={() => scrollTo(s.id)}
             className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left hover:bg-white hover:shadow-sm transition-all group">
-            <span className="text-[10px] font-bold text-[#BE8B55] bg-[#EDDDCA] px-1.5 py-0.5 rounded flex-shrink-0">{s.step}</span>
+            <span className="text-[10px] font-bold text-[#007A87] bg-[#B5E1E5]/50 px-1.5 py-0.5 rounded flex-shrink-0">{s.step}</span>
             <p className="text-xs font-medium text-[#616161] group-hover:text-[#2D2D2D] truncate">{s.label}</p>
           </button>
         ))}
