@@ -30,7 +30,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [modalId, setModalId] = useState<string | null>(null);
-  const [showLikers, setShowLikers] = useState(false);
+  const [likersModalId, setLikersModalId] = useState<string | null>(null);
   const [editState, setEditState] = useState<Partial<Submission>>({});
   const [search, setSearch] = useState("");
   const [adminFilterStatus, setAdminFilterStatus] = useState("");
@@ -51,7 +51,6 @@ export default function AdminPage() {
     const s = submissions.find((s) => s.id === id);
     if (!s) return;
     setModalId(id);
-    setShowLikers(false);
     setEditState({
       category: s.category,
       status: s.status,
@@ -283,45 +282,13 @@ export default function AdminPage() {
                 <StatusBadge status={s.status} />
                 <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.annoyanceLevel}</span>
                 <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.frequency}</span>
-                <button type="button" onClick={() => setShowLikers(v => !v)}
-                  className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-colors ${
-                    showLikers ? "bg-[#007A87] text-white" : "text-[#9E9E9E] hover:bg-[#F0F4F4]"
-                  }`}>
+                <button type="button" onClick={() => setLikersModalId(s.id)}
+                  className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg text-[#9E9E9E] hover:bg-[#F0F4F4] transition-colors">
                   <ThumbsUp size={11} />{s.likeCount}
-                  {s.likers?.length ? <span className="text-[10px]">▾</span> : null}
                 </button>
               </div>
 
-              {showLikers && (
-                <div className="px-5 pb-3 flex-shrink-0">
-                  {(() => {
-                    const likers = s.likers ?? [];
-                    const named = likers.filter(l => l.name);
-                    const anonymous = s.likeCount - likers.length;
-                    return (
-                      <div>
-                        {named.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-2">
-                            {named.map((l, i) => (
-                              <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">
-                                {l.name}{l.dept ? ` · ${l.dept.split(" > ").slice(-1)[0]}` : ""}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {anonymous > 0 && (
-                          <p className="text-xs text-[#9E9E9E]">
-                            另有 <span className="font-semibold text-[#2D2D2D]">{anonymous}</span> 人未留下資料
-                          </p>
-                        )}
-                        {likers.length === 0 && anonymous <= 0 && (
-                          <p className="text-xs text-[#9E9E9E]">尚無共鳴者資料</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
+
               <div className="border-t border-[#F0F4F4]" />
 
               {/* Scrollable body */}
@@ -403,6 +370,54 @@ export default function AdminPage() {
                   <Save size={13} />儲存
                 </Button>
               </div>
+            </div>
+          </div>
+        );
+      })()}
+      {/* Likers Modal */}
+      {likersModalId && (() => {
+        const s = submissions.find(sub => sub.id === likersModalId);
+        if (!s) return null;
+        const likers = s.likers ?? [];
+        const named = likers.filter(l => l.name);
+        const anonymous = s.likeCount - likers.length;
+        return (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+            onClick={e => { if (e.target === e.currentTarget) setLikersModalId(null); }}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setLikersModalId(null)} />
+            <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#2D2D2D]">共鳴者名單</h3>
+                  <p className="text-xs text-[#9E9E9E] mt-0.5 line-clamp-1">{s.problemTitle}</p>
+                </div>
+                <button onClick={() => setLikersModalId(null)} className="p-1.5 rounded-lg hover:bg-[#F0F4F4]">
+                  <X size={15} className="text-[#9E9E9E]" />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-[#F0F4F4] rounded-xl">
+                <ThumbsUp size={14} className="text-[#007A87]" />
+                <span className="text-sm font-bold text-[#007A87]">{s.likeCount}</span>
+                <span className="text-xs text-[#9E9E9E]">人共鳴</span>
+              </div>
+              {named.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-semibold text-[#9E9E9E] mb-2">有留資料 ({named.length} 人)</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {named.map((l, i) => (
+                      <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">
+                        {l.name}{l.dept ? ` · ${l.dept.split(" > ").slice(-1)[0]}` : ""}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {anonymous > 0 && (
+                <p className="text-xs text-[#9E9E9E]">另有 <span className="font-semibold text-[#2D2D2D]">{anonymous}</span> 人未留下資料</p>
+              )}
+              {s.likeCount === 0 && (
+                <p className="text-xs text-[#9E9E9E] text-center py-2">尚無共鳴</p>
+              )}
             </div>
           </div>
         );
