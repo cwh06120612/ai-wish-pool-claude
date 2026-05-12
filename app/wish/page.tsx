@@ -7,7 +7,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { FormField, TextInput } from "@/components/ui/form-field";
 import { OptionCard } from "@/components/ui/option-card";
 import { DepartmentSelector } from "@/components/department-selector";
-import { addSubmission, generateId } from "@/lib/storage";
+import { addSubmissionAsync, generateId } from "@/lib/storage";
 import { isLeafNode } from "@/lib/department-utils";
 import { departments } from "@/data/departments";
 import type { Submission, ShareMode } from "@/types/submission";
@@ -492,12 +492,11 @@ export default function WishPage() {
     return true;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
     const isVisible = form.shareMode === "願意分享（公開內容、部門、姓名）" || form.shareMode === "匿名分享（公開內容，但不顯示部門姓名）";
-    form.problems.forEach(p => {
-      addSubmission({
+    const saves = form.problems.map(p => addSubmissionAsync({
         id: generateId(),
         createdAt: new Date().toISOString(),
         departmentPath: form.departmentPath,
@@ -514,8 +513,8 @@ export default function WishPage() {
         freeText: form.freeText,
         status: "已收到", priority: "待評估", category: "未分類",
         adminNote: "", publicSummary: "", isVisible, likeCount: 0,
-      });
-    });
+    }));
+    await Promise.all(saves);
     try { localStorage.setItem(PERSONAL_INFO_KEY, JSON.stringify({ departmentPath: form.departmentPath, name: form.name })); } catch {}
     setSavedPersonal({ departmentPath: form.departmentPath, name: form.name });
     setSubmitted(true);

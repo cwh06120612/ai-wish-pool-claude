@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { getSubmissions, incrementLike } from "@/lib/storage";
+import { getSubmissionsAsync, incrementLikeAsync } from "@/lib/storage";
 import type { Submission } from "@/types/submission";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, ChevronDown, Sparkles, X, SlidersHorizontal } from "lucide-react";
@@ -229,8 +229,11 @@ export default function BoardPage() {
   const [activeLevel, setActiveLevel] = useState<string>("");
 
   useEffect(() => {
-    const subs = getSubmissions();
-    setAllItems(subs.filter(s => s.shareMode !== "不公開（只給數位創新處後台查看）" && s.isVisible));
+    async function load() {
+      const subs = await getSubmissionsAsync();
+      setAllItems(subs.filter(s => s.shareMode !== "不公開（只給數位創新處後台查看）" && s.isVisible));
+    }
+    load();
     try {
       const raw = localStorage.getItem("ai-wish-liked");
       if (raw) setLikedIds(new Set(JSON.parse(raw)));
@@ -261,7 +264,7 @@ export default function BoardPage() {
 
   function handleLike(id: string) {
     if (likedIds.has(id)) return;
-    incrementLike(id);
+    incrementLikeAsync(id);
     const next = new Set(likedIds).add(id);
     setLikedIds(next);
     localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));

@@ -59,7 +59,7 @@ export default function AdminPage() {
     });
   }
 
-  function handleSave(id: string) {
+  async function handleSave(id: string) {
     updateSubmission(id, editState);
     reload();
     setModalId(null);
