@@ -83,27 +83,17 @@ export async function updateSubmissionAsync(id: string, updates: Partial<Submiss
   if (error) console.error(error);
 }
 
-export async function incrementLikeAsync(id: string, liker?: { name: string; dept: string }): Promise<void> {
-  const { data } = await supabase.from("submissions").select("like_count, likers").eq("id", id).single();
+export async function incrementLikeAsync(id: string): Promise<void> {
+  const { data } = await supabase.from("submissions").select("like_count").eq("id", id).single();
   if (data) {
-    const likers = (data.likers ?? []) as { name: string; dept: string }[];
-    const newLikers = liker ? [...likers, liker] : likers;
-    await supabase.from("submissions").update({
-      like_count: (data.like_count ?? 0) + 1,
-      likers: newLikers,
-    }).eq("id", id);
+    await supabase.from("submissions").update({ like_count: (data.like_count ?? 0) + 1 }).eq("id", id);
   }
 }
 
-export async function decrementLikeAsync(id: string, name?: string): Promise<void> {
-  const { data } = await supabase.from("submissions").select("like_count, likers").eq("id", id).single();
+export async function decrementLikeAsync(id: string): Promise<void> {
+  const { data } = await supabase.from("submissions").select("like_count").eq("id", id).single();
   if (data) {
-    const likers = (data.likers ?? []) as { name: string; dept: string }[];
-    const newLikers = name ? likers.filter(l => l.name !== name) : likers;
-    await supabase.from("submissions").update({
-      like_count: Math.max(0, (data.like_count ?? 0) - 1),
-      likers: newLikers,
-    }).eq("id", id);
+    await supabase.from("submissions").update({ like_count: Math.max(0, (data.like_count ?? 0) - 1) }).eq("id", id);
   }
 }
 
