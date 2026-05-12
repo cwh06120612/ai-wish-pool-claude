@@ -89,6 +89,13 @@ export async function incrementLikeAsync(id: string): Promise<void> {
   }
 }
 
+export async function decrementLikeAsync(id: string): Promise<void> {
+  const { data } = await supabase.from("submissions").select("like_count").eq("id", id).single();
+  if (data) {
+    await supabase.from("submissions").update({ like_count: Math.max(0, (data.like_count ?? 0) - 1) }).eq("id", id);
+  }
+}
+
 // ─── 舊的同步 API 保留相容性（部分頁面還在用）────────────────────────────────
 export function generateId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);

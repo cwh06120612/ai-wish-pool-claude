@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getSubmissions, updateSubmission } from "@/lib/storage";
+import { getSubmissionsAsync, updateSubmissionAsync } from "@/lib/storage";
 import { exportToCsv } from "@/lib/csv";
 import type { Submission, Status, Priority, Category } from "@/types/submission";
 import { StatusBadge, Badge } from "@/components/ui/badge";
@@ -37,8 +37,9 @@ export default function AdminPage() {
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
 
-  function reload() {
-    setSubmissions(getSubmissions());
+  async function reload() {
+    const data = await getSubmissionsAsync();
+    setSubmissions(data);
   }
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function AdminPage() {
   }
 
   async function handleSave(id: string) {
-    updateSubmission(id, editState);
+    await updateSubmissionAsync(id, editState);
     reload();
     setModalId(null);
     setEditState({});

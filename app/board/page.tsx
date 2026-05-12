@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { getSubmissionsAsync, incrementLikeAsync } from "@/lib/storage";
+import { getSubmissionsAsync, incrementLikeAsync, decrementLikeAsync } from "@/lib/storage";
 import type { Submission } from "@/types/submission";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, ChevronDown, Sparkles, X, SlidersHorizontal } from "lucide-react";
@@ -171,10 +171,10 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           )}
         </div>
         <div className="border-t border-[#F0F4F4] px-5 py-3 flex-shrink-0">
-          <button onClick={onLike} disabled={isLiked}
-            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${isLiked ? "bg-[#007A87] text-white cursor-default" : "bg-[#F0F4F4] text-[#616161] hover:bg-[#B5E1E5]/40 hover:text-[#007A87]"}`}>
+          <button onClick={onLike}
+            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${isLiked ? "bg-[#007A87] text-white hover:bg-[#00555E]" : "bg-[#F0F4F4] text-[#616161] hover:bg-[#B5E1E5]/40 hover:text-[#007A87]"}`}>
             <ThumbsUp size={15} />
-            {isLiked ? "已共鳴" : "我也有這個困擾"}
+            {isLiked ? "已共鳴・點此取消" : "我也有這個困擾"}
             <span className={`text-xs font-bold ${isLiked ? "text-white/80" : "text-[#2D2D2D]"}`}>{item.likeCount}</span>
           </button>
         </div>
@@ -263,13 +263,25 @@ export default function BoardPage() {
   const visibleLevels = ANNOYANCE_ORDER.filter(level => filtered.some(s => s.annoyanceLevel === level));
 
   function handleLike(id: string) {
-    if (likedIds.has(id)) return;
-    incrementLikeAsync(id);
-    const next = new Set(likedIds).add(id);
-    setLikedIds(next);
-    localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));
-    setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: s.likeCount + 1 } : s));
-    if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: prev.likeCount + 1 } : null);
+    const isLiked = likedIds.has(id);
+    if (isLiked) {
+      // 取消共鳴
+      decrementLikeAsync(id);
+      const next = new Set(likedIds);
+      next.delete(id);
+      setLikedIds(next);
+      localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));
+      setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: Math.max(0, s.likeCount - 1) } : s));
+      if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: Math.max(0, prev.likeCount - 1) } : null);
+    } else {
+      // 新增共鳴
+      incrementLikeAsync(id);
+      const next = new Set(likedIds).add(id);
+      setLikedIds(next);
+      localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));
+      setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: s.likeCount + 1 } : s));
+      if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: prev.likeCount + 1 } : null);
+    }
   }
 
   return (
