@@ -395,14 +395,13 @@ export default function AdminPage() {
                   <X size={15} className="text-[#9E9E9E]" />
                 </button>
               </div>
-              <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-[#F0F4F4] rounded-xl">
-                <ThumbsUp size={14} className="text-[#007A87]" />
-                <span className="text-sm font-bold text-[#007A87]">{s.likeCount}</span>
-                <span className="text-xs text-[#9E9E9E]">人共鳴</span>
+              <div className="flex items-center gap-1.5 mb-3 text-xs text-[#9E9E9E]">
+                <ThumbsUp size={12} className="text-[#007A87]" />
+                <span className="font-bold text-[#007A87]">{s.likeCount}</span>
+                <span>人共鳴</span>
               </div>
               {named.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-xs font-semibold text-[#9E9E9E] mb-2">有留資料 ({named.length} 人)</p>
                   <div className="flex flex-wrap gap-1.5">
                     {named.map((l, i) => (
                       <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">
