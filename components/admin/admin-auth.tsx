@@ -5,7 +5,7 @@ import { Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ADMIN_SESSION_KEY = "ai-wish-admin-auth";
-const ADMIN_PASSWORD = "1234"; // 可修改
+const ADMIN_PASSWORD = "DID2026"; // 可修改
 
 interface AdminAuthProps {
   children: React.ReactNode;
