@@ -46,5 +46,6 @@ export type Submission = {
   publicSummary: string;
   isVisible: boolean;
   likeCount: number;
+  likers?: { name: string; dept: string }[];
   freeText: string;
 };

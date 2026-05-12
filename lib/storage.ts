@@ -51,6 +51,7 @@ function fromDb(row: Record<string, unknown>): Submission {
     publicSummary: (row.public_summary as string) ?? "",
     isVisible: (row.is_visible as boolean) ?? true,
     likeCount: (row.like_count as number) ?? 0,
+    likers: (row.likers as { name: string; dept: string }[]) ?? [],
   };
 }
 

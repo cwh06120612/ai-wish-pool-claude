@@ -283,11 +283,11 @@ export default function AdminPage() {
                 <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.frequency}</span>
                 <span className="flex items-center gap-1 text-xs text-[#9E9E9E]"><ThumbsUp size={11} />{s.likeCount}</span>
               </div>
-              {!!((s as Submission & { likers?: {name:string;dept:string}[] }).likers?.length) && (
+              {!!(s.likers?.length) && (
                 <div className="px-5 pb-3 flex-shrink-0">
                   <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">共鳴者</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {((s as Submission & { likers?: {name:string;dept:string}[] }).likers ?? []).map((l, i) => (
+                    {(s.likers ?? []).map((l, i) => (
                       <span key={i} className="text-xs px-2.5 py-1 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">
                         {l.name}{l.dept ? ` · ${l.dept}` : ""}
                       </span>

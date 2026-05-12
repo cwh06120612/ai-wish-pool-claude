@@ -9,7 +9,9 @@ export function countByField(
     const val = s[field];
     if (Array.isArray(val)) {
       for (const v of val) {
-        counts[v] = (counts[v] || 0) + 1;
+        if (typeof v === "string") {
+          counts[v] = (counts[v] || 0) + 1;
+        }
       }
     } else if (typeof val === "string") {
       counts[val] = (counts[val] || 0) + 1;
