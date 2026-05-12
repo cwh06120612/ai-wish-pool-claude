@@ -216,6 +216,68 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
   );
 }
 
+
+// ─── Like Confirmation Modal ──────────────────────────────────────────────────
+const PERSONAL_INFO_KEY = "ai-wish-personal-info";
+
+function LikeModal({ onConfirm, onClose }: {
+  onConfirm: (name: string, dept: string) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [dept, setDept] = useState("");
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PERSONAL_INFO_KEY);
+      if (raw) {
+        const info = JSON.parse(raw);
+        setName(info.name ?? "");
+        setDept(info.departmentPath?.slice(-1)[0] ?? "");
+      }
+    } catch {}
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+        <h3 className="text-base font-bold text-[#2D2D2D] mb-1">確認共鳴</h3>
+        <p className="text-xs text-[#9E9E9E] mb-4">請確認你的資訊，讓數位創新處知道哪些人也有同樣困擾</p>
+        <div className="space-y-3 mb-5">
+          <div>
+            <label className="text-xs font-medium text-[#616161] block mb-1">姓名</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)}
+              placeholder="請輸入姓名"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-[#E0E0E0] focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 focus:border-[#007A87]" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-[#616161] block mb-1">部門（選填）</label>
+            <input type="text" value={dept} onChange={e => setDept(e.target.value)}
+              placeholder="例如：工程處"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-[#E0E0E0] focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 focus:border-[#007A87]" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 py-2 rounded-xl text-sm font-medium border border-[#E0E0E0] text-[#616161] hover:bg-[#F0F4F4] transition-colors">
+            取消
+          </button>
+          <button onClick={() => { if (name.trim()) onConfirm(name.trim(), dept.trim()); }}
+            disabled={!name.trim()}
+            className="flex-1 py-2 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            確認共鳴
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function BoardPage() {
   const [allItems, setAllItems] = useState<Submission[]>([]);
@@ -225,6 +287,7 @@ export default function BoardPage() {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
   const [selected, setSelected] = useState<Submission | null>(null);
+  const [likeTarget, setLikeTarget] = useState<string | null>(null);
   // Default: open the top 2 most serious sections
   const [activeLevel, setActiveLevel] = useState<string>("");
 
@@ -265,8 +328,9 @@ export default function BoardPage() {
   function handleLike(id: string) {
     const isLiked = likedIds.has(id);
     if (isLiked) {
-      // 取消共鳴
-      decrementLikeAsync(id);
+      // 取消共鳴 — 直接取消不需確認
+      const likerName = (() => { try { const r = localStorage.getItem("ai-wish-personal-info"); return r ? JSON.parse(r).name : ""; } catch { return ""; } })();
+      decrementLikeAsync(id, likerName);
       const next = new Set(likedIds);
       next.delete(id);
       setLikedIds(next);
@@ -274,14 +338,19 @@ export default function BoardPage() {
       setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: Math.max(0, s.likeCount - 1) } : s));
       if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: Math.max(0, prev.likeCount - 1) } : null);
     } else {
-      // 新增共鳴
-      incrementLikeAsync(id);
-      const next = new Set(likedIds).add(id);
-      setLikedIds(next);
-      localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));
-      setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: s.likeCount + 1 } : s));
-      if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: prev.likeCount + 1 } : null);
+      // 新增共鳴 — 跳出確認視窗
+      setLikeTarget(id);
     }
+  }
+
+  function confirmLike(id: string, name: string, dept: string) {
+    incrementLikeAsync(id, { name, dept });
+    const next = new Set(likedIds).add(id);
+    setLikedIds(next);
+    localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));
+    setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: s.likeCount + 1 } : s));
+    if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: prev.likeCount + 1 } : null);
+    setLikeTarget(null);
   }
 
   return (
@@ -378,6 +447,12 @@ export default function BoardPage() {
       {selected && (
         <DetailModal item={selected} isLiked={likedIds.has(selected.id)}
           onLike={() => handleLike(selected.id)} onClose={() => setSelected(null)} />
+      )}
+      {likeTarget && (
+        <LikeModal
+          onConfirm={(name, dept) => confirmLike(likeTarget, name, dept)}
+          onClose={() => setLikeTarget(null)}
+        />
       )}
     </div>
   );
