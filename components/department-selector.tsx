@@ -253,11 +253,6 @@ export function DepartmentSelector({ value, onChange, error }: DepartmentSelecto
             )}
           </div>
 
-          {/* Footer hint */}
-          <div className="border-t border-[#F5F5F5] px-3 py-2 text-xs text-[#BDBDBD] flex items-center gap-1.5">
-            <Search size={11} />
-            輸入關鍵字快速搜尋，或逐層點選瀏覽
-          </div>
         </div>
       )}
 
