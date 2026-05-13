@@ -283,8 +283,8 @@ export default function AdminPage() {
               </div>
               <div className="flex flex-wrap gap-2 px-5 pb-3 flex-shrink-0">
                 <StatusBadge status={s.status} />
-                <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.annoyanceLevel}</span>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.frequency}</span>
+                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.annoyanceLevel}</span>
+                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{s.frequency}</span>
                 <button type="button" onClick={() => setLikersModalId(s.id)}
                   className="flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg text-[#9E9E9E] hover:bg-[#F0F4F4] transition-colors">
                   <ThumbsUp size={11} />{s.likeCount}

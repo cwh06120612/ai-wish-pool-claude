@@ -578,7 +578,7 @@ export default function WishPage() {
                 <h2 className="text-base font-semibold text-[#424242]">你的困擾</h2>
                 <p className="text-xs text-[#9E9E9E] mt-0.5">有幾個就填幾個，最多 {MAX_PROBLEMS} 個</p>
               </div>
-              <span className="text-xs text-[#9E9E9E] bg-white border border-[#E0E0E0] px-2 py-1 rounded-lg">{form.problems.length} / {MAX_PROBLEMS}</span>
+              <span className="inline-flex items-center text-xs text-[#9E9E9E] bg-white border border-[#E0E0E0] px-2 py-1 rounded-lg">{form.problems.length} / {MAX_PROBLEMS}</span>
             </div>
 
             <div className="space-y-4">

@@ -200,8 +200,8 @@ function AdminDetailModal({ item, onClose }: { item: Submission; onClose: () => 
         </div>
         <div className="flex flex-wrap gap-2 px-5 pb-3 flex-shrink-0">
           <StatusBadge status={item.status} />
-          <span className="text-xs px-2.5 py-1 rounded-full bg-[#FFF3CD] text-[#92400e] font-medium">{item.annoyanceLevel}</span>
-          <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{item.frequency}</span>
+          <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full bg-[#FFF3CD] text-[#92400e] font-medium">{item.annoyanceLevel}</span>
+          <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{item.frequency}</span>
         </div>
         <div className="border-t border-[#F0F4F4]" />
         <div className="overflow-y-auto px-5 py-4 space-y-4 flex-1">

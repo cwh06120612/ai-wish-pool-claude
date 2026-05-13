@@ -37,7 +37,7 @@ const BOARD_STATUS_STYLE: Record<string, { bg: string; text: string }> = {
 
 function BoardStatusTag({ status }: { status: string }) {
   const s = BOARD_STATUS_STYLE[status] ?? { bg: "#E0E0E0", text: "#9E9E9E" };
-  return <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: s.bg, color: s.text }}>{status}</span>;
+  return <span className="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: s.bg, color: s.text }}>{status}</span>;
 }
 
 function getDisplayName(s: Submission) {
@@ -138,8 +138,8 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#F0F4F4] flex-shrink-0"><X size={16} className="text-[#9E9E9E]" /></button>
         </div>
         <div className="flex flex-wrap gap-2 px-5 pb-3 flex-shrink-0">
-          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${st.badge} ${st.text}`}>{item.annoyanceLevel}</span>
-          <span className="text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{item.frequency}</span>
+          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-full font-semibold ${st.badge} ${st.text}`}>{item.annoyanceLevel}</span>
+          <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{item.frequency}</span>
           <BoardStatusTag status={item.status} />
         </div>
         <div className="border-t border-[#F0F4F4]" />
@@ -211,7 +211,7 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
         {item.painPoints.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {item.painPoints.slice(0, 3).map(p => <span key={p} className="text-[11px] px-2 py-0.5 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">{p}</span>)}
-            {item.painPoints.length > 3 && <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#F0F4F4] text-[#9E9E9E]">+{item.painPoints.length - 3}</span>}
+            {item.painPoints.length > 3 && <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full bg-[#F0F4F4] text-[#9E9E9E]">+{item.painPoints.length - 3}</span>}
           </div>
         )}
         <div className="flex items-center justify-between pt-2 border-t border-[#F0F4F4]">
@@ -358,7 +358,7 @@ export default function BoardPage() {
                     : "border-[#E0E0E0]/60 bg-white/60 text-[#9E9E9E] hover:bg-white hover:text-[#2D2D2D]"
                 }`}>
                 全部
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{filtered.length}</span>
+                <span className="inline-flex items-center text-xs font-bold px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{filtered.length}</span>
               </button>
               {visibleLevels.map(level => {
                 const st = ANNOYANCE_STYLE[level] ?? ANNOYANCE_STYLE["還好，但可以優化"];
@@ -374,7 +374,7 @@ export default function BoardPage() {
                     }`}>
                     <span className="text-base leading-none">{st.icon}</span>
                     <span className="whitespace-nowrap">{level.split("，")[0]}</span>
-                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${st.labelBg} ${st.labelText}`}>{count}</span>
+                    <span className={`inline-flex items-center text-xs font-bold px-1.5 py-0.5 rounded-full ${st.labelBg} ${st.labelText}`}>{count}</span>
                   </button>
                 );
               })}
@@ -391,7 +391,7 @@ export default function BoardPage() {
                 {activeLevel === "" && (
                   <div className={`flex items-center gap-3 mb-4 pb-3 border-b-2 ${st.border}`}>
                     <h2 className={`text-sm font-bold flex-1 ${st.text}`}>{level}</h2>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${st.labelBg} ${st.labelText}`}>{items.length} 則</span>
+                    <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${st.labelBg} ${st.labelText}`}>{items.length} 則</span>
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
