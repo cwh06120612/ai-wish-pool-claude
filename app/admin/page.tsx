@@ -58,6 +58,7 @@ export default function AdminPage() {
       publicSummary: s.publicSummary,
       isVisible: s.isVisible,
       adminNote: s.adminNote,
+      isExample: s.isExample ?? false,
     });
   }
 

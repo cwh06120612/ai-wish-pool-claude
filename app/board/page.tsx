@@ -194,8 +194,8 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
     <button type="button" onClick={onClick}
       className="bg-white border border-[#E0E0E0]/80 rounded-xl overflow-hidden text-left hover:shadow-md hover:-translate-y-0.5 transition-all w-full group">
       {item.isExample && (
-        <div className="bg-[#FFF3CD] px-4 py-1 flex items-center gap-1.5 border-b border-[#FFE08A]">
-          <span className="text-[10px] font-bold text-[#92400e]">📌 範例資料，不列入統計</span>
+        <div className="bg-[#B5E1E5]/30 px-4 py-1 flex items-center gap-1.5 border-b border-[#B5E1E5]/50">
+          <span className="text-[10px] font-bold text-[#00555E]">範例資料</span>
         </div>
       )}
       <div className="p-4">
