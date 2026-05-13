@@ -125,7 +125,7 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-[#2D2D2D] leading-snug flex-1">{item.problemTitle}</h2>
-              {item.isExample && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFF3CD] text-[#92400e] font-bold flex-shrink-0">📌 範例</span>}
+              {item.isExample && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#B5E1E5]/40 text-[#00555E] font-bold flex-shrink-0">範例</span>}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-[#9E9E9E]">
               <span className="flex items-center gap-1"><User size={11} />{displayName}</span>
