@@ -15,6 +15,8 @@ import {
   X, Save, Check, LogOut, ThumbsUp,
 } from "lucide-react";
 
+const EXAMPLE_IDS = ['qilbmtf7wlmp3g7gyf', 'ne86qynxnqdmp3fuxu7'];
+
 const STATUS_OPTIONS: Status[] = [
   "已收到","整理中","評估中","尋找工具中","測試中","已導入","暫不處理",
 ];
@@ -71,8 +73,8 @@ export default function AdminPage() {
 
   // List tab
   const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority;
-  const filtered = submissions
-    .filter((s) => {
+  const filtered = submissions.filter(s => !EXAMPLE_IDS.includes(s.id))
+    .filter((s: Submission) => {
       if (search.trim()) {
         const q = search.toLowerCase();
         const match = s.problemTitle.toLowerCase().includes(q) ||
@@ -344,16 +346,6 @@ export default function AdminPage() {
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editState.isVisible ? "translate-x-6" : "translate-x-1"}`} />
                         </button>
                         <span className="text-xs text-[#616161]">{editState.isVisible ? "顯示中" : "已隱藏"}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-[#757575] mb-1">標記為範例</label>
-                      <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => setEditState(e => ({ ...e, isExample: !e.isExample }))}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 ${editState.isExample ? "bg-[#007A87]" : "bg-[#E0E0E0]"}`}>
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editState.isExample ? "translate-x-6" : "translate-x-1"}`} />
-                        </button>
-                        <span className="text-xs text-[#616161]">{editState.isExample ? "範例（不列入統計）" : "一般填答"}</span>
                       </div>
                     </div>
                     <div className="sm:col-span-2">

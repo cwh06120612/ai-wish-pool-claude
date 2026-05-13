@@ -245,7 +245,8 @@ function AdminDetailModal({ item, onClose }: { item: Submission; onClose: () => 
 // ─── Main Dashboard ───────────────────────────────────────────────
 export function Dashboard({ submissions: allSubmissions }: { submissions: Submission[] }) {
   const [detailItem, setDetailItem] = React.useState<Submission | null>(null);
-  const submissions = allSubmissions.filter(s => !s.isExample);
+  const EXAMPLE_IDS = ['qilbmtf7wlmp3g7gyf', 'ne86qynxnqdmp3fuxu7'];
+  const submissions = allSubmissions.filter(s => !EXAMPLE_IDS.includes(s.id));
   const total = submissions.length;
   const thisWeek = getThisWeekCount(submissions);
   const highAnnoyance = getHighAnnoyanceCount(submissions);
