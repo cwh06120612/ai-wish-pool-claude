@@ -62,7 +62,7 @@ export default function AdminPage() {
   }
 
   async function handleSave(id: string) {
-    await updateSubmissionAsync(id, editState);
+    await updateSubmissionAsync(id, { ...editState, isExample: editState.isExample });
     reload();
     setModalId(null);
     setEditState({});
@@ -343,6 +343,16 @@ export default function AdminPage() {
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editState.isVisible ? "translate-x-6" : "translate-x-1"}`} />
                         </button>
                         <span className="text-xs text-[#616161]">{editState.isVisible ? "顯示中" : "已隱藏"}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-[#757575] mb-1">標記為範例</label>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => setEditState(e => ({ ...e, isExample: !e.isExample }))}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 ${editState.isExample ? "bg-[#FFAE00]" : "bg-[#E0E0E0]"}`}>
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editState.isExample ? "translate-x-6" : "translate-x-1"}`} />
+                        </button>
+                        <span className="text-xs text-[#616161]">{editState.isExample ? "📌 範例（不列入統計）" : "一般填答"}</span>
                       </div>
                     </div>
                     <div className="sm:col-span-2">

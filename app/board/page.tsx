@@ -123,7 +123,10 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
       <div className="relative bg-white w-full sm:max-w-xl sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         <div className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 flex-shrink-0">
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-[#2D2D2D] leading-snug">{item.problemTitle}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-[#2D2D2D] leading-snug flex-1">{item.problemTitle}</h2>
+              {item.isExample && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#FFF3CD] text-[#92400e] font-bold flex-shrink-0">📌 範例</span>}
+            </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-[#9E9E9E]">
               <span className="flex items-center gap-1"><User size={11} />{displayName}</span>
               {displayDept && <span className="flex items-center gap-1"><MapPin size={11} /><span className="truncate max-w-[180px]">{displayDept.split(" > ").slice(-2).join(" · ")}</span></span>}
@@ -191,7 +194,10 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
     <button type="button" onClick={onClick}
       className="bg-white border border-[#E0E0E0]/80 rounded-xl overflow-hidden text-left hover:shadow-md hover:-translate-y-0.5 transition-all w-full group">
       <div className="p-4">
-        <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug mb-2.5 line-clamp-2 group-hover:text-[#007A87] transition-colors">{item.problemTitle}</h3>
+        <div className="flex items-start gap-2 mb-2.5">
+          <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors flex-1">{item.problemTitle}</h3>
+          {item.isExample && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFF3CD] text-[#92400e] font-bold flex-shrink-0 mt-0.5">範例</span>}
+        </div>
         <div className="flex flex-wrap gap-1.5 mb-3">
           <BoardStatusTag status={item.status} />
         </div>

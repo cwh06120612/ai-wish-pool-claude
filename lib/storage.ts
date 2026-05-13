@@ -25,6 +25,7 @@ function toDb(s: Submission) {
     public_summary: s.publicSummary,
     is_visible: s.isVisible,
     like_count: s.likeCount,
+    is_example: s.isExample ?? false,
   };
 }
 
@@ -52,6 +53,7 @@ function fromDb(row: Record<string, unknown>): Submission {
     isVisible: (row.is_visible as boolean) ?? true,
     likeCount: (row.like_count as number) ?? 0,
     likers: (row.likers as { name: string; dept: string }[]) ?? [],
+    isExample: (row.is_example as boolean) ?? false,
   };
 }
 
