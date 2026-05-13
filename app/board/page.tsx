@@ -129,7 +129,7 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-[#9E9E9E]">
               <span className="flex items-center gap-1"><User size={11} />{displayName}</span>
-              {displayDept && <span className="flex items-center gap-1"><MapPin size={11} /><span className="truncate max-w-[180px]">{displayDept.split(" > ").slice(-2).join(" · ")}</span></span>}
+              {displayDept && <span className="flex items-center gap-1"><MapPin size={11} /><span className="truncate max-w-[280px]">{displayDept.split(" > ").slice(-3).join(" · ")}</span></span>}
               <span className="flex items-center gap-1"><Clock size={11} />{new Date(item.createdAt).toLocaleDateString("zh-TW")}</span>
             </div>
           </div>
@@ -193,10 +193,14 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
   return (
     <button type="button" onClick={onClick}
       className="bg-white border border-[#E0E0E0]/80 rounded-xl overflow-hidden text-left hover:shadow-md hover:-translate-y-0.5 transition-all w-full group">
+      {item.isExample && (
+        <div className="bg-[#FFF3CD] px-4 py-1 flex items-center gap-1.5 border-b border-[#FFE08A]">
+          <span className="text-[10px] font-bold text-[#92400e]">📌 範例資料，不列入統計</span>
+        </div>
+      )}
       <div className="p-4">
         <div className="flex items-start gap-2 mb-2.5">
           <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors flex-1">{item.problemTitle}</h3>
-          {item.isExample && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFF3CD] text-[#92400e] font-bold flex-shrink-0 mt-0.5">範例</span>}
         </div>
         <div className="flex flex-wrap gap-1.5 mb-3">
           <BoardStatusTag status={item.status} />

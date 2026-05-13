@@ -81,6 +81,7 @@ export async function updateSubmissionAsync(id: string, updates: Partial<Submiss
   if (updates.publicSummary !== undefined) dbUpdates.public_summary = updates.publicSummary;
   if (updates.isVisible !== undefined) dbUpdates.is_visible = updates.isVisible;
   if (updates.likeCount !== undefined) dbUpdates.like_count = updates.likeCount;
+  if (updates.isExample !== undefined) dbUpdates.is_example = updates.isExample;
   const { error } = await supabase.from("submissions").update(dbUpdates).eq("id", id);
   if (error) console.error(error);
 }
