@@ -192,10 +192,10 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
   const displayName = getDisplayName(item);
   return (
     <button type="button" onClick={onClick}
-      className="bg-white border border-[#E0E0E0]/80 rounded-xl overflow-hidden text-left hover:shadow-md hover:-translate-y-0.5 transition-all w-full group">
-      <div className="p-4">
-        <div className="flex items-start gap-2 mb-2.5">
-          <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors flex-1">{item.problemTitle}</h3>
+      className="bg-white border border-[#E0E0E0]/80 rounded-xl overflow-hidden text-left hover:shadow-md hover:-translate-y-0.5 transition-all w-full group flex flex-col">
+      <div className="p-4 flex flex-col flex-1">
+        <div className="mb-2.5 min-h-[40px]">
+          <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors">{item.problemTitle}</h3>
         </div>
         <div className="flex flex-wrap gap-1.5 mb-3">
           <BoardStatusTag status={item.status} />
@@ -206,7 +206,7 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
             {item.painPoints.length > 3 && <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full bg-[#F0F4F4] text-[#9E9E9E]">+{item.painPoints.length - 3}</span>}
           </div>
         )}
-        <div className="flex items-center justify-between pt-2 border-t border-[#F0F4F4]">
+        <div className="flex items-center justify-between pt-2 border-t border-[#F0F4F4] mt-auto">
           <div className="flex items-center gap-2 text-[11px] text-[#BDBDBD]">
             <span className="flex items-center gap-1"><User size={10} />{displayName}</span>
             <span className="flex items-center gap-1"><Clock size={10} />{new Date(item.createdAt).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })}</span>
