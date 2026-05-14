@@ -1,18 +1,23 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createContext, useContext } from "react";
 import { Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const ADMIN_SESSION_KEY = "ai-wish-admin-auth";
-const ADMIN_PASSWORD = "DID2026"; // 可修改
+const PASSWORD_READONLY = "DID2026";
+const PASSWORD_EDITOR = "DID202605";
+
+// Context to pass permission level down
+export const AdminRoleContext = createContext<"readonly" | "editor">("readonly");
+export function useAdminRole() { return useContext(AdminRoleContext); }
 
 interface AdminAuthProps {
   children: React.ReactNode;
 }
 
 export function AdminAuth({ children }: AdminAuthProps) {
-  const [authed, setAuthed] = useState(false);
+  const [role, setRole] = useState<"readonly" | "editor" | null>(null);
   const [checked, setChecked] = useState(false);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,16 +27,21 @@ export function AdminAuth({ children }: AdminAuthProps) {
   useEffect(() => {
     try {
       const val = sessionStorage.getItem(ADMIN_SESSION_KEY);
-      if (val === "ok") setAuthed(true);
+      if (val === "editor") setRole("editor");
+      else if (val === "readonly") setRole("readonly");
     } catch {}
     setChecked(true);
   }, []);
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      try { sessionStorage.setItem(ADMIN_SESSION_KEY, "ok"); } catch {}
-      setAuthed(true);
+    if (password === PASSWORD_EDITOR) {
+      try { sessionStorage.setItem(ADMIN_SESSION_KEY, "editor"); } catch {}
+      setRole("editor");
+      setError("");
+    } else if (password === PASSWORD_READONLY) {
+      try { sessionStorage.setItem(ADMIN_SESSION_KEY, "readonly"); } catch {}
+      setRole("readonly");
       setError("");
     } else {
       setError("密碼錯誤，請再試一次");
@@ -43,19 +53,20 @@ export function AdminAuth({ children }: AdminAuthProps) {
 
   if (!checked) return null;
 
-  if (authed) return <>{children}</>;
+  if (role) return (
+    <AdminRoleContext.Provider value={role}>
+      {children}
+    </AdminRoleContext.Provider>
+  );
 
   return (
     <div className="min-h-[calc(100vh-56px)] flex items-center justify-center px-4">
       <div className={`bg-white border border-[#E0E0E0] rounded-2xl p-8 w-full max-w-sm shadow-sm ${shake ? "animate-shake" : ""}`}>
-        {/* Icon */}
         <div className="w-12 h-12 rounded-xl bg-[#B5E1E5]/40 flex items-center justify-center mx-auto mb-5">
           <Lock size={20} className="text-[#007A87]" />
         </div>
-
         <h1 className="text-lg font-bold text-[#424242] text-center mb-1">管理員專區</h1>
         <p className="text-sm text-[#9E9E9E] text-center mb-6">請輸入密碼繼續</p>
-
         <form onSubmit={handleLogin}>
           <div className="relative mb-4">
             <input
@@ -68,27 +79,21 @@ export function AdminAuth({ children }: AdminAuthProps) {
                 error ? "border-[#AE1914]" : "border-[#E0E0E0]"
               }`}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BDBDBD] hover:text-[#757575]"
-            >
+            <button type="button" onClick={() => setShowPassword(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BDBDBD] hover:text-[#757575]">
               {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-
           {error && (
             <p className="text-xs text-[#AE1914] mb-3 flex items-center gap-1">
               <AlertCircle size={12} />{error}
             </p>
           )}
-
           <Button type="submit" variant="primary" className="w-full">
             進入管理員專區
           </Button>
         </form>
       </div>
-
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }

@@ -8,7 +8,7 @@ import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Dashboard } from "@/components/admin/dashboard";
-import { AdminAuth } from "@/components/admin/admin-auth";
+import { AdminAuth, useAdminRole } from "@/components/admin/admin-auth";
 import {
   LayoutDashboard, ListFilter, Download, FileText, SlidersHorizontal, Search,
   Eye, EyeOff, ChevronDown, ChevronUp, ChevronRight,
@@ -29,6 +29,8 @@ type Tab = "dashboard" | "list";
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const adminRole = useAdminRole();
+  const canEdit = adminRole === "editor";
   const [modalId, setModalId] = useState<string | null>(null);
   const [likersModalId, setLikersModalId] = useState<string | null>(null);
   const [editState, setEditState] = useState<Partial<Submission>>({});
@@ -330,8 +332,8 @@ export default function AdminPage() {
 
                 {/* Editable fields */}
                 <div className="border-t border-[#F0F4F4] pt-4">
-                  <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-3">管理者欄位</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-3">管理者欄位{!canEdit && <span className="ml-2 text-[#FFAE00] font-normal normal-case">（唯讀）</span>}</p>
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${!canEdit ? "opacity-60 pointer-events-none" : ""}`}>
                     <EditSelect label="狀態" value={editState.status || ""} options={STATUS_OPTIONS}
                       onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
                     <EditSelect label="優先級" value={editState.priority || ""} options={PRIORITY_OPTIONS}
@@ -365,11 +367,10 @@ export default function AdminPage() {
                   </div>
                 </div>
               </div>
-
               {/* Footer */}
               <div className="border-t border-[#F0F4F4] px-5 py-3 flex justify-end gap-2 flex-shrink-0">
                 <Button variant="tertiary" size="sm" onClick={() => setModalId(null)}>取消</Button>
-                <Button variant="primary" size="sm" onClick={() => handleSave(s.id)}>
+                <Button variant="primary" size="sm" onClick={() => handleSave(s.id)} disabled={!canEdit}>
                   <Save size={13} />儲存
                 </Button>
               </div>
