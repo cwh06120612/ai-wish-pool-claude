@@ -238,7 +238,7 @@ export default function BoardPage() {
   useEffect(() => {
     async function load() {
       const subs = await getSubmissionsAsync();
-      setAllItems(subs.filter(s => s.shareMode !== "不公開（只給數位創新處後台查看）" && s.isVisible));
+      setAllItems(subs.filter(s => s.isVisible));
     }
     load();
     try {

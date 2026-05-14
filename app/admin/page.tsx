@@ -63,6 +63,7 @@ function AdminContent() {
       isVisible: s.isVisible,
       adminNote: s.adminNote,
       isExample: s.isExample ?? false,
+      shareMode: s.shareMode,
     });
   }
 
@@ -347,7 +348,15 @@ function AdminContent() {
                     <div>
                       <label className="block text-xs font-medium text-[#757575] mb-1">是否顯示</label>
                       <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => setEditState(e => ({ ...e, isVisible: !e.isVisible }))}
+                        <button type="button" onClick={() => {
+                          const newVisible = !editState.isVisible;
+                          const updates: Partial<typeof editState> = { isVisible: newVisible };
+                          // 從不公開改成顯示時，自動改成匿名分享
+                          if (newVisible && editState.shareMode === "不公開（只給數位創新處後台查看）") {
+                            updates.shareMode = "匿名分享（公開內容，但不顯示部門姓名）";
+                          }
+                          setEditState(e => ({ ...e, ...updates }));
+                        }}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 ${editState.isVisible ? "bg-[#007A87]" : "bg-[#E0E0E0]"}`}>
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${editState.isVisible ? "translate-x-6" : "translate-x-1"}`} />
                         </button>
