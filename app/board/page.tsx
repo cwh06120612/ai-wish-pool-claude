@@ -9,8 +9,6 @@ import Link from "next/link";
 
 type SortOption = "newest" | "oldest" | "likes";
 
-const EXAMPLE_IDS = ['qilbmtf7wlmp3g7gyf', 'ne86qynxnqdmp3fuxu7'];
-
 const ANNOYANCE_ORDER = [
   "已經麻痺，每天都這樣",
   "很煩，希望優先處理",
@@ -127,7 +125,7 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-[#2D2D2D] leading-snug flex-1">{item.problemTitle}</h2>
-              {EXAMPLE_IDS.includes(item.id) && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#B5E1E5]/40 text-[#00555E] font-bold flex-shrink-0">範例</span>}
+              
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-[#9E9E9E]">
               <span className="flex items-center gap-1"><User size={11} />{displayName}</span>
@@ -190,17 +188,11 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
 
 // ─── Board Card ───────────────────────────────────────────────────────────────
 function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: boolean; onClick: () => void }) {
-  const isExample = EXAMPLE_IDS.includes(item.id);
   const st = ANNOYANCE_STYLE[item.annoyanceLevel] ?? ANNOYANCE_STYLE["還好，但可以優化"];
   const displayName = getDisplayName(item);
   return (
     <button type="button" onClick={onClick}
       className="bg-white border border-[#E0E0E0]/80 rounded-xl overflow-hidden text-left hover:shadow-md hover:-translate-y-0.5 transition-all w-full group">
-      {isExample && (
-        <div className="bg-[#B5E1E5]/30 px-4 py-1 flex items-center gap-1.5 border-b border-[#B5E1E5]/50">
-          <span className="text-[10px] font-bold text-[#00555E]">範例資料</span>
-        </div>
-      )}
       <div className="p-4">
         <div className="flex items-start gap-2 mb-2.5">
           <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors flex-1">{item.problemTitle}</h3>

@@ -15,8 +15,6 @@ import {
   X, Save, Check, LogOut, ThumbsUp,
 } from "lucide-react";
 
-const EXAMPLE_IDS = ['qilbmtf7wlmp3g7gyf', 'ne86qynxnqdmp3fuxu7'];
-
 const STATUS_OPTIONS: Status[] = [
   "已收到","整理中","評估中","尋找工具中","測試中","已導入","暫不處理",
 ];
@@ -73,7 +71,7 @@ export default function AdminPage() {
 
   // List tab
   const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority;
-  const filtered = submissions.filter(s => !EXAMPLE_IDS.includes(s.id))
+  const filtered = submissions
     .filter((s: Submission) => {
       if (search.trim()) {
         const q = search.toLowerCase();
