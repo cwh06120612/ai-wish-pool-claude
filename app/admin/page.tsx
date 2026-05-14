@@ -45,6 +45,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     reload();
+    const timer = setInterval(reload, 30000);
+    return () => clearInterval(timer);
   }, []);
 
   function handleEdit(id: string) {

@@ -245,6 +245,9 @@ export default function BoardPage() {
       const raw = localStorage.getItem("ai-wish-liked");
       if (raw) setLikedIds(new Set(JSON.parse(raw)));
     } catch {}
+    // Auto-refresh every 30 seconds
+    const timer = setInterval(load, 30000);
+    return () => clearInterval(timer);
   }, []);
 
   const statuses = [...new Set(allItems.map(s => s.status))].filter(Boolean);
