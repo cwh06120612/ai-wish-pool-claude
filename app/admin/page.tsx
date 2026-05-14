@@ -100,7 +100,12 @@ function AdminContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-[#2D2D2D]">管理員專區</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-[#2D2D2D]">管理員專區</h1>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${canEdit ? "bg-[#B5E1E5]/40 text-[#00555E]" : "bg-[#F0F4F4] text-[#9E9E9E]"}`}>
+                {canEdit ? "管理者" : "檢視者"}
+              </span>
+            </div>
             <p className="text-sm text-[#9E9E9E] mt-0.5">AI 許願池 · 數位創新處</p>
           </div>
           <button
