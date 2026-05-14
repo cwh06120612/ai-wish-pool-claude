@@ -37,6 +37,7 @@ function AdminContent() {
   const [search, setSearch] = useState("");
   const [adminFilterStatus, setAdminFilterStatus] = useState("");
   const [adminFilterPriority, setAdminFilterPriority] = useState("");
+  const [adminFilterVisible, setAdminFilterVisible] = useState("");
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
 
@@ -75,7 +76,7 @@ function AdminContent() {
   }
 
   // List tab
-  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority;
+  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible;
   const filtered = submissions
     .filter((s: Submission) => {
       if (search.trim()) {
@@ -87,6 +88,8 @@ function AdminContent() {
       }
       if (adminFilterStatus && s.status !== adminFilterStatus) return false;
       if (adminFilterPriority && s.priority !== adminFilterPriority) return false;
+      if (adminFilterVisible === "shown" && !s.isVisible) return false;
+      if (adminFilterVisible === "hidden" && s.isVisible) return false;
       return true;
     })
     .sort((a, b) =>
@@ -203,8 +206,18 @@ function AdminContent() {
                   options={[{ value: "", label: "全部優先級" }, ...PRIORITY_OPTIONS.map(o => ({ value: o, label: o }))]}
                   onChange={setAdminFilterPriority}
                 />
+                <AdminInlineDropdown
+                  label="顯示狀態"
+                  value={adminFilterVisible}
+                  options={[
+                    { value: "", label: "全部" },
+                    { value: "shown", label: "顯示中" },
+                    { value: "hidden", label: "已隱藏" },
+                  ]}
+                  onChange={setAdminFilterVisible}
+                />
                 {adminHasFilters && (
-                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); }}
+                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); }}
                     className="flex items-center gap-1 text-xs text-[#AE1914] px-2 py-1.5 rounded-lg hover:bg-[#EBCDCC]/20 transition-colors self-start mt-0.5">
                     <X size={11} />清除篩選
                   </button>
