@@ -26,7 +26,7 @@ const CATEGORY_OPTIONS: Category[] = [
 
 type Tab = "dashboard" | "list";
 
-export default function AdminPage() {
+function AdminContent() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const adminRole = useAdminRole();
@@ -95,7 +95,6 @@ export default function AdminPage() {
     );
 
   return (
-    <AdminAuth>
     <div className="max-w-[860px] mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -332,7 +331,7 @@ export default function AdminPage() {
 
                 {/* Editable fields */}
                 <div className="border-t border-[#F0F4F4] pt-4">
-                  <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-3">管理者欄位{!canEdit && <span className="ml-2 text-[#FFAE00] font-normal normal-case">（唯讀）</span>}</p>
+                  <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-3">管理者欄位</p>
                   <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${!canEdit ? "opacity-60 pointer-events-none" : ""}`}>
                     <EditSelect label="狀態" value={editState.status || ""} options={STATUS_OPTIONS}
                       onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
@@ -428,8 +427,11 @@ export default function AdminPage() {
         );
       })()}
     </div>
-    </AdminAuth>
   );
+}
+
+export default function AdminPage() {
+  return <AdminAuth><AdminContent /></AdminAuth>;
 }
 
 function DetailRow({
