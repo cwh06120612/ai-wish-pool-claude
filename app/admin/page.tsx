@@ -8,14 +8,12 @@ import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Dashboard } from "@/components/admin/dashboard";
-import { AdminAuth, useAdminRole } from "@/components/admin/admin-auth";
+import { AdminAuth, useAdminRole, ASSIGNEE_OPTIONS } from "@/components/admin/admin-auth";
 import {
   LayoutDashboard, ListFilter, Download, FileText, SlidersHorizontal, Search,
   Eye, EyeOff, ChevronDown, ChevronUp, ChevronRight,
   X, Save, Check, LogOut, ThumbsUp,
 } from "lucide-react";
-
-const ASSIGNEE_OPTIONS = ["王惠民", "楊振宏", "蔣乃文", "陳宛榆", "卓宛萱", "林政宏", "施義承", "黃晨暐"];
 
 const STATUS_OPTIONS: Status[] = [
   "已收到","整理中","評估中","尋找工具中","測試中","已導入","暫不處理",
@@ -31,8 +29,9 @@ type Tab = "dashboard" | "list";
 function AdminContent() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const adminRole = useAdminRole();
+  const { role: adminRole, assignee: myName } = useAdminRole();
   const canEdit = adminRole === "editor";
+  const isTeam = adminRole === "team";
   const [modalId, setModalId] = useState<string | null>(null);
   const [likersModalId, setLikersModalId] = useState<string | null>(null);
   const [editState, setEditState] = useState<Partial<Submission>>({});
@@ -81,6 +80,7 @@ function AdminContent() {
 
   // List tab
   const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory;
+  const visibleSubmissions = isTeam ? submissions.filter(s => s.assignee === myName) : submissions;
   const filtered = submissions
     .filter((s: Submission) => {
       if (search.trim()) {
@@ -112,7 +112,7 @@ function AdminContent() {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-[#2D2D2D]">管理員專區</h1>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${canEdit ? "bg-[#B5E1E5]/40 text-[#00555E]" : "bg-[#F0F4F4] text-[#9E9E9E]"}`}>
-                {canEdit ? "管理者" : "檢視者"}
+                {canEdit ? "管理者" : `負責人：${myName}`}
               </span>
             </div>
             <p className="text-sm text-[#9E9E9E] mt-0.5">AI 許願池 · 數位創新處</p>
@@ -365,13 +365,19 @@ function AdminContent() {
                 {/* Editable fields */}
                 <div className="border-t border-[#F0F4F4] pt-4">
                   <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-3">管理者欄位</p>
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${!canEdit ? "opacity-60 pointer-events-none" : ""}`}>
-                    <EditSelect label="狀態" value={editState.status || ""} options={STATUS_OPTIONS}
-                      onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
-                    <EditSelect label="優先級" value={editState.priority || ""} options={PRIORITY_OPTIONS}
-                      onChange={v => setEditState(e => ({ ...e, priority: v as Priority }))} />
-                    <EditSelect label="負責人員" value={editState.assignee || ""} options={ASSIGNEE_OPTIONS}
-                      onChange={v => setEditState(e => ({ ...e, assignee: v }))} />
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${!canEdit && !isTeam ? "opacity-60 pointer-events-none" : ""}`}>
+                    <div>
+                      <EditSelect label="狀態" value={editState.status || ""} options={STATUS_OPTIONS}
+                        onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
+                    </div>
+                    <div>
+                      <EditSelect label="優先級" value={editState.priority || ""} options={PRIORITY_OPTIONS}
+                        onChange={v => setEditState(e => ({ ...e, priority: v as Priority }))} />
+                    </div>
+                    <div className={isTeam ? "opacity-60 pointer-events-none" : ""}>
+                      <EditSelect label="負責人員" value={editState.assignee || ""} options={ASSIGNEE_OPTIONS}
+                        onChange={v => setEditState(e => ({ ...e, assignee: v }))} />
+                    </div>
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-medium text-[#757575] mb-2">分類（可複選）</label>
                       <div className="flex flex-wrap gap-2">
@@ -397,7 +403,7 @@ function AdminContent() {
                         })}
                       </div>
                     </div>
-                    <div>
+                    <div className={isTeam ? "opacity-60 pointer-events-none" : ""}>
                       <label className="block text-xs font-medium text-[#757575] mb-1">是否顯示</label>
                       <div className="flex items-center gap-2">
                         <button type="button" onClick={() => {
@@ -435,7 +441,7 @@ function AdminContent() {
               {/* Footer */}
               <div className="border-t border-[#F0F4F4] px-5 py-3 flex justify-end gap-2 flex-shrink-0">
                 <Button variant="tertiary" size="sm" onClick={() => setModalId(null)}>取消</Button>
-                <Button variant="primary" size="sm" onClick={() => handleSave(s.id)} disabled={!canEdit}>
+                <Button variant="primary" size="sm" onClick={() => handleSave(s.id)} disabled={!canEdit && !isTeam}>
                   <Save size={13} />儲存
                 </Button>
               </div>
