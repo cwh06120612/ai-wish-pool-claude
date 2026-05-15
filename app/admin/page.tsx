@@ -81,6 +81,7 @@ function AdminContent() {
   // List tab
   const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory;
   const visibleSubmissions = isTeam ? submissions.filter(s => s.assignee === myName) : submissions;
+  const isMyItem = (s: Submission) => !isTeam || s.assignee === myName;
   const filtered = submissions
     .filter((s: Submission) => {
       if (search.trim()) {
@@ -365,7 +366,7 @@ function AdminContent() {
                 {/* Editable fields */}
                 <div className="border-t border-[#F0F4F4] pt-4">
                   <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-3">管理者欄位</p>
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${!canEdit && !isTeam ? "opacity-60 pointer-events-none" : ""}`}>
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${(!canEdit && !isTeam) ? "opacity-60 pointer-events-none" : ""}`}>
                     <div>
                       <EditSelect label="狀態" value={editState.status || ""} options={STATUS_OPTIONS}
                         onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
