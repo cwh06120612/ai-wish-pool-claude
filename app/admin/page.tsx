@@ -21,7 +21,7 @@ const STATUS_OPTIONS: Status[] = [
 const PRIORITY_OPTIONS: Priority[] = ["高優先","中優先","低優先","待評估"];
 const CATEGORY_OPTIONS: Category[] = [
   "找資料 / 知識查詢","會議紀錄","Excel / 報表","文件整理",
-  "簡報 / 報告","自動化作業","AI 學習","BPM","其他","未分類",
+  "簡報 / 報告","自動化作業","AI 學習","BPM","AI應用","豐譽GPT","其他","未分類",
 ];
 
 type Tab = "dashboard" | "list";
@@ -38,19 +38,20 @@ function AdminContent() {
   const [adminFilterStatus, setAdminFilterStatus] = useState("");
   const [adminFilterPriority, setAdminFilterPriority] = useState("");
   const [adminFilterVisible, setAdminFilterVisible] = useState("");
+  const [adminFilterCategory, setAdminFilterCategory] = useState("");
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
 
-  async function reload() {
+  const reload = React.useCallback(async () => {
     const data = await getSubmissionsAsync();
     setSubmissions(data);
-  }
+  }, []);
 
   useEffect(() => {
     reload();
     const timer = setInterval(reload, 30000);
     return () => clearInterval(timer);
-  }, []);
+  }, [reload]);
 
   function handleEdit(id: string) {
     const s = submissions.find((s) => s.id === id);
@@ -76,7 +77,7 @@ function AdminContent() {
   }
 
   // List tab
-  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible;
+  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory;
   const filtered = submissions
     .filter((s: Submission) => {
       if (search.trim()) {
@@ -90,6 +91,7 @@ function AdminContent() {
       if (adminFilterPriority && s.priority !== adminFilterPriority) return false;
       if (adminFilterVisible === "shown" && !s.isVisible) return false;
       if (adminFilterVisible === "hidden" && s.isVisible) return false;
+      if (adminFilterCategory && s.category !== adminFilterCategory) return false;
       return true;
     })
     .sort((a, b) =>
@@ -216,8 +218,14 @@ function AdminContent() {
                   ]}
                   onChange={setAdminFilterVisible}
                 />
+                <AdminInlineDropdown
+                  label="分類"
+                  value={adminFilterCategory}
+                  options={[{ value: "", label: "全部分類" }, ...CATEGORY_OPTIONS.map(o => ({ value: o, label: o }))]}
+                  onChange={setAdminFilterCategory}
+                />
                 {adminHasFilters && (
-                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); }}
+                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); }}
                     className="flex items-center gap-1 text-xs text-[#AE1914] px-2 py-1.5 rounded-lg hover:bg-[#EBCDCC]/20 transition-colors self-start mt-0.5">
                     <X size={11} />清除篩選
                   </button>
