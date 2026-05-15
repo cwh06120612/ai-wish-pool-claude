@@ -57,7 +57,7 @@ function fromDb(row: Record<string, unknown>): Submission {
       return ['未分類'] as Category[];
     })(),
     adminNote: (row.admin_note as string) ?? "",
-    assignee: (row.assignee as string) ?? "",
+    assignee: (row.assignee as string) || "未指定",
     publicSummary: (row.public_summary as string) ?? "",
     isVisible: (row.is_visible as boolean) ?? true,
     likeCount: (row.like_count as number) ?? 0,

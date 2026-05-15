@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SiteNav } from "@/components/site-nav";
+// @ts-ignore
+let Analytics: any = () => null;
+try { Analytics = require("@vercel/analytics/react").Analytics; } catch {}
 
 
 export const metadata: Metadata = {

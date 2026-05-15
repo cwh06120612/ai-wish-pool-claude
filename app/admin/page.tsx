@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Dashboard } from "@/components/admin/dashboard";
 import { AdminAuth, useAdminRole, ASSIGNEE_OPTIONS } from "@/components/admin/admin-auth";
+const ASSIGNEE_EDIT_OPTIONS = ["未指定", ...ASSIGNEE_OPTIONS];
 import {
   LayoutDashboard, ListFilter, Download, FileText, SlidersHorizontal, Search,
   Eye, EyeOff, ChevronDown, ChevronUp, ChevronRight,
@@ -401,7 +402,7 @@ function AdminContent() {
                         onChange={v => setEditState(e => ({ ...e, priority: v as Priority }))} />
                     </div>
                     <div className={isTeam ? "opacity-60 pointer-events-none" : ""}>
-                      <EditSelect label="負責人員" value={editState.assignee || ""} options={ASSIGNEE_OPTIONS}
+                      <EditSelect label="負責人員" value={editState.assignee || "未指定"} options={ASSIGNEE_EDIT_OPTIONS}
                         onChange={v => setEditState(e => ({ ...e, assignee: v }))} />
                     </div>
                     <div className="sm:col-span-2">
