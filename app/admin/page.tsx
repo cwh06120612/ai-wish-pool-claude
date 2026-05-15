@@ -21,7 +21,7 @@ const STATUS_OPTIONS: Status[] = [
 const PRIORITY_OPTIONS: Priority[] = ["高優先","中優先","低優先","待評估"];
 const CATEGORY_OPTIONS: Category[] = [
   "找資料 / 知識查詢","會議紀錄","Excel / 報表","文件整理",
-  "簡報 / 報告","自動化作業","AI 學習","AI應用","豐譽GPT","BPM","其他","未分類",
+  "簡報 / 報告","自動化作業","AI 學習","AI 應用","豐譽 GPT","BPM","其他","未分類",
 ];
 
 type Tab = "dashboard" | "list";
