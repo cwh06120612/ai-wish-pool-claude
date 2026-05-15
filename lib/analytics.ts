@@ -64,10 +64,20 @@ export function getDepartmentCounts(
   submissions: Submission[]
 ): { label: string; count: number }[] {
   const counts: Record<string, number> = {};
+  const shortCompany: Record<string, string> = {
+    "豐譽聯合工程股份有限公司": "聯合",
+    "豐譽營造股份有限公司": "營造",
+    "豐譽智慧動能股份有限公司": "智慧動能",
+    "晉宇開發股份有限公司": "晉宇",
+  };
   for (const s of submissions) {
-    // 取最末兩層作為部門名稱，例如 "工程處 > 預算部" 而不是完整公司名
     const path = s.departmentPath;
-    const dept = path.length >= 2 ? path.slice(-2).join(" > ") : path[path.length - 1] || "未知";
+    const company = shortCompany[path[0]] ?? path[0] ?? "未知";
+    const dept = path.length >= 3
+      ? company + " > " + path.slice(-2).join(" > ")
+      : path.length === 2
+      ? company + " > " + path[1]
+      : company;
     counts[dept] = (counts[dept] || 0) + 1;
   }
   return Object.entries(counts)
