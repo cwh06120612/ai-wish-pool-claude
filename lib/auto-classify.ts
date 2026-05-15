@@ -88,8 +88,6 @@ export function autoClassify(s: Record<string, unknown>): Category[] {
   const text = [
     (s.problemTitle as string) ?? "",
     (s.freeText as string) ?? "",
-    ...((s.painPoints as string[]) ?? []),
-    ...((s.aiNeeds as string[]) ?? []),
   ].join(" ");
 
   const matched: Category[] = [];
