@@ -36,6 +36,7 @@ function AdminContent() {
   const [likersModalId, setLikersModalId] = useState<string | null>(null);
   const [editState, setEditState] = useState<Partial<Submission>>({});
   const [search, setSearch] = useState("");
+  const [teamTab, setTeamTab] = useState<"mine" | "all">("mine");
   const [adminFilterStatus, setAdminFilterStatus] = useState("");
   const [adminFilterPriority, setAdminFilterPriority] = useState("");
   const [adminFilterVisible, setAdminFilterVisible] = useState("");
@@ -80,7 +81,7 @@ function AdminContent() {
 
   // List tab
   const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory;
-  const visibleSubmissions = isTeam ? submissions.filter(s => s.assignee === myName) : submissions;
+  const visibleSubmissions = submissions;
   const isMyItem = (s: Submission) => !isTeam || s.assignee === myName;
   const filtered = submissions
     .filter((s: Submission) => {
@@ -168,6 +169,28 @@ function AdminContent() {
 
       {tab === "list" && (
         <div>
+          {/* Team tab */}
+          {isTeam && (
+            <div className="flex gap-2 mb-4">
+              <button type="button" onClick={() => setTeamTab("mine")}
+                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                  teamTab === "mine"
+                    ? "bg-[#007A87] text-white border-[#007A87]"
+                    : "bg-white text-[#616161] border-[#E0E0E0] hover:border-[#007A87]/50"
+                }`}>
+                我負責的困擾
+              </button>
+              <button type="button" onClick={() => setTeamTab("all")}
+                className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                  teamTab === "all"
+                    ? "bg-[#007A87] text-white border-[#007A87]"
+                    : "bg-white text-[#616161] border-[#E0E0E0] hover:border-[#007A87]/50"
+                }`}>
+                所有困擾
+              </button>
+            </div>
+          )}
+
           {/* Search + Filter */}
           <div className="mb-4 space-y-2">
             <div className="flex gap-2">
@@ -366,7 +389,7 @@ function AdminContent() {
                 {/* Editable fields */}
                 <div className="border-t border-[#F0F4F4] pt-4">
                   <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-3">管理者欄位</p>
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${(!canEdit && !isTeam) ? "opacity-60 pointer-events-none" : ""}`}>
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${(!canEdit && !(isTeam && isMyItem(s))) ? "opacity-60 pointer-events-none" : ""}`}>
                     <div>
                       <EditSelect label="狀態" value={editState.status || ""} options={STATUS_OPTIONS}
                         onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
@@ -442,7 +465,7 @@ function AdminContent() {
               {/* Footer */}
               <div className="border-t border-[#F0F4F4] px-5 py-3 flex justify-end gap-2 flex-shrink-0">
                 <Button variant="tertiary" size="sm" onClick={() => setModalId(null)}>取消</Button>
-                <Button variant="primary" size="sm" onClick={() => handleSave(s.id)} disabled={!canEdit && !isTeam}>
+                <Button variant="primary" size="sm" onClick={() => handleSave(s.id)} disabled={!canEdit && !(isTeam && isMyItem(s))}>
                   <Save size={13} />儲存
                 </Button>
               </div>
