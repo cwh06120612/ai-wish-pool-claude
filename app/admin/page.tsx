@@ -42,6 +42,7 @@ function AdminContent() {
   const [adminFilterPriority, setAdminFilterPriority] = useState("");
   const [adminFilterVisible, setAdminFilterVisible] = useState("");
   const [adminFilterCategory, setAdminFilterCategory] = useState("");
+  const [adminFilterAssignee, setAdminFilterAssignee] = useState("");
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
 
@@ -81,7 +82,7 @@ function AdminContent() {
   }
 
   // List tab
-  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory;
+  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || !!adminFilterAssignee;
   const visibleSubmissions = submissions;
   const isMyItem = (s: Submission) => !isTeam || s.assignee === myName;
   const filtered = submissions
@@ -100,6 +101,7 @@ function AdminContent() {
       if (adminFilterVisible === "shown" && !s.isVisible) return false;
       if (adminFilterVisible === "hidden" && s.isVisible) return false;
       if (adminFilterCategory && !(Array.isArray(s.category) ? s.category : [s.category]).includes(adminFilterCategory as Category)) return false;
+      if (adminFilterAssignee && s.assignee !== adminFilterAssignee) return false;
       return true;
     })
     .sort((a, b) =>
@@ -254,8 +256,14 @@ function AdminContent() {
                   options={[{ value: "", label: "全部分類" }, ...CATEGORY_OPTIONS.map(o => ({ value: o, label: o }))]}
                   onChange={setAdminFilterCategory}
                 />
+                <AdminInlineDropdown
+                  label="負責人員"
+                  value={adminFilterAssignee}
+                  options={[{ value: "", label: "全部人員" }, ...ASSIGNEE_EDIT_OPTIONS.map(o => ({ value: o, label: o }))]}
+                  onChange={setAdminFilterAssignee}
+                />
                 {adminHasFilters && (
-                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); }}
+                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee(""); }}
                     className="flex items-center gap-1 text-xs text-[#AE1914] px-2 py-1.5 rounded-lg hover:bg-[#EBCDCC]/20 transition-colors self-start mt-0.5">
                     <X size={11} />清除篩選
                   </button>
