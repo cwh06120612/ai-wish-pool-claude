@@ -15,6 +15,8 @@ import {
   X, Save, Check, LogOut, ThumbsUp,
 } from "lucide-react";
 
+const ASSIGNEE_OPTIONS = ["王惠民", "楊振宏", "蔣乃文", "陳宛榆", "卓宛萱", "林政宏", "施義承", "黃晨暐"];
+
 const STATUS_OPTIONS: Status[] = [
   "已收到","整理中","評估中","尋找工具中","測試中","已導入","暫不處理",
 ];
@@ -66,6 +68,7 @@ function AdminContent() {
       adminNote: s.adminNote,
       isExample: s.isExample ?? false,
       shareMode: s.shareMode,
+      assignee: s.assignee ?? "",
     });
   }
 
@@ -367,6 +370,8 @@ function AdminContent() {
                       onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
                     <EditSelect label="優先級" value={editState.priority || ""} options={PRIORITY_OPTIONS}
                       onChange={v => setEditState(e => ({ ...e, priority: v as Priority }))} />
+                    <EditSelect label="負責人員" value={editState.assignee || ""} options={ASSIGNEE_OPTIONS}
+                      onChange={v => setEditState(e => ({ ...e, assignee: v }))} />
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-medium text-[#757575] mb-2">分類（可複選）</label>
                       <div className="flex flex-wrap gap-2">

@@ -46,6 +46,7 @@ export type Submission = {
   priority: Priority;
   category: Category[];
   adminNote: string;
+  assignee: string;
   publicSummary: string;
   isVisible: boolean;
   likeCount: number;
