@@ -257,7 +257,7 @@ export function Dashboard({ submissions: allSubmissions }: { submissions: Submis
   const aiNeedsCounts = getTopN(countByField(submissions, "aiNeeds"), 7);
   const freqCounts = getTopN(countByField(submissions, "frequency"), 7);
   const annoyanceCounts = getTopN(countByField(submissions, "annoyanceLevel"), 4);
-  const deptCounts = getDepartmentCounts(submissions).slice(0, 6);
+  const deptCounts = getDepartmentCounts(submissions).filter(d => !d.label.includes("數位創新處")).slice(0, 6);
   const highPriority = getHighPriorityCandidates(submissions);
 
   if (total === 0) {
