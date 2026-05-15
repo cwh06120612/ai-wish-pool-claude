@@ -65,7 +65,9 @@ export function getDepartmentCounts(
 ): { label: string; count: number }[] {
   const counts: Record<string, number> = {};
   for (const s of submissions) {
-    const dept = s.departmentPath[0] || "未知";
+    // 取最末兩層作為部門名稱，例如 "工程處 > 預算部" 而不是完整公司名
+    const path = s.departmentPath;
+    const dept = path.length >= 2 ? path.slice(-2).join(" > ") : path[path.length - 1] || "未知";
     counts[dept] = (counts[dept] || 0) + 1;
   }
   return Object.entries(counts)
