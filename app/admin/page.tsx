@@ -384,8 +384,31 @@ function AdminContent() {
                       onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
                     <EditSelect label="優先級" value={editState.priority || ""} options={PRIORITY_OPTIONS}
                       onChange={v => setEditState(e => ({ ...e, priority: v as Priority }))} />
-                    <EditSelect label="分類" value={(Array.isArray(editState.category) ? editState.category[0] : editState.category) || ""} options={CATEGORY_OPTIONS}
-                      onChange={v => setEditState(e => ({ ...e, category: [v as Category] }))} />
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-medium text-[#757575] mb-2">分類（可複選）</label>
+                      <div className="flex flex-wrap gap-2">
+                        {CATEGORY_OPTIONS.filter(c => c !== "未分類").map(cat => {
+                          const selected = (Array.isArray(editState.category) ? editState.category : [editState.category] as unknown as Category[]).includes(cat as Category);
+                          return (
+                            <button key={cat} type="button"
+                              onClick={() => {
+                                const current = Array.isArray(editState.category) ? editState.category : [editState.category as unknown as Category];
+                                const next: Category[] = selected
+                                  ? current.filter(c => c !== cat)
+                                  : [...current.filter(c => c !== "未分類" as Category), cat as Category];
+                                setEditState(e => ({ ...e, category: (next.length > 0 ? next : ["未分類"]) as Category[] }));
+                              }}
+                              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                                selected
+                                  ? "bg-[#007A87] text-white border-[#007A87]"
+                                  : "bg-white text-[#616161] border-[#E0E0E0] hover:border-[#007A87]/50"
+                              }`}>
+                              {cat}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-xs font-medium text-[#757575] mb-1">是否顯示</label>
                       <div className="flex items-center gap-2">
