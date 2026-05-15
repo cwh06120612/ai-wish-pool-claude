@@ -126,23 +126,6 @@ function AdminContent() {
             登出
           </button>
         </div>
-        {canEdit && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={async () => {
-              if (!confirm(`將對 ${submissions.length} 筆資料重新自動分類，確定嗎？`)) return;
-              const { autoClassify } = await import("@/lib/auto-classify");
-              await Promise.all(submissions.map(s =>
-                updateSubmissionAsync(s.id, { category: autoClassify(s as unknown as Record<string, unknown>) })
-              ));
-              await reload();
-              alert("完成！");
-            }}
-          >
-            自動分類全部
-          </Button>
-        )}
         <Button
           variant="secondary"
           size="sm"
