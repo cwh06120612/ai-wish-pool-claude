@@ -8,6 +8,7 @@ import { FormField, TextInput } from "@/components/ui/form-field";
 import { OptionCard } from "@/components/ui/option-card";
 import { DepartmentSelector } from "@/components/department-selector";
 import { addSubmissionAsync, generateId } from "@/lib/storage";
+import { autoClassify } from "@/lib/auto-classify";
 import { isLeafNode } from "@/lib/department-utils";
 import { departments } from "@/data/departments";
 import type { Submission, ShareMode } from "@/types/submission";
@@ -496,7 +497,8 @@ export default function WishPage() {
     e.preventDefault();
     if (!validate()) return;
     const isVisible = form.shareMode === "願意分享（公開內容、部門、姓名）" || form.shareMode === "匿名分享（公開內容，但不顯示部門姓名）";
-    const saves = form.problems.map(p => addSubmissionAsync({
+    const saves = form.problems.map(p => {
+      const sub = {
         id: generateId(),
         createdAt: new Date().toISOString(),
         departmentPath: form.departmentPath,
@@ -513,7 +515,9 @@ export default function WishPage() {
         freeText: form.freeText,
         status: "已收到", priority: "待評估", category: "未分類",
         adminNote: "", publicSummary: "", isVisible, likeCount: 0,
-    }));
+      };
+      return addSubmissionAsync({ ...sub, category: autoClassify(sub as Record<string, unknown>) } as import("@/types/submission").Submission);
+    });
     await Promise.all(saves);
     try { localStorage.setItem(PERSONAL_INFO_KEY, JSON.stringify({ departmentPath: form.departmentPath, name: form.name })); } catch {}
     setSavedPersonal({ departmentPath: form.departmentPath, name: form.name });

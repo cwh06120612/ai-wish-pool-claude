@@ -91,7 +91,7 @@ function AdminContent() {
       if (adminFilterPriority && s.priority !== adminFilterPriority) return false;
       if (adminFilterVisible === "shown" && !s.isVisible) return false;
       if (adminFilterVisible === "hidden" && s.isVisible) return false;
-      if (adminFilterCategory && s.category !== adminFilterCategory) return false;
+      if (adminFilterCategory && !(Array.isArray(s.category) ? s.category : [s.category]).includes(adminFilterCategory as Category)) return false;
       return true;
     })
     .sort((a, b) =>
@@ -126,6 +126,23 @@ function AdminContent() {
             登出
           </button>
         </div>
+        {canEdit && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={async () => {
+              if (!confirm(`將對 ${submissions.length} 筆資料重新自動分類，確定嗎？`)) return;
+              const { autoClassify } = await import("@/lib/auto-classify");
+              await Promise.all(submissions.map(s =>
+                updateSubmissionAsync(s.id, { category: autoClassify(s as unknown as Record<string, unknown>) })
+              ));
+              await reload();
+              alert("完成！");
+            }}
+          >
+            自動分類全部
+          </Button>
+        )}
         <Button
           variant="secondary"
           size="sm"
@@ -263,9 +280,9 @@ function AdminContent() {
                             {s.problemTitle}
                           </span>
                           <StatusBadge status={s.status} />
-                          {s.category && s.category !== "未分類" && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">{s.category}</span>
-                          )}
+                          {(Array.isArray(s.category) ? s.category : [s.category]).filter(c => c !== "未分類").map((c, i) => (
+                            <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">{c}</span>
+                          ))}
                         </div>
                         <div className="flex items-center gap-3 text-xs text-[#9E9E9E]">
                           <span>{new Date(s.createdAt).toLocaleDateString("zh-TW")}</span>
@@ -367,8 +384,8 @@ function AdminContent() {
                       onChange={v => setEditState(e => ({ ...e, status: v as Status }))} />
                     <EditSelect label="優先級" value={editState.priority || ""} options={PRIORITY_OPTIONS}
                       onChange={v => setEditState(e => ({ ...e, priority: v as Priority }))} />
-                    <EditSelect label="分類" value={editState.category || ""} options={CATEGORY_OPTIONS}
-                      onChange={v => setEditState(e => ({ ...e, category: v as Category }))} />
+                    <EditSelect label="分類" value={(Array.isArray(editState.category) ? editState.category[0] : editState.category) || ""} options={CATEGORY_OPTIONS}
+                      onChange={v => setEditState(e => ({ ...e, category: [v as Category] }))} />
                     <div>
                       <label className="block text-xs font-medium text-[#757575] mb-1">是否顯示</label>
                       <div className="flex items-center gap-2">

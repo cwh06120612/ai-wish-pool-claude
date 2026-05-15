@@ -44,7 +44,7 @@ export type Submission = {
   shareMode: ShareMode;
   status: Status;
   priority: Priority;
-  category: Category;
+  category: Category[];
   adminNote: string;
   publicSummary: string;
   isVisible: boolean;

@@ -46,7 +46,7 @@ export function exportToCsv(submissions: Submission[]): void {
     escapeCsv(s.shareMode),
     escapeCsv(s.status),
     escapeCsv(s.priority),
-    escapeCsv(s.category),
+    escapeCsv(Array.isArray(s.category) ? s.category.join("、") : s.category),
     escapeCsv(s.isVisible ? "是" : "否"),
     escapeCsv(s.likeCount),
     escapeCsv(s.adminNote),

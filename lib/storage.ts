@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Submission } from "@/types/submission";
+import type { Submission, Category } from "@/types/submission";
 
 // ─── 型別轉換（DB 欄位 snake_case ↔ JS camelCase）────────────────────────────
 function toDb(s: Submission) {
@@ -20,7 +20,7 @@ function toDb(s: Submission) {
     free_text: s.freeText,
     status: s.status,
     priority: s.priority,
-    category: s.category,
+    category: Array.isArray(s.category) ? s.category : [s.category],
     admin_note: s.adminNote,
     public_summary: s.publicSummary,
     is_visible: s.isVisible,
@@ -47,7 +47,14 @@ function fromDb(row: Record<string, unknown>): Submission {
     freeText: (row.free_text as string) ?? "",
     status: (row.status as Submission["status"]) ?? "已收到",
     priority: (row.priority as Submission["priority"]) ?? "待評估",
-    category: (row.category as Submission["category"]) ?? "未分類",
+    category: (() => {
+      const raw = row.category;
+      if (Array.isArray(raw)) return raw as Category[];
+      if (typeof raw === 'string') {
+        try { const p = JSON.parse(raw); return Array.isArray(p) ? p as Category[] : [p as Category]; } catch { return [raw as Category]; }
+      }
+      return ['未分類'] as Category[];
+    })(),
     adminNote: (row.admin_note as string) ?? "",
     publicSummary: (row.public_summary as string) ?? "",
     isVisible: (row.is_visible as boolean) ?? true,
