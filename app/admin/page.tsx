@@ -21,7 +21,7 @@ const STATUS_OPTIONS: Status[] = [
 const PRIORITY_OPTIONS: Priority[] = ["高優先","中優先","低優先","待評估"];
 const CATEGORY_OPTIONS: Category[] = [
   "找資料 / 知識查詢","會議紀錄","Excel / 報表","文件整理",
-  "簡報 / 報告","自動化作業","AI 學習","BPM","AI應用","豐譽GPT","其他","未分類",
+  "簡報 / 報告","自動化作業","AI 學習","AI應用","豐譽GPT","BPM","其他","未分類",
 ];
 
 type Tab = "dashboard" | "list";
@@ -263,6 +263,9 @@ function AdminContent() {
                             {s.problemTitle}
                           </span>
                           <StatusBadge status={s.status} />
+                          {s.category && s.category !== "未分類" && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">{s.category}</span>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 text-xs text-[#9E9E9E]">
                           <span>{new Date(s.createdAt).toLocaleDateString("zh-TW")}</span>

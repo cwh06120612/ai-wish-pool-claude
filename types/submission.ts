@@ -22,9 +22,9 @@ export type Category =
   | "簡報 / 報告"
   | "自動化作業"
   | "AI 學習"
-  | "BPM"
   | "AI應用"
   | "豐譽GPT"
+  | "BPM"
   | "其他"
   | "未分類";
 
