@@ -85,6 +85,8 @@ function AdminContent() {
   const isMyItem = (s: Submission) => !isTeam || s.assignee === myName;
   const filtered = submissions
     .filter((s: Submission) => {
+      // Team tab filter
+      if (isTeam && teamTab === "mine" && s.assignee !== myName) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
         const match = s.problemTitle.toLowerCase().includes(q) ||
