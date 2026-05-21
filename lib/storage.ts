@@ -22,7 +22,7 @@ function toDb(s: Submission) {
     priority: s.priority,
     category: Array.isArray(s.category) ? s.category : [s.category],
     admin_note: s.adminNote,
-    assignee: s.assignee ?? "",
+    assignee: Array.isArray(s.assignee) ? s.assignee : [s.assignee],
     public_summary: s.publicSummary,
     is_visible: s.isVisible,
     like_count: s.likeCount,
@@ -57,7 +57,14 @@ function fromDb(row: Record<string, unknown>): Submission {
       return ['未分類'] as Category[];
     })(),
     adminNote: (row.admin_note as string) ?? "",
-    assignee: (row.assignee as string) || "未指定",
+    assignee: (() => {
+      const raw = row.assignee;
+      if (Array.isArray(raw)) return raw as string[];
+      if (typeof raw === 'string') {
+        try { const p = JSON.parse(raw); return Array.isArray(p) ? p as string[] : [p as string]; } catch { return raw ? [raw] : ['未指定']; }
+      }
+      return ['未指定'];
+    })(),
     publicSummary: (row.public_summary as string) ?? "",
     isVisible: (row.is_visible as boolean) ?? true,
     likeCount: (row.like_count as number) ?? 0,
@@ -91,7 +98,7 @@ export async function updateSubmissionAsync(id: string, updates: Partial<Submiss
   if (updates.isVisible !== undefined) dbUpdates.is_visible = updates.isVisible;
   if (updates.likeCount !== undefined) dbUpdates.like_count = updates.likeCount;
   if (updates.isExample !== undefined) dbUpdates.is_example = updates.isExample;
-  if (updates.assignee !== undefined) dbUpdates.assignee = updates.assignee;
+  if (updates.assignee !== undefined) dbUpdates.assignee = Array.isArray(updates.assignee) ? updates.assignee : [updates.assignee];
   const { error } = await supabase.from("submissions").update(dbUpdates).eq("id", id);
   if (error) console.error(error);
 }

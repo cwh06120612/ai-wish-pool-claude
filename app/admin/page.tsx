@@ -70,7 +70,7 @@ function AdminContent() {
       adminNote: s.adminNote,
       isExample: s.isExample ?? false,
       shareMode: s.shareMode,
-      assignee: s.assignee ?? "",
+      assignee: s.assignee ?? ["未指定"],
     });
   }
 
@@ -84,11 +84,11 @@ function AdminContent() {
   // List tab
   const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || !!adminFilterAssignee;
   const visibleSubmissions = submissions;
-  const isMyItem = (s: Submission) => !isTeam || s.assignee === myName;
+  const isMyItem = (s: Submission) => !isTeam || (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName);
   const filtered = submissions
     .filter((s: Submission) => {
       // Team tab filter
-      if (isTeam && teamTab === "mine" && s.assignee !== myName) return false;
+      if (isTeam && teamTab === "mine" && !(Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName)) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
         const match = s.problemTitle.toLowerCase().includes(q) ||
@@ -101,7 +101,7 @@ function AdminContent() {
       if (adminFilterVisible === "shown" && !s.isVisible) return false;
       if (adminFilterVisible === "hidden" && s.isVisible) return false;
       if (adminFilterCategory && !(Array.isArray(s.category) ? s.category : [s.category]).includes(adminFilterCategory as Category)) return false;
-      if (adminFilterAssignee && s.assignee !== adminFilterAssignee) return false;
+      if (adminFilterAssignee && !(Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(adminFilterAssignee)) return false;
       return true;
     })
     .sort((a, b) =>
@@ -301,8 +301,8 @@ function AdminContent() {
                             {s.problemTitle}
                           </span>
                           <StatusBadge status={s.status} />
-                          {(Array.isArray(s.category) ? s.category : [s.category]).filter(c => c !== "未分類").map((c, i) => (
-                            <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">{c}</span>
+                          {(Array.isArray(s.assignee) ? s.assignee : [s.assignee]).filter(a => a && a !== "未指定").map((a, i) => (
+                            <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">{a}</span>
                           ))}
                         </div>
                         <div className="flex items-center gap-3 text-xs text-[#9E9E9E]">
@@ -409,9 +409,31 @@ function AdminContent() {
                       <EditSelect label="優先級" value={editState.priority || ""} options={PRIORITY_OPTIONS}
                         onChange={v => setEditState(e => ({ ...e, priority: v as Priority }))} />
                     </div>
-                    <div className={isTeam ? "opacity-60 pointer-events-none" : ""}>
-                      <EditSelect label="負責人員" value={editState.assignee || "未指定"} options={ASSIGNEE_EDIT_OPTIONS}
-                        onChange={v => setEditState(e => ({ ...e, assignee: v }))} />
+                    <div className={`sm:col-span-2 ${isTeam ? "opacity-60 pointer-events-none" : ""}`}>
+                      <label className="block text-xs font-medium text-[#757575] mb-2">負責人員（可複選）</label>
+                      <div className="flex flex-wrap gap-2">
+                        {ASSIGNEE_OPTIONS.map(name => {
+                          const arr: string[] = Array.isArray(editState.assignee) ? editState.assignee as string[] : [editState.assignee as unknown as string];
+                          const selected = arr.includes(name);
+                          return (
+                            <button key={name} type="button"
+                              onClick={() => {
+                                const current = arr.filter((a: string) => a && a !== "未指定");
+                                const next = selected
+                                  ? current.filter((a: string) => a !== name)
+                                  : [...current, name];
+                                setEditState((e: any) => ({ ...e, assignee: next.length > 0 ? next : ["未指定"] }));
+                              }}
+                              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                                selected
+                                  ? "bg-[#007A87] text-white border-[#007A87]"
+                                  : "bg-white text-[#616161] border-[#E0E0E0] hover:border-[#007A87]/50"
+                              }`}>
+                              {name}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-medium text-[#757575] mb-2">分類（可複選）</label>
