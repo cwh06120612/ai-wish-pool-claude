@@ -42,7 +42,7 @@ function AdminContent() {
   const [adminFilterPriority, setAdminFilterPriority] = useState("");
   const [adminFilterVisible, setAdminFilterVisible] = useState("");
   const [adminFilterCategory, setAdminFilterCategory] = useState("");
-  const [adminFilterAssignee, setAdminFilterAssignee] = useState("");
+  const [adminFilterAssignee, setAdminFilterAssignee] = useState<string[]>([]);
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
 
@@ -82,7 +82,7 @@ function AdminContent() {
   }
 
   // List tab
-  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || !!adminFilterAssignee;
+  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || adminFilterAssignee.length > 0;
   const visibleSubmissions = submissions;
   const isMyItem = (s: Submission) => !isTeam || (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName);
   const filtered = submissions
@@ -101,7 +101,7 @@ function AdminContent() {
       if (adminFilterVisible === "shown" && !s.isVisible) return false;
       if (adminFilterVisible === "hidden" && s.isVisible) return false;
       if (adminFilterCategory && !(Array.isArray(s.category) ? s.category : [s.category]).includes(adminFilterCategory as Category)) return false;
-      if (adminFilterAssignee && !(Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(adminFilterAssignee)) return false;
+      if (adminFilterAssignee.length > 0) { const sa = Array.isArray(s.assignee) ? s.assignee : [s.assignee]; if (!adminFilterAssignee.some(f => sa.includes(f))) return false; }
       return true;
     })
     .sort((a, b) =>
@@ -256,14 +256,23 @@ function AdminContent() {
                   options={[{ value: "", label: "全部分類" }, ...CATEGORY_OPTIONS.map(o => ({ value: o, label: o }))]}
                   onChange={setAdminFilterCategory}
                 />
-                <AdminInlineDropdown
-                  label="負責人員"
-                  value={adminFilterAssignee}
-                  options={[{ value: "", label: "全部人員" }, ...ASSIGNEE_EDIT_OPTIONS.map(o => ({ value: o, label: o }))]}
-                  onChange={setAdminFilterAssignee}
-                />
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-[#757575] mr-1">負責人員</span>
+                  {ASSIGNEE_EDIT_OPTIONS.map(name => {
+                    const sel = adminFilterAssignee.includes(name);
+                    return (
+                      <button key={name} type="button"
+                        onClick={() => setAdminFilterAssignee(prev => sel ? prev.filter(a => a !== name) : [...prev, name])}
+                        className={`text-xs px-2 py-1 rounded-full border transition-colors ${
+                          sel ? "bg-[#007A87] text-white border-[#007A87]" : "bg-white text-[#616161] border-[#E0E0E0] hover:border-[#007A87]/50"
+                        }`}>
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
                 {adminHasFilters && (
-                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee(""); }}
+                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee([]); }}
                     className="flex items-center gap-1 text-xs text-[#AE1914] px-2 py-1.5 rounded-lg hover:bg-[#EBCDCC]/20 transition-colors self-start mt-0.5">
                     <X size={11} />清除篩選
                   </button>
