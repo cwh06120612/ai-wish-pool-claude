@@ -499,7 +499,7 @@ function AdminContent() {
                       {/* Comment list */}
                       {editState.adminNote && (
                         <div className="mb-3 space-y-2 max-h-40 overflow-y-auto">
-                          {editState.adminNote.split('\n').filter(Boolean).map((line, i) => {
+                          {editState.adminNote.split('\n').filter(Boolean).map((line, i, arr) => {
                             const match = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] (.+)$/);
                             if (!match) return (
                               <div key={i} className="flex gap-2 items-start">
@@ -510,8 +510,9 @@ function AdminContent() {
                             const [, author, datetime, content] = match;
                             const avatar = author === '管理者' ? '管' : author.charAt(0);
                             const avatarColor = author === '管理者' ? '#007A87' : '#BE8B55';
+                            const canEdit = author === (adminRole === 'editor' ? '管理者' : myName);
                             return (
-                              <div key={i} className="flex gap-2 items-start">
+                              <div key={i} className="flex gap-2 items-start group">
                                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: avatarColor}}>
                                   {avatar}
                                 </div>
@@ -519,6 +520,30 @@ function AdminContent() {
                                   <div className="flex items-baseline gap-2 mb-0.5">
                                     <span className="text-xs font-medium text-[#424242]">{author}</span>
                                     <span className="text-[10px] text-[#9E9E9E]">{datetime}</span>
+                                    {canEdit && (
+                                      <span className="hidden group-hover:flex items-center gap-1 ml-1">
+                                        <button type="button" className="text-[10px] text-[#9E9E9E] hover:text-[#007A87]"
+                                          onClick={() => {
+                                            const newContent = window.prompt('編輯備註', content);
+                                            if (newContent === null) return;
+                                            const newLine = `[${author} ${datetime}] ${newContent.trim()}`;
+                                            const lines = arr.slice();
+                                            lines[i] = newLine;
+                                            const newNote = lines.join('\n');
+                                            setEditState(st => ({ ...st, adminNote: newNote }));
+                                            updateSubmissionAsync(s.id, { adminNote: newNote });
+                                          }}>編輯</button>
+                                        <span className="text-[#E0E0E0]">·</span>
+                                        <button type="button" className="text-[10px] text-[#9E9E9E] hover:text-[#AE1914]"
+                                          onClick={() => {
+                                            if (!window.confirm('確定刪除這則備註？')) return;
+                                            const lines = arr.filter((_, j) => j !== i);
+                                            const newNote = lines.join('\n');
+                                            setEditState(st => ({ ...st, adminNote: newNote }));
+                                            updateSubmissionAsync(s.id, { adminNote: newNote });
+                                          }}>刪除</button>
+                                      </span>
+                                    )}
                                   </div>
                                   <div className="bg-[#F5F5F5] rounded-xl rounded-tl-sm px-3 py-1.5 text-xs text-[#424242] leading-relaxed">{content}</div>
                                 </div>
@@ -536,15 +561,18 @@ function AdminContent() {
                           placeholder="新增備註..."
                           className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                         <button type="button"
-                          onClick={() => {
+                          onClick={async () => {
                             const input = document.getElementById('newNoteInput') as HTMLTextAreaElement;
                             if (!input?.value.trim()) return;
                             const author = adminRole === 'editor' ? '管理者' : myName;
                             const now = new Date().toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
                             const stamp = `[${author} ${now}] ${input.value.trim()}`;
                             const prev = editState.adminNote?.trim();
-                            setEditState(st => ({ ...st, adminNote: prev ? prev + '\n' + stamp : stamp }));
+                            const newNote = prev ? prev + '\n' + stamp : stamp;
+                            setEditState(st => ({ ...st, adminNote: newNote }));
                             input.value = '';
+                            await updateSubmissionAsync(s.id, { adminNote: newNote });
+                            await reload();
                           }}
                           className="px-3 py-2 text-xs font-medium bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] transition-colors whitespace-nowrap">
                           送出
