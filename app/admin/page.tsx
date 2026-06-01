@@ -495,15 +495,43 @@ function AdminContent() {
                         className="w-full text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block text-xs font-medium text-[#757575] mb-1">負責人員備註</label>
-                      {/* Show existing notes */}
+                      <label className="block text-xs font-medium text-[#757575] mb-2">負責人員備註</label>
+                      {/* Comment list */}
                       {editState.adminNote && (
-                        <div className="mb-2 text-xs text-[#616161] bg-[#F5F5F5] rounded-xl px-3 py-2 whitespace-pre-wrap leading-relaxed">
-                          {editState.adminNote}
+                        <div className="mb-3 space-y-2 max-h-40 overflow-y-auto">
+                          {editState.adminNote.split('\n').filter(Boolean).map((line, i) => {
+                            const match = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] (.+)$/);
+                            if (!match) return (
+                              <div key={i} className="flex gap-2 items-start">
+                                <div className="w-7 h-7 rounded-full bg-[#E0E0E0] flex items-center justify-center text-xs font-bold text-[#616161] flex-shrink-0">?</div>
+                                <div className="flex-1 bg-[#F5F5F5] rounded-xl px-3 py-2 text-xs text-[#424242]">{line}</div>
+                              </div>
+                            );
+                            const [, author, datetime, content] = match;
+                            const avatar = author === '管理者' ? '管' : author.charAt(0);
+                            const avatarColor = author === '管理者' ? '#007A87' : '#BE8B55';
+                            return (
+                              <div key={i} className="flex gap-2 items-start">
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: avatarColor}}>
+                                  {avatar}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-baseline gap-2 mb-0.5">
+                                    <span className="text-xs font-medium text-[#424242]">{author}</span>
+                                    <span className="text-[10px] text-[#9E9E9E]">{datetime}</span>
+                                  </div>
+                                  <div className="bg-[#F5F5F5] rounded-xl rounded-tl-sm px-3 py-1.5 text-xs text-[#424242] leading-relaxed">{content}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                       {/* New note input */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-end">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: adminRole === 'editor' ? '#007A87' : '#BE8B55'}}>
+                          {adminRole === 'editor' ? '管' : myName.charAt(0)}
+                        </div>
                         <textarea rows={2} id="newNoteInput"
                           placeholder="新增備註..."
                           className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
@@ -518,8 +546,8 @@ function AdminContent() {
                             setEditState(st => ({ ...st, adminNote: prev ? prev + '\n' + stamp : stamp }));
                             input.value = '';
                           }}
-                          className="self-end px-3 py-2 text-xs font-medium bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] transition-colors whitespace-nowrap">
-                          新增
+                          className="px-3 py-2 text-xs font-medium bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] transition-colors whitespace-nowrap">
+                          送出
                         </button>
                       </div>
                     </div>
