@@ -496,10 +496,32 @@ function AdminContent() {
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-medium text-[#757575] mb-1">管理者備註</label>
-                      <textarea rows={2} value={editState.adminNote || ""}
-                        onChange={e => setEditState(st => ({ ...st, adminNote: e.target.value }))}
-                        placeholder="內部備註，不對外顯示"
-                        className="w-full text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
+                      {/* Show existing notes */}
+                      {editState.adminNote && (
+                        <div className="mb-2 text-xs text-[#616161] bg-[#F5F5F5] rounded-xl px-3 py-2 whitespace-pre-wrap leading-relaxed">
+                          {editState.adminNote}
+                        </div>
+                      )}
+                      {/* New note input */}
+                      <div className="flex gap-2">
+                        <textarea rows={2} id="newNoteInput"
+                          placeholder="新增備註..."
+                          className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
+                        <button type="button"
+                          onClick={() => {
+                            const input = document.getElementById('newNoteInput') as HTMLTextAreaElement;
+                            if (!input?.value.trim()) return;
+                            const author = adminRole === 'editor' ? '管理者' : myName;
+                            const now = new Date().toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+                            const stamp = `[${author} ${now}] ${input.value.trim()}`;
+                            const prev = editState.adminNote?.trim();
+                            setEditState(st => ({ ...st, adminNote: prev ? prev + '\n' + stamp : stamp }));
+                            input.value = '';
+                          }}
+                          className="self-end px-3 py-2 text-xs font-medium bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] transition-colors whitespace-nowrap">
+                          新增
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
