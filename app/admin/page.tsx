@@ -45,6 +45,8 @@ function AdminContent() {
   const [adminFilterAssignee, setAdminFilterAssignee] = useState<string[]>([]);
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
+  const [editingNoteIdx, setEditingNoteIdx] = useState<number | null>(null);
+  const [editingNoteVal, setEditingNoteVal] = useState("");
 
   const reload = React.useCallback(async () => {
     const data = await getSubmissionsAsync();
@@ -511,8 +513,9 @@ function AdminContent() {
                             const avatar = author === '管理者' ? '管' : author.charAt(0);
                             const avatarColor = author === '管理者' ? '#007A87' : '#BE8B55';
                             const canEdit = author === (adminRole === 'editor' ? '管理者' : myName);
+                            const isEditing = editingNoteIdx === i;
                             return (
-                              <div key={i} className="flex gap-2 items-start group">
+                              <div key={i} className="flex gap-2 items-start">
                                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: avatarColor}}>
                                   {avatar}
                                 </div>
@@ -520,32 +523,70 @@ function AdminContent() {
                                   <div className="flex items-baseline gap-2 mb-0.5">
                                     <span className="text-xs font-medium text-[#424242]">{author}</span>
                                     <span className="text-[10px] text-[#9E9E9E]">{datetime}</span>
-                                    {canEdit && (
-                                      <span className="hidden group-hover:flex items-center gap-1 ml-1">
-                                        <button type="button" className="text-[10px] text-[#9E9E9E] hover:text-[#007A87]"
-                                          onClick={() => {
-                                            const newContent = window.prompt('編輯備註', content);
-                                            if (newContent === null) return;
-                                            const newLine = `[${author} ${datetime}] ${newContent.trim()}`;
-                                            const lines = arr.slice();
-                                            lines[i] = newLine;
-                                            const newNote = lines.join('\n');
-                                            setEditState(st => ({ ...st, adminNote: newNote }));
-                                            updateSubmissionAsync(s.id, { adminNote: newNote });
-                                          }}>編輯</button>
+                                    {canEdit && !isEditing && (
+                                      <span className="flex items-center gap-1 ml-1">
+                                        <button type="button"
+                                          className="text-[10px] text-[#9E9E9E] hover:text-[#007A87] px-1.5 py-0.5 rounded hover:bg-[#007A87]/10 transition-colors"
+                                          onClick={() => { setEditingNoteIdx(i); setEditingNoteVal(content); }}>
+                                          編輯
+                                        </button>
                                         <span className="text-[#E0E0E0]">·</span>
-                                        <button type="button" className="text-[10px] text-[#9E9E9E] hover:text-[#AE1914]"
-                                          onClick={() => {
-                                            if (!window.confirm('確定刪除這則備註？')) return;
-                                            const lines = arr.filter((_, j) => j !== i);
-                                            const newNote = lines.join('\n');
-                                            setEditState(st => ({ ...st, adminNote: newNote }));
-                                            updateSubmissionAsync(s.id, { adminNote: newNote });
-                                          }}>刪除</button>
+                                        <button type="button"
+                                          className="text-[10px] text-[#9E9E9E] hover:text-[#AE1914] px-1.5 py-0.5 rounded hover:bg-[#AE1914]/10 transition-colors"
+                                          onClick={async () => {
+                                            setEditingNoteIdx(i);
+                                            setEditingNoteVal("__delete__");
+                                          }}>
+                                          刪除
+                                        </button>
                                       </span>
                                     )}
                                   </div>
-                                  <div className="bg-[#F5F5F5] rounded-xl rounded-tl-sm px-3 py-1.5 text-xs text-[#424242] leading-relaxed">{content}</div>
+                                  {isEditing && editingNoteVal === "__delete__" ? (
+                                    <div className="bg-[#FDF2F2] border border-[#EBCDCC] rounded-xl px-3 py-2 text-xs">
+                                      <p className="text-[#AE1914] mb-2">確定要刪除這則備註嗎？</p>
+                                      <div className="flex gap-2">
+                                        <button type="button"
+                                          className="px-3 py-1 bg-[#AE1914] text-white text-xs rounded-lg hover:bg-[#8B1410] transition-colors"
+                                          onClick={async () => {
+                                            const lines = arr.filter((_, j) => j !== i);
+                                            const newNote = lines.join("\n");
+                                            setEditState(st => ({ ...st, adminNote: newNote }));
+                                            setEditingNoteIdx(null);
+                                            await updateSubmissionAsync(s.id, { adminNote: newNote });
+                                            await reload();
+                                          }}>確定刪除</button>
+                                        <button type="button"
+                                          className="px-3 py-1 bg-white border border-[#E0E0E0] text-[#616161] text-xs rounded-lg hover:bg-[#F5F5F5] transition-colors"
+                                          onClick={() => setEditingNoteIdx(null)}>取消</button>
+                                      </div>
+                                    </div>
+                                  ) : isEditing ? (
+                                    <div className="space-y-1.5">
+                                      <textarea rows={2} value={editingNoteVal}
+                                        onChange={e => setEditingNoteVal(e.target.value)}
+                                        className="w-full text-xs border border-[#007A87] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
+                                      <div className="flex gap-2">
+                                        <button type="button"
+                                          className="px-3 py-1 bg-[#007A87] text-white text-xs rounded-lg hover:bg-[#00555E] transition-colors"
+                                          onClick={async () => {
+                                            if (!editingNoteVal.trim()) return;
+                                            const newLine = `[${author} ${datetime}] ${editingNoteVal.trim()}`;
+                                            const lines = arr.slice(); lines[i] = newLine;
+                                            const newNote = lines.join("\n");
+                                            setEditState(st => ({ ...st, adminNote: newNote }));
+                                            setEditingNoteIdx(null);
+                                            await updateSubmissionAsync(s.id, { adminNote: newNote });
+                                            await reload();
+                                          }}>儲存</button>
+                                        <button type="button"
+                                          className="px-3 py-1 bg-white border border-[#E0E0E0] text-[#616161] text-xs rounded-lg hover:bg-[#F5F5F5] transition-colors"
+                                          onClick={() => setEditingNoteIdx(null)}>取消</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="bg-[#F5F5F5] rounded-xl rounded-tl-sm px-3 py-1.5 text-xs text-[#424242] leading-relaxed">{content}</div>
+                                  )}
                                 </div>
                               </div>
                             );
