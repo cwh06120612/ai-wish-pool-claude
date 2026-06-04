@@ -90,12 +90,11 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
   const [currentUser, setCurrentUser] = useState<CurrentUserInfo | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
-  const [isComposing, setIsComposing] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   function isComposingEvent(event: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) {
     const nativeEvent = event.nativeEvent as KeyboardEvent & { isComposing?: boolean };
-    return (event as any).isComposing || nativeEvent.isComposing || isComposing;
+    return nativeEvent.isComposing === true;
   }
 
   const load = useCallback(async () => {
@@ -240,8 +239,6 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
       <div className="space-y-1.5 w-full">
         <textarea key={editKey} rows={2} defaultValue={val}
           onChange={e => setVal(e.target.value)}
-          onCompositionStart={() => setIsComposing(true)}
-          onCompositionEnd={() => setIsComposing(false)}
           onKeyDown={e => {
             if (isComposingEvent(e)) return;
             if (e.key === "Enter") {
@@ -461,8 +458,6 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
           <div className="flex gap-2 items-end">
             <Av name={currentActorName} avatarText={currentActorAvatarText} />
             <textarea rows={1} value={input} onChange={e => setInput(e.target.value)}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={() => setIsComposing(false)}
               onKeyDown={async e => {
                 if (isComposingEvent(e)) return;
                 if (e.key === "Enter" && !e.shiftKey) {

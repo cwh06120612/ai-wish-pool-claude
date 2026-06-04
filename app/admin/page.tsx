@@ -417,9 +417,18 @@ function AdminContent() {
                     <span>{s.shareMode === "願意分享（公開內容、部門、姓名）" ? "公開" : s.shareMode === "匿名分享（公開內容，但不顯示部門姓名）" ? "匿名" : "不公開"}</span>
                   </div>
                 </div>
-                <button onClick={() => setModalId(null)} className="p-1.5 rounded-lg hover:bg-[#F0F4F4] flex-shrink-0">
-                  <X size={16} className="text-[#9E9E9E]" />
-                </button>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button type="button"
+                    onClick={() => { setDrawerSub(s); }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-[#007A87] text-white text-xs font-medium rounded-lg hover:bg-[#00555E] transition-colors">
+                    <MessageSquare size={13} />
+                    <span>討論</span>
+                    {unreadMap[s.id] > 0 && <span className="px-1.5 py-0.5 bg-white text-[#AE1914] text-[9px] rounded-full font-bold">{unreadMap[s.id]}</span>}
+                  </button>
+                  <button onClick={() => setModalId(null)} className="p-1.5 rounded-lg hover:bg-[#F0F4F4]">
+                    <X size={16} className="text-[#9E9E9E]" />
+                  </button>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2 px-5 pb-3 flex-shrink-0">
                 <StatusBadge status={s.status} />
@@ -556,15 +565,7 @@ function AdminContent() {
                         placeholder="填寫後公告欄會顯示此回覆"
                         className="w-full text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                     </div>
-                    <div className="sm:col-span-2">
-                      <button type="button"
-                          onClick={() => { setDrawerSub(s); }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007A87] text-white text-xs font-medium rounded-xl hover:bg-[#00555E] transition-colors mb-2">
-                          <MessageSquare size={13} />
-                          <span>開啟討論區</span>
-                          {unreadMap[s.id] > 0 && <span className="px-1.5 py-0.5 bg-white text-[#AE1914] text-[9px] rounded-full font-bold">{unreadMap[s.id]}</span>}
-                        </button>
-                    </div>
+
                   </div>
                 </div>
               </div>
