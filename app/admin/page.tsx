@@ -43,6 +43,7 @@ function AdminContent() {
   const [adminFilterVisible, setAdminFilterVisible] = useState("");
   const [adminFilterCategory, setAdminFilterCategory] = useState("");
   const [adminFilterAssignee, setAdminFilterAssignee] = useState<string[]>([]);
+  const [adminFilterNote, setAdminFilterNote] = useState("");
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
   const [editingNoteIdx, setEditingNoteIdx] = useState<number | null>(null);
@@ -84,7 +85,7 @@ function AdminContent() {
   }
 
   // List tab
-  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || adminFilterAssignee.length > 0;
+  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || adminFilterAssignee.length > 0 || !!adminFilterNote;
   const visibleSubmissions = submissions;
   const isMyItem = (s: Submission) => !isTeam || (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName);
   const filtered = submissions
@@ -104,6 +105,8 @@ function AdminContent() {
       if (adminFilterVisible === "hidden" && s.isVisible) return false;
       if (adminFilterCategory && !(Array.isArray(s.category) ? s.category : [s.category]).includes(adminFilterCategory as Category)) return false;
       if (adminFilterAssignee.length > 0) { const sa = Array.isArray(s.assignee) ? s.assignee : [s.assignee]; if (!adminFilterAssignee.some(f => sa.includes(f))) return false; }
+      if (adminFilterNote === "有備註" && !s.adminNote?.trim()) return false;
+      if (adminFilterNote === "無備註" && !!s.adminNote?.trim()) return false;
       return true;
     })
     .sort((a, b) =>
@@ -273,8 +276,18 @@ function AdminContent() {
                     );
                   })}
                 </div>
+                <AdminInlineDropdown
+                  label="備註"
+                  value={adminFilterNote}
+                  options={[
+                    { value: "", label: "全部" },
+                    { value: "有備註", label: "有備註" },
+                    { value: "無備註", label: "無備註" },
+                  ]}
+                  onChange={setAdminFilterNote}
+                />
                 {adminHasFilters && (
-                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee([]); }}
+                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee([]); setAdminFilterNote(""); }}
                     className="flex items-center gap-1 text-xs text-[#AE1914] px-2 py-1.5 rounded-lg hover:bg-[#EBCDCC]/20 transition-colors self-start mt-0.5">
                     <X size={11} />清除篩選
                   </button>
@@ -502,7 +515,7 @@ function AdminContent() {
                       {editState.adminNote && (
                         <div className="mb-3 space-y-2 max-h-40 overflow-y-auto">
                           {editState.adminNote.split(/(?=\[.+? \d{4}\/\d{2}\/\d{2}.+?\] )/).filter(Boolean).map((line, i, arr) => {
-                            const match = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] (.+)$/);
+                            const match = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] ([\s\S]+)$/);
                             if (!match) return (
                               <div key={i} className="text-xs text-[#616161] bg-[#F5F5F5] rounded-xl px-3 py-2 leading-relaxed">{line}</div>
                             );
