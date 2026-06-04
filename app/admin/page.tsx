@@ -614,7 +614,23 @@ function AdminContent() {
                           {adminRole === 'editor' ? '管' : myName.charAt(0)}
                         </div>
                         <textarea rows={2} id="newNoteInput"
-                          placeholder="新增備註..."
+                          placeholder="新增備註... (Enter 送出，Shift+Enter 換行)"
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              const input = e.currentTarget;
+                              if (!input.value.trim()) return;
+                              const author = adminRole === 'editor' ? '管理者' : myName;
+                              const now = new Date().toLocaleString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+                              const stamp = `[${author} ${now}] ${input.value.trim()}`;
+                              const prev = editState.adminNote?.trim();
+                              const newNote = prev ? prev + '\n' + stamp : stamp;
+                              setEditState(st => ({ ...st, adminNote: newNote }));
+                              input.value = '';
+                              await updateSubmissionAsync(s.id, { adminNote: newNote });
+                              await reload();
+                            }
+                          }}
                           className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                         <button type="button"
                           onClick={async () => {
