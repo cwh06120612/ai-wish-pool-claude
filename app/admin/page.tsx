@@ -15,7 +15,7 @@ const ASSIGNEE_EDIT_OPTIONS = ["未指定", ...ASSIGNEE_OPTIONS];
 import {
   LayoutDashboard, ListFilter, Download, FileText, SlidersHorizontal, Search,
   Eye, EyeOff, ChevronDown, ChevronUp, ChevronRight,
-  X, Save, Check, LogOut, ThumbsUp,
+  X, Save, Check, LogOut, ThumbsUp, MessageSquare,
 } from "lucide-react";
 
 const STATUS_OPTIONS: Status[] = [
@@ -64,6 +64,18 @@ function AdminContent() {
     const timer = setInterval(reload, 30000);
     return () => clearInterval(timer);
   }, [reload]);
+
+  useEffect(() => {
+    if (!isTeam || !myName || submissions.length === 0) return;
+    const myIds = submissions
+      .filter(s => (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName))
+      .map(s => s.id);
+    if (myIds.length === 0) return;
+    getUnreadCount(myIds, myName).then(map => {
+      setUnreadMap(map);
+      if (Object.values(map).reduce((a, b) => a + b, 0) > 0) setShowUnreadAlert(true);
+    });
+  }, [submissions.length, myName, isTeam]);
 
   function handleEdit(id: string) {
     const s = submissions.find((s) => s.id === id);
@@ -341,6 +353,14 @@ function AdminContent() {
                             ? <Eye size={13} className="text-[#007A87]" />
                             : <EyeOff size={13} className="text-[#BDBDBD]" />
                           }
+                          <button type="button"
+                            onClick={e => { e.stopPropagation(); setDrawerSub(s); setUnreadMap(prev => { const n = {...prev}; delete n[s.id]; return n; }); }}
+                            className="relative ml-auto flex items-center gap-1 text-[#9E9E9E] hover:text-[#007A87] transition-colors">
+                            <MessageSquare size={13} />
+                            {unreadMap[s.id] > 0 && (
+                              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#AE1914] rounded-full text-[8px] text-white flex items-center justify-center font-bold">{unreadMap[s.id]}</span>
+                            )}
+                          </button>
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-[#BDBDBD] flex-shrink-0 mt-0.5" />
@@ -732,6 +752,39 @@ function AdminContent() {
           </div>
         );
       })()}
+
+      {/* Unread notification modal */}
+      {showUnreadAlert && isTeam && Object.values(unreadMap).reduce((a,b) => a+b, 0) > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setShowUnreadAlert(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl p-6 w-80 text-center">
+            <div className="w-12 h-12 rounded-full bg-[#B5E1E5]/40 flex items-center justify-center mx-auto mb-4">
+              <MessageSquare size={22} className="text-[#007A87]" />
+            </div>
+            <h3 className="text-base font-bold text-[#1F2937] mb-1">你有新回覆</h3>
+            <p className="text-sm text-[#6B7280] mb-4">
+              共 <span className="font-bold text-[#007A87]">{Object.values(unreadMap).reduce((a,b) => a+b, 0)}</span> 則未讀訊息
+            </p>
+            <button onClick={() => { setShowUnreadAlert(false); setTeamTab("mine"); }}
+              className="w-full py-2.5 bg-[#007A87] text-white text-sm font-medium rounded-xl hover:bg-[#00555E] transition-colors">
+              前往查看
+            </button>
+            <button onClick={() => setShowUnreadAlert(false)}
+              className="mt-2 w-full py-2 text-sm text-[#9E9E9E] hover:text-[#616161] transition-colors">
+              稍後再看
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Discussion drawer */}
+      {drawerSub && (
+        <DiscussionDrawer
+          submission={drawerSub}
+          author={adminRole === "editor" ? "管理者" : myName}
+          onClose={() => setDrawerSub(null)}
+        />
+      )}
     </div>
   );
 }
