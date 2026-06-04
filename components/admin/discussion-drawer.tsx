@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { X, CornerDownRight, Send, Pencil, Trash2, User } from "lucide-react";
 import { getDiscussions, addDiscussion, markRead, deleteDiscussion, editDiscussion, Discussion } from "@/lib/discussions";
 import { updateSubmissionAsync } from "@/lib/storage";
+import { getCurrentUserDisplayInfo, CurrentUserInfo } from "@/lib/user";
 import type { Submission } from "@/types/submission";
 
 interface Props {
@@ -76,6 +77,9 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
   const [editNoteI, setEditNoteI] = useState<number | null>(null);
   const [editNoteVal, setEditNoteVal] = useState("");
   const [delNoteI, setDelNoteI] = useState<number | null>(null);
+  const [currentUser, setCurrentUser] = useState<CurrentUserInfo | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -88,21 +92,52 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }, [msgs]);
 
+  useEffect(() => {
+    let mounted = true;
+    getCurrentUserDisplayInfo()
+      .then(user => { if (mounted) setCurrentUser(user); })
+      .catch(error => { console.error("[DiscussionDrawer] failed to load user info", error); });
+    return () => { mounted = false; };
+  }, []);
+
   async function send() {
     const t = input.trim();
     if (!t) return;
-    setInput("");
-    const rid = replyTo?.id;
-    setReplyTo(null);
-    await addDiscussion({
-      submissionId: s.id,
-      author,
-      authorName: author,
-      avatarText: getAvatarText(author),
-      content: t,
-      replyTo: rid,
-    });
-    await load();
+    if (!currentUser) {
+      setSendError("請先登入後再留言");
+      return;
+    }
+    setSending(true);
+    setSendError("");
+    const rid = replyTo?.id ?? null;
+    try {
+      const result = await addDiscussion({
+        submissionId: s.id,
+        author: currentUser.displayName,
+        authorId: currentUser.userId,
+        authorName: currentUser.displayName,
+        authorEmail: currentUser.email,
+        avatarText: currentUser.avatarText,
+        content: t,
+        replyTo: rid,
+        parentId: rid,
+        createdAt: new Date().toISOString(),
+        isEdited: false,
+        readBy: [currentUser.displayName],
+      });
+      if (!result) {
+        setSendError("留言送出失敗：伺服器回應錯誤，請稍後再試");
+        return;
+      }
+      setInput("");
+      setReplyTo(null);
+      await load();
+    } catch (error) {
+      console.error("[DiscussionDrawer] send failed", error);
+      setSendError(error instanceof Error ? `留言送出失敗：${error.message}` : "留言送出失敗：未知錯誤");
+    } finally {
+      setSending(false);
+    }
   }
 
   async function saveEdit(id: string) {
@@ -220,6 +255,7 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
   // Latest message for "newest" label
   const allSorted = [...msgs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const latestId = allSorted[0]?.id;
+  const currentUserName = currentUser?.displayName || author;
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -304,8 +340,8 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
           {/* New discussions */}
           {topLevel.map(msg => {
             const authorInfo = getDiscussionAuthor(msg);
-            const isMe = msg.author === author || msg.authorName === author;
-            const canEdit = msg.author === author || msg.authorName === author;
+            const isMe = msg.author === currentUserName || msg.authorName === currentUserName;
+            const canEdit = msg.author === currentUserName || msg.authorName === currentUserName;
             const replyTarget = msg.replyTo ? msgs.find(m => m.id === msg.replyTo) : null;
             const isLatest = msg.id === latestId;
 
@@ -346,8 +382,8 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
                 {/* Replies */}
                 {repliesOf(msg.id).map(reply => {
                   const replyAuthorInfo = getDiscussionAuthor(reply);
-                  const rIsMe = reply.author === author || reply.authorName === author;
-                  const rCanEdit = reply.author === author || reply.authorName === author;
+                  const rIsMe = reply.author === currentUserName || reply.authorName === currentUserName;
+                  const rCanEdit = reply.author === currentUserName || reply.authorName === currentUserName;
                   const rTarget = msgs.find(m => m.id === reply.replyTo);
                   return (
                     <div key={reply.id} className={`flex gap-2 mt-2 ml-9 ${rIsMe ? "flex-row-reverse" : ""}`}>
@@ -395,16 +431,21 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
         )}
 
         {/* Input */}
-        <div className="px-4 py-3 border-t border-[#E5E7EB] flex gap-2 items-end">
-          <Av name={author} />
-          <textarea rows={1} value={input} onChange={e => setInput(e.target.value)}
-            onKeyDown={async e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); await send(); } }}
-            placeholder="輸入訊息... (Enter 送出)"
-            className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 focus:border-[#007A87] resize-none" />
-          <button onClick={send} disabled={!input.trim()}
-            className="p-2.5 bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] disabled:opacity-40 transition-colors flex-shrink-0">
-            <Send size={15} />
-          </button>
+        <div className="px-4 py-3 border-t border-[#E5E7EB]">
+          <div className="flex gap-2 items-end">
+            <Av name={currentUser?.displayName || author} />
+            <textarea rows={1} value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={async e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); await send(); } }}
+              placeholder="輸入訊息... (Enter 送出)"
+              disabled={sending}
+              className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 focus:border-[#007A87] resize-none disabled:cursor-not-allowed disabled:opacity-50" />
+            <button onClick={send} disabled={sending || !input.trim()}
+              className="p-2.5 bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] disabled:opacity-40 transition-colors flex-shrink-0">
+              <Send size={15} />
+            </button>
+          </div>
+          {sendError && <p className="mt-2 text-xs text-[#AE1914]">{sendError}</p>}
+          {sending && <p className="mt-2 text-xs text-[#6B7280]">留言送出中...</p>}
         </div>
       </div>
     </div>

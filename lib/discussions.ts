@@ -4,12 +4,15 @@ export interface Discussion {
   id: string;
   submissionId: string;
   author: string;
+  authorId?: string;
   authorName?: string;
   authorEmail?: string;
   avatarText?: string;
   content: string;
   createdAt: string;
   replyTo: string | null;
+  parentId?: string | null;
+  isEdited?: boolean;
   readBy: string[];
 }
 
@@ -18,12 +21,15 @@ function fromDb(row: Record<string, unknown>): Discussion {
     id: row.id as string,
     submissionId: row.submission_id as string,
     author: row.author as string,
+    authorId: row.author_id as string | undefined,
     authorName: row.author_name as string | undefined,
     authorEmail: row.author_email as string | undefined,
     avatarText: row.avatar_text as string | undefined,
     content: row.content as string,
     createdAt: row.created_at as string,
     replyTo: row.reply_to as string | null,
+    parentId: row.parent_id as string | null,
+    isEdited: row.is_edited as boolean | undefined,
     readBy: (row.read_by as string[]) ?? [],
   };
 }
@@ -40,11 +46,16 @@ export async function getDiscussions(submissionId: string): Promise<Discussion[]
 export async function addDiscussion(params: {
   submissionId: string;
   author: string;
+  authorId?: string;
   content: string;
   replyTo?: string | null;
+  parentId?: string | null;
   authorName?: string;
   authorEmail?: string;
   avatarText?: string;
+  createdAt?: string;
+  isEdited?: boolean;
+  readBy?: string[];
 }): Promise<Discussion | null> {
   const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
   const insertData: Record<string, unknown> = {
@@ -53,12 +64,20 @@ export async function addDiscussion(params: {
     author: params.author,
     content: params.content,
     reply_to: params.replyTo ?? null,
-    read_by: [params.author],
+    read_by: params.readBy ?? [params.author],
+    is_edited: params.isEdited ?? false,
   };
+  if (params.authorId) insertData.author_id = params.authorId;
   if (params.authorName) insertData.author_name = params.authorName;
   if (params.authorEmail) insertData.author_email = params.authorEmail;
   if (params.avatarText) insertData.avatar_text = params.avatarText;
-  const { data } = await supabase.from("discussions").insert(insertData).select().single();
+  if (params.parentId !== undefined) insertData.parent_id = params.parentId;
+  if (params.createdAt) insertData.created_at = params.createdAt;
+  const { data, error } = await supabase.from("discussions").insert(insertData).select().single();
+  if (error) {
+    console.error("[discussions.addDiscussion] insert error", error, insertData);
+    return null;
+  }
   return data ? fromDb(data) : null;
 }
 
