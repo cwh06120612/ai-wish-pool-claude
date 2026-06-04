@@ -133,12 +133,15 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
     );
   }
 
-  function EditInput({ val, setVal, onSave, onCancel }: { val: string; setVal: (v: string) => void; onSave: () => void; onCancel: () => void }) {
+  function EditInput({ val, setVal, onSave, onCancel, editKey }: { val: string; setVal: (v: string) => void; onSave: () => void; onCancel: () => void; editKey: string }) {
     return (
       <div className="space-y-1.5 w-full">
-        <textarea rows={2} value={val} onChange={e => setVal(e.target.value)}
+        <textarea key={editKey} rows={2} defaultValue={val}
+          onChange={e => setVal(e.target.value)}
           className="w-full text-xs border border-[#007A87] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-none bg-white"
-          autoFocus />
+          autoFocus
+          onFocus={e => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
+        />
         <div className="flex gap-1.5">
           <button onClick={onSave} className="px-3 py-1 bg-[#007A87] text-white text-[11px] rounded-lg hover:bg-[#00555E]">儲存</button>
           <button onClick={onCancel} className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg hover:bg-[#F5F5F5]">取消</button>
@@ -149,7 +152,7 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
 
   function Bubble({ content, isMe, replyTarget }: { content: string; isMe: boolean; replyTarget?: { author: string; content: string } | null }) {
     return (
-      <div className={`px-3.5 py-2 rounded-2xl text-xs leading-relaxed break-words ${isMe ? "bg-[#007A87] text-white rounded-br-sm" : "bg-[#F3F4F6] text-[#2D2D2D] rounded-bl-sm"}`}>
+      <div className={`px-3.5 py-2 rounded-2xl text-xs leading-relaxed w-fit max-w-full ${isMe ? "bg-[#007A87] text-white rounded-br-sm" : "bg-[#F3F4F6] text-[#2D2D2D] rounded-bl-sm"}`} style={{wordBreak:"break-word", overflowWrap:"anywhere"}}>
         {replyTarget && (
           <div className={`text-[10px] mb-1.5 pb-1.5 border-b flex items-start gap-1 opacity-80 ${isMe ? "border-white/30" : "border-[#D1D5DB]"}`}>
             <CornerDownRight size={10} className="mt-0.5 flex-shrink-0" />
@@ -193,9 +196,9 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
 
         {/* Collapsible detail */}
         <details className="border-b border-[#E5E7EB] group">
-          <summary className="px-5 py-2.5 text-xs text-[#6B7280] cursor-pointer hover:bg-[#F9FAFB] select-none flex items-center justify-between">
-            <span className="font-medium">困擾詳情</span>
-            <span className="text-[10px] text-[#9CA3AF]">點擊展開</span>
+          <summary className="px-5 py-2.5 text-xs font-semibold text-[#424242] cursor-pointer hover:bg-[#F0F4F4] select-none flex items-center justify-between bg-[#F9FAFB]">
+            <span>困擾詳情</span>
+            <span className="text-[10px] text-[#007A87] font-medium">點擊展開 ▾</span>
           </summary>
           <div className="px-5 py-3 bg-[#F9FAFB] text-xs text-[#6B7280] space-y-1.5 border-t border-[#E5E7EB]">
             {s.painPoints?.length > 0 && <p><span className="font-medium text-[#9CA3AF]">痛點：</span>{s.painPoints.join("、")}</p>}
@@ -225,7 +228,7 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
                   {delNoteI === idx
                     ? <ConfirmDelete onConfirm={() => doDeleteNote(idx)} onCancel={() => setDelNoteI(null)} />
                     : editNoteI === idx
-                    ? <EditInput val={editNoteVal} setVal={setEditNoteVal} onSave={() => saveNoteEdit(idx)} onCancel={() => { setEditNoteI(null); setEditNoteVal(""); }} />
+                    ? <EditInput val={editNoteVal} setVal={setEditNoteVal} onSave={() => saveNoteEdit(idx)} onCancel={() => { setEditNoteI(null); setEditNoteVal(""); }} editKey={`note-${idx}`} />
                     : <Bubble content={item.content} isMe={isMe} />
                   }
                   {editNoteI !== idx && delNoteI !== idx && (
@@ -269,7 +272,7 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
                     {delId === msg.id
                       ? <ConfirmDelete onConfirm={() => doDelete(msg.id)} onCancel={() => setDelId(null)} />
                       : editId === msg.id
-                      ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(msg.id)} onCancel={() => { setEditId(null); setEditVal(""); }} />
+                      ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(msg.id)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`msg-${msg.id}`} />
                       : <Bubble content={msg.content} isMe={isMe} replyTarget={replyTarget ? { author: replyTarget.author, content: replyTarget.content } : null} />
                     }
                     {editId !== msg.id && delId !== msg.id && (
@@ -300,7 +303,7 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
                         {delId === reply.id
                           ? <ConfirmDelete onConfirm={() => doDelete(reply.id)} onCancel={() => setDelId(null)} />
                           : editId === reply.id
-                          ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(reply.id)} onCancel={() => { setEditId(null); setEditVal(""); }} />
+                          ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(reply.id)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`reply-${reply.id}`} />
                           : <Bubble content={reply.content} isMe={rIsMe} replyTarget={rTarget ? { author: rTarget.author, content: rTarget.content } : null} />
                         }
                         {editId !== reply.id && delId !== reply.id && (

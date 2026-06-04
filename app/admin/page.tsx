@@ -528,16 +528,13 @@ function AdminContent() {
                         className="w-full text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                     </div>
                     <div className="sm:col-span-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-medium text-[#757575]">負責人員討論區</label>
-                        <button type="button"
+                      <button type="button"
                           onClick={() => { setDrawerSub(s); }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007A87] text-white text-xs font-medium rounded-xl hover:bg-[#00555E] transition-colors">
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007A87] text-white text-xs font-medium rounded-xl hover:bg-[#00555E] transition-colors mb-2">
                           <MessageSquare size={13} />
                           <span>開啟討論區</span>
                           {unreadMap[s.id] > 0 && <span className="px-1.5 py-0.5 bg-white text-[#AE1914] text-[9px] rounded-full font-bold">{unreadMap[s.id]}</span>}
                         </button>
-                      </div>
                       {/* Comment list */}
                       {editState.adminNote && (
                         <div className="mb-3 space-y-2 max-h-40 overflow-y-auto">
