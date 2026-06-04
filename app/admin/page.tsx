@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Dashboard } from "@/components/admin/dashboard";
 import { AdminAuth, useAdminRole, ASSIGNEE_OPTIONS } from "@/components/admin/admin-auth";
+import { DiscussionDrawer } from "@/components/admin/discussion-drawer";
+import { getUnreadCount } from "@/lib/discussions";
 const ASSIGNEE_EDIT_OPTIONS = ["未指定", ...ASSIGNEE_OPTIONS];
 import {
   LayoutDashboard, ListFilter, Download, FileText, SlidersHorizontal, Search,
@@ -47,6 +49,9 @@ function AdminContent() {
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
   const [editingNoteIdx, setEditingNoteIdx] = useState<number | null>(null);
+  const [drawerSub, setDrawerSub] = useState<Submission | null>(null);
+  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
+  const [showUnreadAlert, setShowUnreadAlert] = useState(false);
   const [editingNoteVal, setEditingNoteVal] = useState("");
 
   const reload = React.useCallback(async () => {
@@ -198,6 +203,16 @@ function AdminContent() {
                 }`}>
                 所有困擾
               </button>
+            </div>
+          )}
+
+          {/* Unread alert */}
+          {showUnreadAlert && isTeam && (
+            <div className="mb-3 flex items-center justify-between bg-[#B5E1E5]/30 border border-[#007A87]/30 rounded-xl px-4 py-2.5">
+              <span className="text-sm text-[#007A87]">
+                你有 <span className="font-bold">{Object.values(unreadMap).reduce((a,b) => a+b, 0)}</span> 則新回覆
+              </span>
+              <button onClick={() => setShowUnreadAlert(false)} className="text-[#9E9E9E] hover:text-[#424242]"><X size={14} /></button>
             </div>
           )}
 
@@ -510,7 +525,7 @@ function AdminContent() {
                         className="w-full text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block text-xs font-medium text-[#757575] mb-2">負責人員備註</label>
+                      <label className="block text-xs font-medium text-[#757575] mb-2">負責人員討論區</label>
                       {/* Comment list */}
                       {editState.adminNote && (
                         <div className="mb-3 space-y-2 max-h-40 overflow-y-auto">
