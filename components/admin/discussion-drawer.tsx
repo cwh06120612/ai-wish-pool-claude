@@ -4,6 +4,7 @@ import { X, CornerDownRight, Send, Pencil, Trash2, User } from "lucide-react";
 import { getDiscussions, addDiscussion, markRead, deleteDiscussion, editDiscussion, Discussion } from "@/lib/discussions";
 import { updateSubmissionAsync } from "@/lib/storage";
 import { getCurrentUserDisplayInfo, CurrentUserInfo } from "@/lib/user";
+import { useImeInput } from "@/lib/use-ime-input";
 import type { AdminRole } from "@/components/admin/admin-auth";
 import type { Submission } from "@/types/submission";
 
@@ -79,7 +80,7 @@ function getDiscussionAuthor(info: { author?: string; authorName?: string; autho
 export function DiscussionDrawer({ submission: s, author, role, personKey, onClose, onAdminNoteChange }: Props) {
   const [msgs, setMsgs] = useState<Discussion[]>([]);
   const [notes, setNotes] = useState(() => parseNotes(s.adminNote || ""));
-  const [input, setInput] = useState("");
+  const inputIme = useImeInput("");
   const [replyTo, setReplyTo] = useState<{ id: string; author: string; content: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
@@ -91,11 +92,6 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  function isComposingEvent(event: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) {
-    const nativeEvent = event.nativeEvent as KeyboardEvent & { isComposing?: boolean };
-    return nativeEvent.isComposing === true;
-  }
 
   const load = useCallback(async () => {
     const data = await getDiscussions(s.id);
@@ -116,7 +112,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
   }, []);
 
   async function send() {
-    const t = input.trim();
+    const t = inputIme.value.trim();
     if (!t) return;
     const isAdmin = role === "editor";
     const isOwner = role === "team";
@@ -150,7 +146,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
         setSendError("留言送出失敗：伺服器回應錯誤，請稍後再試");
         return;
       }
-      setInput("");
+      inputIme.syncValue("");
       setReplyTo(null);
       await load();
     } catch (error) {
@@ -235,15 +231,25 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
   }
 
   function EditInput({ val, setVal, onSave, onCancel, editKey }: { val: string; setVal: (v: string) => void; onSave: () => void; onCancel: () => void; editKey: string }) {
+    const editIme = useImeInput(val);
+
+    const handleSave = () => {
+      setVal(editIme.value);
+      onSave();
+    };
+
     return (
       <div className="space-y-1.5 w-full">
-        <textarea key={editKey} rows={2} defaultValue={val}
-          onChange={e => setVal(e.target.value)}
+        <textarea key={editKey} rows={2}
+          value={editIme.draft}
+          onChange={editIme.inputProps.onChange}
+          onCompositionStart={editIme.inputProps.onCompositionStart}
+          onCompositionEnd={editIme.inputProps.onCompositionEnd}
           onKeyDown={e => {
-            if (isComposingEvent(e)) return;
+            if (editIme.isComposing(e)) return;
             if (e.key === "Enter") {
               e.preventDefault();
-              void onSave();
+              handleSave();
             }
           }}
           className="w-full text-xs border border-[#007A87] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-none bg-white"
@@ -251,7 +257,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
           onFocus={e => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
         />
         <div className="flex gap-1.5">
-          <button onClick={onSave} className="px-3 py-1 bg-[#007A87] text-white text-[11px] rounded-lg hover:bg-[#00555E]">儲存</button>
+          <button onClick={handleSave} className="px-3 py-1 bg-[#007A87] text-white text-[11px] rounded-lg hover:bg-[#00555E]">儲存</button>
           <button onClick={onCancel} className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg hover:bg-[#F5F5F5]">取消</button>
         </div>
       </div>
@@ -457,9 +463,13 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
         <div className="px-4 py-3 border-t border-[#E5E7EB]">
           <div className="flex gap-2 items-end">
             <Av name={currentActorName} avatarText={currentActorAvatarText} />
-            <textarea rows={1} value={input} onChange={e => setInput(e.target.value)}
+            <textarea rows={1}
+              value={inputIme.draft}
+              onChange={inputIme.inputProps.onChange}
+              onCompositionStart={inputIme.inputProps.onCompositionStart}
+              onCompositionEnd={inputIme.inputProps.onCompositionEnd}
               onKeyDown={async e => {
-                if (isComposingEvent(e)) return;
+                if (inputIme.isComposing(e)) return;
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   await send();
@@ -468,7 +478,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
               placeholder="輸入訊息... (Enter 送出)"
               disabled={sending}
               className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 focus:border-[#007A87] resize-none disabled:cursor-not-allowed disabled:opacity-50" />
-            <button onClick={send} disabled={sending || !input.trim()}
+            <button onClick={send} disabled={sending || !inputIme.value.trim()}
               className="p-2.5 bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] disabled:opacity-40 transition-colors flex-shrink-0">
               <Send size={15} />
             </button>

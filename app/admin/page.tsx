@@ -55,6 +55,8 @@ function AdminContent() {
   const [showUnreadAlert, setShowUnreadAlert] = useState(false);
   const [personKey, setPersonKey] = useState("");
   const [editingNoteVal, setEditingNoteVal] = useState("");
+  const [publicSummaryDraft, setPublicSummaryDraft] = useState("");
+  const [isComposingPublicSummary, setIsComposingPublicSummary] = useState(false);
 
   useEffect(() => {
     try {
@@ -98,11 +100,13 @@ function AdminContent() {
     const s = submissions.find((s) => s.id === id);
     if (!s) return;
     setModalId(id);
+    const pubSummary = s.publicSummary || "";
+    setPublicSummaryDraft(pubSummary);
     setEditState({
       category: s.category,
       status: s.status,
       priority: s.priority,
-      publicSummary: s.publicSummary,
+      publicSummary: pubSummary,
       isVisible: s.isVisible,
       adminNote: s.adminNote,
       isExample: s.isExample ?? false,
@@ -112,10 +116,11 @@ function AdminContent() {
   }
 
   async function handleSave(id: string) {
-    await updateSubmissionAsync(id, { ...editState, isExample: editState.isExample });
+    await updateSubmissionAsync(id, { ...editState, publicSummary: publicSummaryDraft, isExample: editState.isExample });
     reload();
     setModalId(null);
     setEditState({});
+    setPublicSummaryDraft("");
   }
 
   // List tab
@@ -560,8 +565,14 @@ function AdminContent() {
                     </div>
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-medium text-[#757575] mb-1">公開回覆</label>
-                      <textarea rows={2} value={editState.publicSummary || ""}
-                        onChange={e => setEditState(st => ({ ...st, publicSummary: e.target.value }))}
+                      <textarea rows={2} value={publicSummaryDraft}
+                        onChange={e => setPublicSummaryDraft(e.target.value)}
+                        onCompositionStart={() => setIsComposingPublicSummary(true)}
+                        onCompositionEnd={(e) => {
+                          setIsComposingPublicSummary(false);
+                          const finalValue = e.currentTarget.value;
+                          setPublicSummaryDraft(finalValue);
+                        }}
                         placeholder="填寫後公告欄會顯示此回覆"
                         className="w-full text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                     </div>
