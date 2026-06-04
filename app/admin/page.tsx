@@ -46,6 +46,7 @@ function AdminContent() {
   const [adminFilterCategory, setAdminFilterCategory] = useState("");
   const [adminFilterAssignee, setAdminFilterAssignee] = useState<string[]>([]);
   const [adminFilterNote, setAdminFilterNote] = useState("");
+  const [adminFilterUnread, setAdminFilterUnread] = useState(false);
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
   const [editingNoteIdx, setEditingNoteIdx] = useState<number | null>(null);
@@ -102,7 +103,7 @@ function AdminContent() {
   }
 
   // List tab
-  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || adminFilterAssignee.length > 0 || !!adminFilterNote;
+  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || adminFilterAssignee.length > 0 || !!adminFilterNote || adminFilterUnread;
   const visibleSubmissions = submissions;
   const isMyItem = (s: Submission) => !isTeam || (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName);
   const filtered = submissions
@@ -124,6 +125,7 @@ function AdminContent() {
       if (adminFilterAssignee.length > 0) { const sa = Array.isArray(s.assignee) ? s.assignee : [s.assignee]; if (!adminFilterAssignee.some(f => sa.includes(f))) return false; }
       if (adminFilterNote === "有備註" && !s.adminNote?.trim()) return false;
       if (adminFilterNote === "無備註" && !!s.adminNote?.trim()) return false;
+      if (adminFilterUnread && !unreadMap[s.id]) return false;
       return true;
     })
     .sort((a, b) =>
@@ -282,6 +284,15 @@ function AdminContent() {
                   ]}
                   onChange={setAdminFilterNote}
                 />
+                <button type="button"
+                  onClick={() => setAdminFilterUnread(v => !v)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs transition-colors ${
+                    adminFilterUnread
+                      ? "bg-[#AE1914] text-white border-[#AE1914]"
+                      : "bg-white text-[#616161] border-[#E0E0E0] hover:border-[#AE1914]/50"
+                  }`}>
+                  <MessageSquare size={11} />有新回覆
+                </button>
                 <AdminInlineDropdown
                   label="分類"
                   value={adminFilterCategory}
@@ -304,7 +315,7 @@ function AdminContent() {
                   })}
                 </div>
                 {adminHasFilters && (
-                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee([]); setAdminFilterNote(""); }}
+                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee([]); setAdminFilterNote(""); setAdminFilterUnread(false); }}
                     className="flex items-center gap-1 text-xs text-[#AE1914] px-2 py-1.5 rounded-lg hover:bg-[#EBCDCC]/20 transition-colors self-start mt-0.5">
                     <X size={11} />清除篩選
                   </button>
@@ -761,7 +772,7 @@ function AdminContent() {
             <p className="text-sm text-[#6B7280] mb-4">
               共 <span className="font-bold text-[#007A87]">{Object.values(unreadMap).reduce((a,b) => a+b, 0)}</span> 則未讀訊息
             </p>
-            <button onClick={() => { setShowUnreadAlert(false); setTeamTab("mine"); }}
+            <button onClick={() => { setShowUnreadAlert(false); setTeamTab("mine"); setAdminShowFilters(true); setAdminFilterUnread(true); }}
               className="w-full py-2.5 bg-[#007A87] text-white text-sm font-medium rounded-xl hover:bg-[#00555E] transition-colors">
               前往查看
             </button>
