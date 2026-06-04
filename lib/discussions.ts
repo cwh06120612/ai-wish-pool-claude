@@ -75,7 +75,15 @@ export async function addDiscussion(params: {
   if (params.createdAt) insertData.created_at = params.createdAt;
   const { data, error } = await supabase.from("discussions").insert(insertData).select().single();
   if (error) {
-    console.error("[discussions.addDiscussion] insert error", error, insertData);
+    console.error("[discussions.addDiscussion] insert error", {
+      error: {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      },
+      insertData,
+    });
     return null;
   }
   return data ? fromDb(data) : null;
