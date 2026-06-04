@@ -30,13 +30,39 @@ function parseNotes(note: string) {
 function getAvatarText(name?: string) {
   const trimmed = name?.trim();
   if (!trimmed || trimmed === "?") return undefined;
-  return trimmed === "管理者" ? "管" : trimmed.charAt(0);
+  if (trimmed === "管理者") return "管";
+  const chineseChars = Array.from(trimmed).filter(ch => /[\u4e00-\u9fff]/.test(ch));
+  if (chineseChars.length > 0) {
+    return chineseChars.length >= 2 ? chineseChars.slice(-2).join("") : chineseChars[0];
+  }
+  const normalized = trimmed.includes("@") ? trimmed.split("@")[0] : trimmed;
+  const words = normalized.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  return normalized.slice(0, 2).toUpperCase();
 }
 
-function getDisplayName(name?: string) {
+function getDisplayName(name?: string, email?: string) {
   const trimmed = name?.trim();
-  if (!trimmed || trimmed === "?") return "未知使用者";
-  return trimmed;
+  if (trimmed && trimmed !== "?") return trimmed;
+  if (email?.trim()) return email.trim().split("@")[0];
+  return "未綁定帳號";
+}
+
+function getDiscussionAuthor(info: { author?: string; authorName?: string; authorEmail?: string; avatarText?: string }) {
+  const rawAuthor = info.author?.trim();
+  const candidateName = [info.authorName?.trim(), rawAuthor, info.authorEmail?.trim()?.split("@")[0]].find(v => v && v !== "?") ?? "";
+  const displayName = candidateName || "未綁定帳號";
+  const avatarText = info.avatarText || getAvatarText(candidateName || info.authorEmail);
+  if (!candidateName) {
+    console.warn("[DiscussionDrawer] discussion item missing authorName/author/authorEmail metadata");
+  }
+  return {
+    rawAuthor: rawAuthor || "",
+    displayName,
+    avatarText,
+  };
 }
 
 export function DiscussionDrawer({ submission: s, author, personKey, onClose, onAdminNoteChange }: Props) {
@@ -248,7 +274,7 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
             const canEdit = item.author === author;
             return (
               <div key={item.id} className={`flex gap-2 mt-3 ${isMe ? "flex-row-reverse" : ""}`}>
-                <Av name={item.author} avatarText={getAvatarText(item.author)} />
+                <Av name={displayName} avatarText={getAvatarText(item.author)} />
                 <div className={`flex flex-col max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
                   {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{displayName}</span>}
                   {delNoteI === idx
@@ -260,7 +286,7 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
                   {editNoteI !== idx && delNoteI !== idx && (
                     <div className={`flex items-center gap-2 mt-0.5 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
                       {item.datetime && <span className="text-[9px] text-[#9CA3AF]">{item.datetime}</span>}
-                      <button onClick={() => setReplyTo({ id: item.id, author: item.author, content: item.content })}
+                      <button onClick={() => setReplyTo({ id: item.id, author: getDisplayName(item.author), content: item.content })}
                         className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
                         <CornerDownRight size={9} />回覆
                       </button>
@@ -277,11 +303,9 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
 
           {/* New discussions */}
           {topLevel.map(msg => {
-            const authorName = msg.authorName?.trim() || msg.author?.trim() || "";
-            const displayName = getDisplayName(authorName);
-            const avatarText = msg.avatarText || getAvatarText(authorName);
-            const isMe = msg.author === author;
-            const canEdit = msg.author === author;
+            const authorInfo = getDiscussionAuthor(msg);
+            const isMe = msg.author === author || msg.authorName === author;
+            const canEdit = msg.author === author || msg.authorName === author;
             const replyTarget = msg.replyTo ? msgs.find(m => m.id === msg.replyTo) : null;
             const isLatest = msg.id === latestId;
 
@@ -295,19 +319,19 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
                   </div>
                 )}
                 <div className={`flex gap-2 mt-3 ${isMe ? "flex-row-reverse" : ""}`}>
-                  <Av name={authorName} avatarText={avatarText} />
+                  <Av name={authorInfo.displayName} avatarText={authorInfo.avatarText} />
                   <div className={`flex flex-col max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
-                    {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{displayName}</span>}
+                    {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{authorInfo.displayName}</span>}
                     {delId === msg.id
                       ? <ConfirmDelete onConfirm={() => doDelete(msg.id)} onCancel={() => setDelId(null)} />
                       : editId === msg.id
                       ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(msg.id)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`msg-${msg.id}`} />
-                      : <Bubble content={msg.content} isMe={isMe} replyTarget={replyTarget ? { author: replyTarget.author, content: replyTarget.content } : null} />
+                      : <Bubble content={msg.content} isMe={isMe} replyTarget={replyTarget ? { author: getDiscussionAuthor(replyTarget).displayName, content: replyTarget.content } : null} />
                     }
                     {editId !== msg.id && delId !== msg.id && (
                       <div className={`flex items-center gap-2 mt-0.5 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
                         <span className="text-[9px] text-[#9CA3AF]">{formatTime(msg.createdAt)}</span>
-                        <button onClick={() => setReplyTo({ id: msg.id, author: msg.author, content: msg.content })}
+                        <button onClick={() => setReplyTo({ id: msg.id, author: getDiscussionAuthor(msg).displayName, content: msg.content })}
                           className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
                           <CornerDownRight size={9} />回覆
                         </button>
@@ -321,25 +345,25 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
                 </div>
                 {/* Replies */}
                 {repliesOf(msg.id).map(reply => {
-                  const replyAuthorName = reply.authorName?.trim() || reply.author?.trim() || "";
-                  const rIsMe = reply.author === author;
-                  const rCanEdit = reply.author === author;
+                  const replyAuthorInfo = getDiscussionAuthor(reply);
+                  const rIsMe = reply.author === author || reply.authorName === author;
+                  const rCanEdit = reply.author === author || reply.authorName === author;
                   const rTarget = msgs.find(m => m.id === reply.replyTo);
                   return (
                     <div key={reply.id} className={`flex gap-2 mt-2 ml-9 ${rIsMe ? "flex-row-reverse" : ""}`}>
-                      <Av name={replyAuthorName} avatarText={reply.avatarText || getAvatarText(replyAuthorName)} />
+                      <Av name={replyAuthorInfo.displayName} avatarText={replyAuthorInfo.avatarText} />
                       <div className={`flex flex-col max-w-[72%] ${rIsMe ? "items-end" : "items-start"}`}>
-                        {!rIsMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{getDisplayName(replyAuthorName)}</span>}
+                        {!rIsMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{replyAuthorInfo.displayName}</span>}
                         {delId === reply.id
                           ? <ConfirmDelete onConfirm={() => doDelete(reply.id)} onCancel={() => setDelId(null)} />
                           : editId === reply.id
                           ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(reply.id)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`reply-${reply.id}`} />
-                          : <Bubble content={reply.content} isMe={rIsMe} replyTarget={rTarget ? { author: rTarget.author, content: rTarget.content } : null} />
+                          : <Bubble content={reply.content} isMe={rIsMe} replyTarget={rTarget ? { author: getDiscussionAuthor(rTarget).displayName, content: rTarget.content } : null} />
                         }
                         {editId !== reply.id && delId !== reply.id && (
                           <div className={`flex items-center gap-2 mt-0.5 px-1 ${rIsMe ? "flex-row-reverse" : ""}`}>
                             <span className="text-[9px] text-[#9CA3AF]">{formatTime(reply.createdAt)}</span>
-                            <button onClick={() => setReplyTo({ id: reply.id, author: reply.author, content: reply.content })}
+                            <button onClick={() => setReplyTo({ id: reply.id, author: getDiscussionAuthor(reply).displayName, content: reply.content })}
                               className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
                               <CornerDownRight size={9} />回覆
                             </button>
