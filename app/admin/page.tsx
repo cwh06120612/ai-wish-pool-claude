@@ -626,7 +626,7 @@ function AdminContent() {
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: adminRole === 'editor' ? '#007A87' : '#BE8B55'}}>
                           {adminRole === 'editor' ? '管' : myName.charAt(0)}
                         </div>
-                        <textarea rows={2} id="newNoteInput"
+                        <textarea rows={1} id="newNoteInput"
                           placeholder="新增備註... (Enter 送出，Shift+Enter 換行)"
                           onKeyDown={async (e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
