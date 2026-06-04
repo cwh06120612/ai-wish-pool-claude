@@ -73,3 +73,11 @@ export async function getUnreadCount(submissionIds: string[], person: string): P
   }
   return counts;
 }
+
+export async function deleteDiscussion(id: string): Promise<void> {
+  await supabase.from("discussions").delete().eq("id", id);
+}
+
+export async function editDiscussion(id: string, content: string): Promise<void> {
+  await supabase.from("discussions").update({ content }).eq("id", id);
+}

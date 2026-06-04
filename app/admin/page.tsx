@@ -353,13 +353,16 @@ function AdminContent() {
                             ? <Eye size={13} className="text-[#007A87]" />
                             : <EyeOff size={13} className="text-[#BDBDBD]" />
                           }
-                          {unreadMap[s.id] > 0 && (
-                            <button type="button"
-                              onClick={e => { e.stopPropagation(); setDrawerSub(s); setUnreadMap(prev => { const n={...prev}; delete n[s.id]; return n; }); }}
-                              className="ml-auto flex items-center gap-1 px-2 py-0.5 bg-[#AE1914] text-white text-[10px] font-bold rounded-full hover:bg-[#8B1410] transition-colors">
-                              <MessageSquare size={9} />+{unreadMap[s.id]}
-                            </button>
-                          )}
+                          <button type="button"
+                            onClick={e => { e.stopPropagation(); setDrawerSub(s); setUnreadMap(prev => { const n={...prev}; delete n[s.id]; return n; }); }}
+                            className={`ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
+                              unreadMap[s.id] > 0
+                                ? "bg-[#AE1914] text-white hover:bg-[#8B1410]"
+                                : "bg-[#F3F4F6] text-[#9CA3AF] hover:bg-[#E5E7EB]"
+                            }`}>
+                            <MessageSquare size={9} />
+                            {unreadMap[s.id] > 0 ? `+${unreadMap[s.id]} 則新訊息` : "討論"}
+                          </button>
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-[#BDBDBD] flex-shrink-0 mt-0.5" />
