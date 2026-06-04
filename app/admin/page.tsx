@@ -13,8 +13,8 @@ import { DiscussionDrawer } from "@/components/admin/discussion-drawer";
 import { getUnreadCount } from "@/lib/discussions";
 const ASSIGNEE_EDIT_OPTIONS = ["未指定", ...ASSIGNEE_OPTIONS];
 import {
-  LayoutDashboard, ListFilter, Download, FileText, SlidersHorizontal, Search,
-  Eye, EyeOff, ChevronDown, ChevronUp, ChevronRight,
+  LayoutDashboard, ListFilter, Download, SlidersHorizontal, Search,
+  Eye, EyeOff, ChevronDown, ChevronRight,
   X, Save, Check, LogOut, ThumbsUp, MessageSquare,
 } from "lucide-react";
 
@@ -29,8 +29,26 @@ const CATEGORY_OPTIONS: Category[] = [
 
 type Tab = "dashboard" | "list";
 
+function formatMutationError(error: unknown) {
+  if (typeof error === "object" && error !== null) {
+    const err = error as { message?: string; code?: string; details?: string; hint?: string };
+    return {
+      message: err.message,
+      code: err.code,
+      details: err.details,
+      hint: err.hint,
+    };
+  }
+  return {
+    message: String(error),
+    code: undefined,
+    details: undefined,
+    hint: undefined,
+  };
+}
+
 function AdminContent() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>("list");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const { role: adminRole, assignee: myName } = useAdminRole();
   const canEdit = adminRole === "editor";
@@ -45,18 +63,17 @@ function AdminContent() {
   const [adminFilterVisible, setAdminFilterVisible] = useState("");
   const [adminFilterCategory, setAdminFilterCategory] = useState("");
   const [adminFilterAssignee, setAdminFilterAssignee] = useState<string[]>([]);
-  const [adminFilterNote, setAdminFilterNote] = useState("");
   const [adminFilterUnread, setAdminFilterUnread] = useState("");
   const [adminShowFilters, setAdminShowFilters] = useState(false);
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
-  const [editingNoteIdx, setEditingNoteIdx] = useState<number | null>(null);
   const [drawerSub, setDrawerSub] = useState<Submission | null>(null);
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
   const [showUnreadAlert, setShowUnreadAlert] = useState(false);
   const [personKey, setPersonKey] = useState("");
-  const [editingNoteVal, setEditingNoteVal] = useState("");
   const [publicSummaryDraft, setPublicSummaryDraft] = useState("");
   const [isComposingPublicSummary, setIsComposingPublicSummary] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     try {
@@ -100,6 +117,8 @@ function AdminContent() {
     const s = submissions.find((s) => s.id === id);
     if (!s) return;
     setModalId(id);
+    setSaveError("");
+    setIsComposingPublicSummary(false);
     const pubSummary = s.publicSummary || "";
     setPublicSummaryDraft(pubSummary);
     setEditState({
@@ -108,7 +127,6 @@ function AdminContent() {
       priority: s.priority,
       publicSummary: pubSummary,
       isVisible: s.isVisible,
-      adminNote: s.adminNote,
       isExample: s.isExample ?? false,
       shareMode: s.shareMode,
       assignee: s.assignee ?? ["未指定"],
@@ -116,16 +134,62 @@ function AdminContent() {
   }
 
   async function handleSave(id: string) {
-    await updateSubmissionAsync(id, { ...editState, publicSummary: publicSummaryDraft, isExample: editState.isExample });
-    reload();
-    setModalId(null);
-    setEditState({});
-    setPublicSummaryDraft("");
+    if (isComposingPublicSummary) {
+      setSaveError("請先完成中文選字再儲存");
+      return;
+    }
+
+    const current = submissions.find((s) => s.id === id);
+    if (!current) {
+      const error = new Error("Missing submission before save");
+      console.error("[AdminContent.handleSave] update target missing", {
+        table: "submissions",
+        targetId: id,
+        updatePayload: {},
+        error: formatMutationError(error),
+      });
+      setSaveError("儲存失敗，請稍後再試");
+      return;
+    }
+
+    const updates: Partial<Submission> = {
+      status: (editState.status as Status | undefined) ?? current.status,
+      priority: (editState.priority as Priority | undefined) ?? current.priority,
+      category: (editState.category as Category[] | undefined) ?? current.category,
+      publicSummary: publicSummaryDraft,
+    };
+
+    if (canEdit) {
+      updates.isVisible = editState.isVisible ?? current.isVisible;
+      updates.isExample = editState.isExample ?? current.isExample ?? false;
+      updates.shareMode = editState.shareMode ?? current.shareMode;
+      updates.assignee = (editState.assignee as string[] | undefined) ?? current.assignee;
+    }
+
+    setIsSavingEdit(true);
+    setSaveError("");
+    try {
+      await updateSubmissionAsync(id, updates);
+      setSubmissions(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+      await reload();
+      setModalId(null);
+      setEditState({});
+      setPublicSummaryDraft("");
+    } catch (error) {
+      console.error("[AdminContent.handleSave] update failed", {
+        table: "submissions",
+        targetId: id,
+        updatePayload: updates,
+        error: formatMutationError(error),
+      });
+      setSaveError("儲存失敗，請稍後再試");
+    } finally {
+      setIsSavingEdit(false);
+    }
   }
 
   // List tab
-  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || adminFilterAssignee.length > 0 || !!adminFilterNote || !!adminFilterUnread;
-  const visibleSubmissions = submissions;
+  const adminHasFilters = !!adminFilterStatus || !!adminFilterPriority || !!adminFilterVisible || !!adminFilterCategory || adminFilterAssignee.length > 0 || !!adminFilterUnread;
   const isMyItem = (s: Submission) => !isTeam || (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName);
   const filtered = submissions
     .filter((s: Submission) => {
@@ -144,8 +208,6 @@ function AdminContent() {
       if (adminFilterVisible === "hidden" && s.isVisible) return false;
       if (adminFilterCategory && !(Array.isArray(s.category) ? s.category : [s.category]).includes(adminFilterCategory as Category)) return false;
       if (adminFilterAssignee.length > 0) { const sa = Array.isArray(s.assignee) ? s.assignee : [s.assignee]; if (!adminFilterAssignee.some(f => sa.includes(f))) return false; }
-      if (adminFilterNote === "有備註" && !s.adminNote?.trim()) return false;
-      if (adminFilterNote === "無備註" && !!s.adminNote?.trim()) return false;
       if (adminFilterUnread === "有新回覆" && !unreadMap[s.id]) return false;
       if (adminFilterUnread === "無新回覆" && unreadMap[s.id]) return false;
       return true;
@@ -303,16 +365,6 @@ function AdminContent() {
                   onChange={setAdminFilterCategory}
                 />
                 <AdminInlineDropdown
-                  label="備註"
-                  value={adminFilterNote}
-                  options={[
-                    { value: "", label: "全部" },
-                    { value: "有備註", label: "有備註" },
-                    { value: "無備註", label: "無備註" },
-                  ]}
-                  onChange={setAdminFilterNote}
-                />
-                <AdminInlineDropdown
                   label="新討論"
                   value={adminFilterUnread}
                   options={[
@@ -338,7 +390,7 @@ function AdminContent() {
                   })}
                 </div>
                 {adminHasFilters && (
-                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee([]); setAdminFilterNote(""); setAdminFilterUnread(""); }}
+                  <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee([]); setAdminFilterUnread(""); }}
                     className="flex items-center gap-1 text-xs text-[#AE1914] px-2 py-1.5 rounded-lg hover:bg-[#EBCDCC]/20 transition-colors self-start mt-0.5">
                     <X size={11} />清除篩選
                   </button>
@@ -566,7 +618,10 @@ function AdminContent() {
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-medium text-[#757575] mb-1">公開回覆</label>
                       <textarea rows={2} value={publicSummaryDraft}
-                        onChange={e => setPublicSummaryDraft(e.target.value)}
+                        onChange={e => {
+                          setPublicSummaryDraft(e.target.value);
+                          if (saveError) setSaveError("");
+                        }}
                         onCompositionStart={() => setIsComposingPublicSummary(true)}
                         onCompositionEnd={(e) => {
                           setIsComposingPublicSummary(false);
@@ -581,11 +636,16 @@ function AdminContent() {
                 </div>
               </div>
               {/* Footer */}
-              <div className="border-t border-[#F0F4F4] px-5 py-3 flex justify-end gap-2 flex-shrink-0">
+              <div className="border-t border-[#F0F4F4] px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 flex-shrink-0">
+                <div className="min-h-4">
+                  {saveError && <p className="text-xs text-[#AE1914]">{saveError}</p>}
+                </div>
+                <div className="flex justify-end gap-2">
                 <Button variant="tertiary" size="sm" onClick={() => setModalId(null)}>取消</Button>
-                <Button variant="primary" size="sm" onClick={() => handleSave(s.id)} disabled={!canEdit && !(isTeam && isMyItem(s))}>
+                <Button variant="primary" size="sm" onClick={() => handleSave(s.id)} disabled={isSavingEdit || isComposingPublicSummary || (!canEdit && !(isTeam && isMyItem(s)))}>
                   <Save size={13} />儲存
                 </Button>
+                </div>
               </div>
             </div>
           </div>

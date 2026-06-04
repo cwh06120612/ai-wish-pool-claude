@@ -1,5 +1,32 @@
 import { supabase } from "./supabase";
 
+function formatSupabaseError(error: unknown) {
+  if (typeof error === "object" && error !== null) {
+    const err = error as { message?: string; code?: string; details?: string; hint?: string };
+    return {
+      message: err.message,
+      code: err.code,
+      details: err.details,
+      hint: err.hint,
+    };
+  }
+  return {
+    message: String(error),
+    code: undefined,
+    details: undefined,
+    hint: undefined,
+  };
+}
+
+function logMutationError(context: string, params: { table: string; targetId: string; updatePayload: Record<string, unknown>; error: unknown }) {
+  console.error(context, {
+    table: params.table,
+    targetId: params.targetId,
+    updatePayload: params.updatePayload,
+    error: formatSupabaseError(params.error),
+  });
+}
+
 export interface Discussion {
   id: string;
   submissionId: string;
@@ -123,5 +150,31 @@ export async function deleteDiscussion(id: string): Promise<void> {
 }
 
 export async function editDiscussion(id: string, content: string): Promise<void> {
-  await supabase.from("discussions").update({ content }).eq("id", id);
+  const updatePayload = { content, is_edited: true };
+  if (!id) {
+    const error = new Error("Missing discussion id for update");
+    logMutationError("[discussions.editDiscussion] invalid update", {
+      table: "discussions",
+      targetId: id,
+      updatePayload,
+      error,
+    });
+    throw error;
+  }
+
+  const { error } = await supabase
+    .from("discussions")
+    .update(updatePayload)
+    .eq("id", id)
+    .select("id")
+    .single();
+  if (error) {
+    logMutationError("[discussions.editDiscussion] update error", {
+      table: "discussions",
+      targetId: id,
+      updatePayload,
+      error,
+    });
+    throw error;
+  }
 }

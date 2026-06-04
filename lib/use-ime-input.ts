@@ -11,18 +11,18 @@ import { useState, useRef, useCallback } from "react";
  * - On compositionEnd: sync the final value from input to state
  * - On change when not composing: update both draft and main state immediately
  */
-export function useImeInput(initialValue: string = "") {
+export function useImeInput<TElement extends HTMLInputElement | HTMLTextAreaElement = HTMLTextAreaElement>(initialValue: string = "") {
   const [value, setValue] = useState(initialValue);
   const [draft, setDraft] = useState(initialValue);
   const isComposingRef = useRef(false);
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const inputRef = useRef<TElement>(null);
 
   const handleCompositionStart = useCallback(() => {
     isComposingRef.current = true;
   }, []);
 
   const handleCompositionEnd = useCallback(
-    (event: React.CompositionEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (event: React.CompositionEvent<TElement>) => {
       isComposingRef.current = false;
       // Get the final value after IME selection
       const finalValue = event.currentTarget.value;
@@ -33,7 +33,7 @@ export function useImeInput(initialValue: string = "") {
   );
 
   const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (event: React.ChangeEvent<TElement>) => {
       const nextValue = event.currentTarget.value;
       setDraft(nextValue);
 
@@ -47,7 +47,7 @@ export function useImeInput(initialValue: string = "") {
   );
 
   const isComposing = useCallback(
-    (event?: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (event?: React.KeyboardEvent<TElement>) => {
       const nativeEvent = event?.nativeEvent as KeyboardEvent | undefined;
       return (
         isComposingRef.current ||
@@ -63,14 +63,22 @@ export function useImeInput(initialValue: string = "") {
     setDraft(newValue);
   }, []);
 
+  const getLatestValue = useCallback(() => {
+    return inputRef.current?.value ?? draft;
+  }, [draft]);
+
   return {
     value,
     draft,
     inputRef,
     isComposing,
+    getLatestValue,
     syncValue,
     setValue,
     setDraft,
+    onChange: handleChange,
+    onCompositionStart: handleCompositionStart,
+    onCompositionEnd: handleCompositionEnd,
     inputProps: {
       ref: inputRef,
       value: draft, // Use draft for controlled input to show live composition

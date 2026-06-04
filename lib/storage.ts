@@ -1,6 +1,33 @@
 import { supabase } from "./supabase";
 import type { Submission, Category } from "@/types/submission";
 
+function formatSupabaseError(error: unknown) {
+  if (typeof error === "object" && error !== null) {
+    const err = error as { message?: string; code?: string; details?: string; hint?: string };
+    return {
+      message: err.message,
+      code: err.code,
+      details: err.details,
+      hint: err.hint,
+    };
+  }
+  return {
+    message: String(error),
+    code: undefined,
+    details: undefined,
+    hint: undefined,
+  };
+}
+
+function logMutationError(context: string, params: { table: string; targetId: string; updatePayload: Record<string, unknown>; error: unknown }) {
+  console.error(context, {
+    table: params.table,
+    targetId: params.targetId,
+    updatePayload: params.updatePayload,
+    error: formatSupabaseError(params.error),
+  });
+}
+
 // ─── 型別轉換（DB 欄位 snake_case ↔ JS camelCase）────────────────────────────
 function toDb(s: Submission) {
   return {
@@ -98,9 +125,34 @@ export async function updateSubmissionAsync(id: string, updates: Partial<Submiss
   if (updates.isVisible !== undefined) dbUpdates.is_visible = updates.isVisible;
   if (updates.likeCount !== undefined) dbUpdates.like_count = updates.likeCount;
   if (updates.isExample !== undefined) dbUpdates.is_example = updates.isExample;
+  if (updates.shareMode !== undefined) dbUpdates.share_mode = updates.shareMode;
   if (updates.assignee !== undefined) dbUpdates.assignee = Array.isArray(updates.assignee) ? updates.assignee : [updates.assignee];
-  const { error } = await supabase.from("submissions").update(dbUpdates).eq("id", id);
-  if (error) console.error(error);
+  if (!id || Object.keys(dbUpdates).length === 0) {
+    const error = new Error(!id ? "Missing submission id for update" : "No submission fields to update");
+    logMutationError("[storage.updateSubmissionAsync] invalid update", {
+      table: "submissions",
+      targetId: id,
+      updatePayload: dbUpdates,
+      error,
+    });
+    throw error;
+  }
+
+  const { error } = await supabase
+    .from("submissions")
+    .update(dbUpdates)
+    .eq("id", id)
+    .select("id")
+    .single();
+  if (error) {
+    logMutationError("[storage.updateSubmissionAsync] update error", {
+      table: "submissions",
+      targetId: id,
+      updatePayload: dbUpdates,
+      error,
+    });
+    throw error;
+  }
 }
 
 export async function incrementLikeAsync(id: string, liker?: { name: string; dept: string }): Promise<void> {

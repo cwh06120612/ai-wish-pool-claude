@@ -14,7 +14,7 @@ interface Props {
   role: AdminRole;
   personKey: string;
   onClose: () => void;
-  onAdminNoteChange?: (newNote: string) => void;
+  onAdminNoteChange?: (newNote: string) => void | Promise<void>;
 }
 
 function formatTime(iso: string) {
@@ -80,7 +80,17 @@ function getDiscussionAuthor(info: { author?: string; authorName?: string; autho
 export function DiscussionDrawer({ submission: s, author, role, personKey, onClose, onAdminNoteChange }: Props) {
   const [msgs, setMsgs] = useState<Discussion[]>([]);
   const [notes, setNotes] = useState(() => parseNotes(s.adminNote || ""));
-  const inputIme = useImeInput("");
+  const {
+    value: inputValue,
+    draft: inputDraft,
+    inputRef: messageInputRef,
+    isComposing: isInputComposing,
+    getLatestValue: getLatestInputValue,
+    syncValue: syncInputValue,
+    onChange: handleInputChange,
+    onCompositionStart: handleInputCompositionStart,
+    onCompositionEnd: handleInputCompositionEnd,
+  } = useImeInput("");
   const [replyTo, setReplyTo] = useState<{ id: string; author: string; content: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
@@ -91,6 +101,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
   const [currentUser, setCurrentUser] = useState<CurrentUserInfo | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [actionError, setActionError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -112,7 +123,11 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
   }, []);
 
   async function send() {
-    const t = inputIme.value.trim();
+    if (isInputComposing()) {
+      setSendError("請先完成中文選字再送出");
+      return;
+    }
+    const t = getLatestInputValue().trim();
     if (!t) return;
     const isAdmin = role === "editor";
     const isOwner = role === "team";
@@ -122,6 +137,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
     }
     setSending(true);
     setSendError("");
+    setActionError("");
     const rid = replyTo?.id ?? null;
     const authorName = isAdmin ? "管理者" : author;
     const authorAvatarText = isAdmin ? "管" : getAvatarText(author);
@@ -146,7 +162,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
         setSendError("留言送出失敗：伺服器回應錯誤，請稍後再試");
         return;
       }
-      inputIme.syncValue("");
+      syncInputValue("");
       setReplyTo(null);
       await load();
     } catch (error) {
@@ -157,12 +173,14 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
     }
   }
 
-  async function saveEdit(id: string) {
-    const t = editVal.trim();
+  async function saveEdit(id: string, nextContent: string) {
+    const t = nextContent.trim();
     if (!t) return;
-    setMsgs(p => p.map(m => m.id === id ? { ...m, content: t } : m));
-    setEditId(null); setEditVal("");
     await editDiscussion(id, t);
+    setMsgs(p => p.map(m => m.id === id ? { ...m, content: t, isEdited: true } : m));
+    setEditId(null);
+    setEditVal("");
+    setActionError("");
   }
 
   async function doDelete(id: string) {
@@ -171,25 +189,36 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
     await deleteDiscussion(id);
   }
 
-  async function saveNoteEdit(idx: number) {
-    const t = editNoteVal.trim();
+  async function saveNoteEdit(idx: number, nextContent: string) {
+    const t = nextContent.trim();
     if (!t) return;
     const arr = [...notes];
     const item = arr[idx];
+    if (!item) return;
     const raw = `[${item.author} ${item.datetime}] ${t}`;
     arr[idx] = { ...item, content: t, raw };
     const newNote = arr.map(n => n.raw).join("\n");
-    setNotes(arr); setEditNoteI(null); setEditNoteVal("");
-    onAdminNoteChange?.(newNote);
     await updateSubmissionAsync(s.id, { adminNote: newNote });
+    setNotes(arr);
+    setEditNoteI(null);
+    setEditNoteVal("");
+    setActionError("");
+    await onAdminNoteChange?.(newNote);
   }
 
   async function doDeleteNote(idx: number) {
     const arr = notes.filter((_, j) => j !== idx);
     const newNote = arr.map(n => n.raw).join("\n");
-    setNotes(arr); setDelNoteI(null);
-    onAdminNoteChange?.(newNote);
-    await updateSubmissionAsync(s.id, { adminNote: newNote });
+    try {
+      await updateSubmissionAsync(s.id, { adminNote: newNote });
+      setNotes(arr);
+      setDelNoteI(null);
+      setActionError("");
+      await onAdminNoteChange?.(newNote);
+    } catch (error) {
+      console.error("[DiscussionDrawer] delete adminNote item failed", error);
+      setActionError("儲存失敗，請稍後再試");
+    }
   }
 
   function Av({ name, avatarText }: { name?: string; avatarText?: string }) {
@@ -230,23 +259,48 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
     );
   }
 
-  function EditInput({ val, setVal, onSave, onCancel, editKey }: { val: string; setVal: (v: string) => void; onSave: () => void; onCancel: () => void; editKey: string }) {
-    const editIme = useImeInput(val);
+  function EditInput({ val, onSave, onCancel, editKey }: { val: string; onSave: (value: string) => void | Promise<void>; onCancel: () => void; editKey: string }) {
+    const {
+      draft,
+      inputRef,
+      isComposing,
+      getLatestValue,
+      onChange,
+      onCompositionStart,
+      onCompositionEnd,
+    } = useImeInput(val);
+    const [error, setError] = useState("");
+    const [saving, setSaving] = useState(false);
 
-    const handleSave = () => {
-      setVal(editIme.value);
-      onSave();
+    const handleSave = async () => {
+      if (isComposing()) {
+        setError("請先完成中文選字再儲存");
+        return;
+      }
+      const latestValue = getLatestValue().trim();
+      if (!latestValue) return;
+      setSaving(true);
+      setError("");
+      try {
+        await onSave(latestValue);
+      } catch (saveError) {
+        console.error("[DiscussionDrawer.EditInput] save failed", saveError);
+        setError("儲存失敗，請稍後再試");
+      } finally {
+        setSaving(false);
+      }
     };
 
     return (
       <div className="space-y-1.5 w-full">
         <textarea key={editKey} rows={2}
-          value={editIme.draft}
-          onChange={editIme.inputProps.onChange}
-          onCompositionStart={editIme.inputProps.onCompositionStart}
-          onCompositionEnd={editIme.inputProps.onCompositionEnd}
+          ref={inputRef}
+          value={draft}
+          onChange={onChange}
+          onCompositionStart={onCompositionStart}
+          onCompositionEnd={onCompositionEnd}
           onKeyDown={e => {
-            if (editIme.isComposing(e)) return;
+            if (isComposing(e)) return;
             if (e.key === "Enter") {
               e.preventDefault();
               handleSave();
@@ -256,9 +310,10 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
           autoFocus
           onFocus={e => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
         />
+        {error && <p className="text-[11px] text-[#AE1914]">{error}</p>}
         <div className="flex gap-1.5">
-          <button onClick={handleSave} className="px-3 py-1 bg-[#007A87] text-white text-[11px] rounded-lg hover:bg-[#00555E]">儲存</button>
-          <button onClick={onCancel} className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg hover:bg-[#F5F5F5]">取消</button>
+          <button onClick={handleSave} disabled={saving} className="px-3 py-1 bg-[#007A87] text-white text-[11px] rounded-lg hover:bg-[#00555E] disabled:opacity-50">儲存</button>
+          <button onClick={onCancel} disabled={saving} className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg hover:bg-[#F5F5F5] disabled:opacity-50">取消</button>
         </div>
       </div>
     );
@@ -345,7 +400,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
                   {delNoteI === idx
                     ? <ConfirmDelete onConfirm={() => doDeleteNote(idx)} onCancel={() => setDelNoteI(null)} />
                     : editNoteI === idx
-                    ? <EditInput val={editNoteVal} setVal={setEditNoteVal} onSave={() => saveNoteEdit(idx)} onCancel={() => { setEditNoteI(null); setEditNoteVal(""); }} editKey={`note-${idx}`} />
+                    ? <EditInput val={editNoteVal} onSave={(value) => saveNoteEdit(idx, value)} onCancel={() => { setEditNoteI(null); setEditNoteVal(""); }} editKey={`note-${idx}`} />
                     : <Bubble content={item.content} isMe={isMe} />
                   }
                   {editNoteI !== idx && delNoteI !== idx && (
@@ -390,7 +445,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
                     {delId === msg.id
                       ? <ConfirmDelete onConfirm={() => doDelete(msg.id)} onCancel={() => setDelId(null)} />
                       : editId === msg.id
-                      ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(msg.id)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`msg-${msg.id}`} />
+                      ? <EditInput val={editVal} onSave={(value) => saveEdit(msg.id, value)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`msg-${msg.id}`} />
                       : <Bubble content={msg.content} isMe={isMe} replyTarget={replyTarget ? { author: getDiscussionAuthor(replyTarget).displayName, content: replyTarget.content } : null} />
                     }
                     {editId !== msg.id && delId !== msg.id && (
@@ -422,7 +477,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
                         {delId === reply.id
                           ? <ConfirmDelete onConfirm={() => doDelete(reply.id)} onCancel={() => setDelId(null)} />
                           : editId === reply.id
-                          ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(reply.id)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`reply-${reply.id}`} />
+                          ? <EditInput val={editVal} onSave={(value) => saveEdit(reply.id, value)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`reply-${reply.id}`} />
                           : <Bubble content={reply.content} isMe={rIsMe} replyTarget={rTarget ? { author: getDiscussionAuthor(rTarget).displayName, content: rTarget.content } : null} />
                         }
                         {editId !== reply.id && delId !== reply.id && (
@@ -464,12 +519,13 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
           <div className="flex gap-2 items-end">
             <Av name={currentActorName} avatarText={currentActorAvatarText} />
             <textarea rows={1}
-              value={inputIme.draft}
-              onChange={inputIme.inputProps.onChange}
-              onCompositionStart={inputIme.inputProps.onCompositionStart}
-              onCompositionEnd={inputIme.inputProps.onCompositionEnd}
+              ref={messageInputRef}
+              value={inputDraft}
+              onChange={handleInputChange}
+              onCompositionStart={handleInputCompositionStart}
+              onCompositionEnd={handleInputCompositionEnd}
               onKeyDown={async e => {
-                if (inputIme.isComposing(e)) return;
+                if (isInputComposing(e)) return;
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   await send();
@@ -478,11 +534,12 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
               placeholder="輸入訊息... (Enter 送出)"
               disabled={sending}
               className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 focus:border-[#007A87] resize-none disabled:cursor-not-allowed disabled:opacity-50" />
-            <button onClick={send} disabled={sending || !inputIme.value.trim()}
+            <button onClick={send} disabled={sending || !inputValue.trim()}
               className="p-2.5 bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] disabled:opacity-40 transition-colors flex-shrink-0">
               <Send size={15} />
             </button>
           </div>
+          {actionError && <p className="mt-2 text-xs text-[#AE1914]">{actionError}</p>}
           {sendError && <p className="mt-2 text-xs text-[#AE1914]">{sendError}</p>}
           {sending && <p className="mt-2 text-xs text-[#6B7280]">留言送出中...</p>}
         </div>
