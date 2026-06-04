@@ -53,7 +53,23 @@ function AdminContent() {
   const [drawerSub, setDrawerSub] = useState<Submission | null>(null);
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
   const [showUnreadAlert, setShowUnreadAlert] = useState(false);
+  const [personKey, setPersonKey] = useState("");
   const [editingNoteVal, setEditingNoteVal] = useState("");
+
+  useEffect(() => {
+    try {
+      if (adminRole === "editor") {
+        const stored = sessionStorage.getItem("ai-wish-admin-person-key");
+        const key = stored || `editor-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+        sessionStorage.setItem("ai-wish-admin-person-key", key);
+        setPersonKey(key);
+      } else if (adminRole === "team" && myName) {
+        setPersonKey(myName);
+      }
+    } catch {
+      setPersonKey(adminRole === "team" ? myName : "管理者");
+    }
+  }, [adminRole, myName]);
 
   const reload = React.useCallback(async () => {
     const data = await getSubmissionsAsync();
@@ -67,16 +83,16 @@ function AdminContent() {
   }, [reload]);
 
   useEffect(() => {
-    if (!isTeam || !myName || submissions.length === 0) return;
-    const myIds = submissions
-      .filter(s => (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName))
-      .map(s => s.id);
-    if (myIds.length === 0) return;
-    getUnreadCount(myIds, myName).then(map => {
+    if (!personKey || submissions.length === 0) return;
+    const ids = adminRole === "team"
+      ? submissions.filter(s => (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName)).map(s => s.id)
+      : submissions.map(s => s.id);
+    if (ids.length === 0) return;
+    getUnreadCount(ids, personKey).then(map => {
       setUnreadMap(map);
       if (Object.values(map).reduce((a, b) => a + b, 0) > 0) setShowUnreadAlert(true);
     });
-  }, [submissions.length, myName, isTeam]);
+  }, [submissions.length, myName, adminRole, personKey]);
 
   function handleEdit(id: string) {
     const s = submissions.find((s) => s.id === id);
@@ -614,20 +630,26 @@ function AdminContent() {
       })()}
 
       {/* Unread notification modal */}
-      {showUnreadAlert && isTeam && Object.values(unreadMap).reduce((a,b) => a+b, 0) > 0 && (
+      {showUnreadAlert && Object.values(unreadMap).reduce((a,b) => a+b, 0) > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30" onClick={() => setShowUnreadAlert(false)} />
           <div className="relative bg-white rounded-2xl shadow-xl p-6 w-80 text-center">
             <div className="w-12 h-12 rounded-full bg-[#B5E1E5]/40 flex items-center justify-center mx-auto mb-4">
               <MessageSquare size={22} className="text-[#007A87]" />
             </div>
-            <h3 className="text-base font-bold text-[#1F2937] mb-1">你有新討論</h3>
-            <p className="text-sm text-[#6B7280] mb-4">
-              共 <span className="font-bold text-[#007A87]">{Object.values(unreadMap).reduce((a,b) => a+b, 0)}</span> 則未讀訊息
-            </p>
-            <button onClick={() => { setShowUnreadAlert(false); setTeamTab("mine"); setAdminShowFilters(true); setAdminFilterUnread("有新回覆"); }}
+            <h3 className="text-base font-bold text-[#1F2937] mb-1">
+              {adminRole === "editor" ? "目前有" : "你負責的困擾中，有"}
+              <span className="text-[#007A87] font-semibold"> {Object.values(unreadMap).filter(c => c > 0).length} </span>
+              筆{adminRole === "editor" ? "困擾有新討論" : "有新討論"}
+            </h3>
+            <button onClick={() => {
+                setShowUnreadAlert(false);
+                setAdminShowFilters(true);
+                setAdminFilterUnread("有新回覆");
+                if (adminRole === "team") setTeamTab("mine");
+              }}
               className="w-full py-2.5 bg-[#007A87] text-white text-sm font-medium rounded-xl hover:bg-[#00555E] transition-colors">
-              前往查看
+              查看新討論
             </button>
             <button onClick={() => setShowUnreadAlert(false)}
               className="mt-2 w-full py-2 text-sm text-[#9E9E9E] hover:text-[#616161] transition-colors">
@@ -642,6 +664,7 @@ function AdminContent() {
         <DiscussionDrawer
           submission={drawerSub}
           author={adminRole === "editor" ? "管理者" : myName}
+          personKey={personKey || (adminRole === "editor" ? "管理者" : myName)}
           onClose={() => setDrawerSub(null)}
           onAdminNoteChange={async (newNote) => {
             setDrawerSub(prev => prev ? { ...prev, adminNote: newNote } : prev);

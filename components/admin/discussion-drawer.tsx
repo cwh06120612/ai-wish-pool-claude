@@ -8,6 +8,7 @@ import type { Submission } from "@/types/submission";
 interface Props {
   submission: Submission;
   author: string;
+  personKey: string;
   onClose: () => void;
   onAdminNoteChange?: (newNote: string) => void;
 }
@@ -38,7 +39,7 @@ function getDisplayName(name?: string) {
   return trimmed;
 }
 
-export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteChange }: Props) {
+export function DiscussionDrawer({ submission: s, author, personKey, onClose, onAdminNoteChange }: Props) {
   const [msgs, setMsgs] = useState<Discussion[]>([]);
   const [notes, setNotes] = useState(() => parseNotes(s.adminNote || ""));
   const [input, setInput] = useState("");
@@ -54,9 +55,9 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
   const load = useCallback(async () => {
     const data = await getDiscussions(s.id);
     setMsgs(data);
-    const unread = data.filter(m => !m.readBy.includes(author)).map(m => m.id);
-    if (unread.length) await markRead(unread, author);
-  }, [s.id, author]);
+    const unread = data.filter(m => !m.readBy.includes(personKey)).map(m => m.id);
+    if (unread.length) await markRead(unread, personKey);
+  }, [s.id, personKey]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }, [msgs]);
