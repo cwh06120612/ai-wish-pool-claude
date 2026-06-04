@@ -501,25 +501,27 @@ function AdminContent() {
                       {/* Comment list */}
                       {editState.adminNote && (
                         <div className="mb-3 space-y-2 max-h-40 overflow-y-auto">
-                          {editState.adminNote.split('\n').filter(Boolean).map((line, i, arr) => {
+                          {editState.adminNote.split(/(?=\[.+? \d{4}\/\d{2}\/\d{2}.+?\] )/).filter(Boolean).map((line, i, arr) => {
                             const match = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] (.+)$/);
                             if (!match) return (
-                              <div key={i} className="flex gap-2 items-start">
-                                <div className="w-7 h-7 rounded-full bg-[#E0E0E0] flex items-center justify-center text-xs font-bold text-[#616161] flex-shrink-0">?</div>
-                                <div className="flex-1 bg-[#F5F5F5] rounded-xl px-3 py-2 text-xs text-[#424242]">{line}</div>
-                              </div>
+                              <div key={i} className="text-xs text-[#616161] bg-[#F5F5F5] rounded-xl px-3 py-2 leading-relaxed">{line}</div>
                             );
                             const [, author, datetime, content] = match;
                             const avatar = author === '管理者' ? '管' : author.charAt(0);
                             const avatarColor = author === '管理者' ? '#007A87' : '#BE8B55';
                             const canEdit = author === (adminRole === 'editor' ? '管理者' : myName);
                             const isEditing = editingNoteIdx === i;
+                            const prevMatch = i > 0 ? arr[i-1].match(/^\[(.+?) \d{4}\/\d{2}\/\d{2}.+?\]/) : null;
+                            const prevAuthor = prevMatch ? prevMatch[1] : null;
+                            const isContinued = prevAuthor === author;
                             return (
                               <div key={i} className="flex gap-2 items-start">
-                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: avatarColor}}>
-                                  {avatar}
-                                </div>
+                                {isContinued
+                                  ? <div className="w-7 flex-shrink-0" />
+                                  : <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: avatarColor}}>{avatar}</div>
+                                }
                                 <div className="flex-1">
+                                  {!isContinued && (
                                   <div className="flex items-baseline gap-2 mb-0.5">
                                     <span className="text-xs font-medium text-[#424242]">{author}</span>
                                     <span className="text-[10px] text-[#9E9E9E]">{datetime}</span>
@@ -542,6 +544,19 @@ function AdminContent() {
                                       </span>
                                     )}
                                   </div>
+                                  )}
+                                  {isContinued && canEdit && !isEditing && (
+                                    <div className="flex items-center gap-1 mb-0.5">
+                                      <span className="text-[10px] text-[#9E9E9E]">{datetime}</span>
+                                      <button type="button"
+                                        className="text-[10px] text-[#9E9E9E] hover:text-[#007A87] px-1.5 py-0.5 rounded hover:bg-[#007A87]/10 transition-colors"
+                                        onClick={() => { setEditingNoteIdx(i); setEditingNoteVal(content); }}>編輯</button>
+                                      <span className="text-[#E0E0E0]">·</span>
+                                      <button type="button"
+                                        className="text-[10px] text-[#9E9E9E] hover:text-[#AE1914] px-1.5 py-0.5 rounded hover:bg-[#AE1914]/10 transition-colors"
+                                        onClick={() => { setEditingNoteIdx(i); setEditingNoteVal("__delete__"); }}>刪除</button>
+                                    </div>
+                                  )}
                                   {isEditing && editingNoteVal === "__delete__" ? (
                                     <div className="bg-[#FDF2F2] border border-[#EBCDCC] rounded-xl px-3 py-2 text-xs">
                                       <p className="text-[#AE1914] mb-2">確定要刪除這則備註嗎？</p>
