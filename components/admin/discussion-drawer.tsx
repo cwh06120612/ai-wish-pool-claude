@@ -4,11 +4,13 @@ import { X, CornerDownRight, Send, Pencil, Trash2, User } from "lucide-react";
 import { getDiscussions, addDiscussion, markRead, deleteDiscussion, editDiscussion, Discussion } from "@/lib/discussions";
 import { updateSubmissionAsync } from "@/lib/storage";
 import { getCurrentUserDisplayInfo, CurrentUserInfo } from "@/lib/user";
+import type { AdminRole } from "@/components/admin/admin-auth";
 import type { Submission } from "@/types/submission";
 
 interface Props {
   submission: Submission;
   author: string;
+  role: AdminRole;
   personKey: string;
   onClose: () => void;
   onAdminNoteChange?: (newNote: string) => void;
@@ -51,7 +53,15 @@ function getDisplayName(name?: string, email?: string) {
   return "未綁定帳號";
 }
 
-function getDiscussionAuthor(info: { author?: string; authorName?: string; authorEmail?: string; avatarText?: string }) {
+function getDiscussionAuthor(info: { author?: string; authorName?: string; authorEmail?: string; avatarText?: string; authorRole?: string }) {
+  if (info.authorRole === "admin") {
+    return {
+      rawAuthor: "",
+      displayName: "管理者",
+      avatarText: "管",
+    };
+  }
+
   const rawAuthor = info.author?.trim();
   const candidateName = [info.authorName?.trim(), rawAuthor, info.authorEmail?.trim()?.split("@")[0]].find(v => v && v !== "?") ?? "";
   const displayName = candidateName || "未綁定帳號";
@@ -66,7 +76,7 @@ function getDiscussionAuthor(info: { author?: string; authorName?: string; autho
   };
 }
 
-export function DiscussionDrawer({ submission: s, author, personKey, onClose, onAdminNoteChange }: Props) {
+export function DiscussionDrawer({ submission: s, author, role, personKey, onClose, onAdminNoteChange }: Props) {
   const [msgs, setMsgs] = useState<Discussion[]>([]);
   const [notes, setNotes] = useState(() => parseNotes(s.adminNote || ""));
   const [input, setInput] = useState("");
@@ -80,7 +90,13 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
   const [currentUser, setCurrentUser] = useState<CurrentUserInfo | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [isComposing, setIsComposing] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  function isComposingEvent(event: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) {
+    const nativeEvent = event.nativeEvent as KeyboardEvent & { isComposing?: boolean };
+    return (event as any).isComposing || nativeEvent.isComposing || isComposing;
+  }
 
   const load = useCallback(async () => {
     const data = await getDiscussions(s.id);
@@ -103,27 +119,33 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
   async function send() {
     const t = input.trim();
     if (!t) return;
-    if (!currentUser) {
-      setSendError("請先登入後再留言");
+    const isAdmin = role === "editor";
+    const isOwner = role === "team";
+    if (!isAdmin && !isOwner) {
+      setSendError("無法確認目前身份，請重新登入");
       return;
     }
     setSending(true);
     setSendError("");
     const rid = replyTo?.id ?? null;
+    const authorName = isAdmin ? "管理者" : author;
+    const authorAvatarText = isAdmin ? "管" : getAvatarText(author);
+    const authorRole = isAdmin ? "admin" : "owner";
     try {
       const result = await addDiscussion({
         submissionId: s.id,
-        author: currentUser.displayName,
-        authorId: currentUser.userId,
-        authorName: currentUser.displayName,
-        authorEmail: currentUser.email,
-        avatarText: currentUser.avatarText,
+        author: authorName,
+        authorId: isOwner ? currentUser?.userId : undefined,
+        authorName,
+        authorEmail: isOwner ? currentUser?.email : undefined,
+        avatarText: authorAvatarText,
+        authorRole,
         content: t,
         replyTo: rid,
         parentId: rid,
         createdAt: new Date().toISOString(),
         isEdited: false,
-        readBy: [currentUser.displayName],
+        readBy: [authorName],
       });
       if (!result) {
         setSendError("留言送出失敗：伺服器回應錯誤，請稍後再試");
@@ -218,7 +240,10 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
       <div className="space-y-1.5 w-full">
         <textarea key={editKey} rows={2} defaultValue={val}
           onChange={e => setVal(e.target.value)}
+          onCompositionStart={() => setIsComposing(true)}
+          onCompositionEnd={() => setIsComposing(false)}
           onKeyDown={e => {
+            if (isComposingEvent(e)) return;
             if (e.key === "Enter") {
               e.preventDefault();
               void onSave();
@@ -255,7 +280,8 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
   // Latest message for "newest" label
   const allSorted = [...msgs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const latestId = allSorted[0]?.id;
-  const currentUserName = currentUser?.displayName || author;
+  const currentActorName = role === "editor" ? "管理者" : author;
+  const currentActorAvatarText = role === "editor" ? "管" : getAvatarText(author);
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -340,8 +366,8 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
           {/* New discussions */}
           {topLevel.map(msg => {
             const authorInfo = getDiscussionAuthor(msg);
-            const isMe = msg.author === currentUserName || msg.authorName === currentUserName;
-            const canEdit = msg.author === currentUserName || msg.authorName === currentUserName;
+            const isMe = msg.author === currentActorName || msg.authorName === currentActorName;
+            const canEdit = msg.author === currentActorName || msg.authorName === currentActorName;
             const replyTarget = msg.replyTo ? msgs.find(m => m.id === msg.replyTo) : null;
             const isLatest = msg.id === latestId;
 
@@ -382,8 +408,8 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
                 {/* Replies */}
                 {repliesOf(msg.id).map(reply => {
                   const replyAuthorInfo = getDiscussionAuthor(reply);
-                  const rIsMe = reply.author === currentUserName || reply.authorName === currentUserName;
-                  const rCanEdit = reply.author === currentUserName || reply.authorName === currentUserName;
+                  const rIsMe = reply.author === currentActorName || reply.authorName === currentActorName;
+                  const rCanEdit = reply.author === currentActorName || reply.authorName === currentActorName;
                   const rTarget = msgs.find(m => m.id === reply.replyTo);
                   return (
                     <div key={reply.id} className={`flex gap-2 mt-2 ml-9 ${rIsMe ? "flex-row-reverse" : ""}`}>
@@ -433,9 +459,17 @@ export function DiscussionDrawer({ submission: s, author, personKey, onClose, on
         {/* Input */}
         <div className="px-4 py-3 border-t border-[#E5E7EB]">
           <div className="flex gap-2 items-end">
-            <Av name={currentUser?.displayName || author} />
+            <Av name={currentActorName} avatarText={currentActorAvatarText} />
             <textarea rows={1} value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={async e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); await send(); } }}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={() => setIsComposing(false)}
+              onKeyDown={async e => {
+                if (isComposingEvent(e)) return;
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  await send();
+                }
+              }}
               placeholder="輸入訊息... (Enter 送出)"
               disabled={sending}
               className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 focus:border-[#007A87] resize-none disabled:cursor-not-allowed disabled:opacity-50" />

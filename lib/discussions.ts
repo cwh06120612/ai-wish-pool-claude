@@ -8,6 +8,7 @@ export interface Discussion {
   authorName?: string;
   authorEmail?: string;
   avatarText?: string;
+  authorRole?: string;
   content: string;
   createdAt: string;
   replyTo: string | null;
@@ -25,6 +26,7 @@ function fromDb(row: Record<string, unknown>): Discussion {
     authorName: row.author_name as string | undefined,
     authorEmail: row.author_email as string | undefined,
     avatarText: row.avatar_text as string | undefined,
+    authorRole: row.author_role as string | undefined,
     content: row.content as string,
     createdAt: row.created_at as string,
     replyTo: row.reply_to as string | null,
@@ -53,6 +55,7 @@ export async function addDiscussion(params: {
   authorName?: string;
   authorEmail?: string;
   avatarText?: string;
+  authorRole?: string;
   createdAt?: string;
   isEdited?: boolean;
   readBy?: string[];
@@ -71,6 +74,7 @@ export async function addDiscussion(params: {
   if (params.authorName) insertData.author_name = params.authorName;
   if (params.authorEmail) insertData.author_email = params.authorEmail;
   if (params.avatarText) insertData.avatar_text = params.avatarText;
+  if (params.authorRole) insertData.author_role = params.authorRole;
   if (params.parentId !== undefined) insertData.parent_id = params.parentId;
   if (params.createdAt) insertData.created_at = params.createdAt;
   const { data, error } = await supabase.from("discussions").insert(insertData).select().single();

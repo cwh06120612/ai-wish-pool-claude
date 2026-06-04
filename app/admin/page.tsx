@@ -663,6 +663,7 @@ function AdminContent() {
       {drawerSub && (
         <DiscussionDrawer
           submission={drawerSub}
+          role={adminRole}
           author={adminRole === "editor" ? "管理者" : myName}
           personKey={personKey || (adminRole === "editor" ? "管理者" : myName)}
           onClose={() => setDrawerSub(null)}
