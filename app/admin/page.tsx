@@ -353,7 +353,13 @@ function AdminContent() {
                             ? <Eye size={13} className="text-[#007A87]" />
                             : <EyeOff size={13} className="text-[#BDBDBD]" />
                           }
-
+                          {unreadMap[s.id] > 0 && (
+                            <button type="button"
+                              onClick={e => { e.stopPropagation(); setDrawerSub(s); setUnreadMap(prev => { const n={...prev}; delete n[s.id]; return n; }); }}
+                              className="ml-auto flex items-center gap-1 px-2 py-0.5 bg-[#AE1914] text-white text-[10px] font-bold rounded-full hover:bg-[#8B1410] transition-colors">
+                              <MessageSquare size={9} />+{unreadMap[s.id]}
+                            </button>
+                          )}
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-[#BDBDBD] flex-shrink-0 mt-0.5" />
@@ -532,10 +538,10 @@ function AdminContent() {
                         <label className="block text-xs font-medium text-[#757575]">負責人員討論區</label>
                         <button type="button"
                           onClick={() => { setDrawerSub(s); }}
-                          className="flex items-center gap-1 text-xs text-[#007A87] hover:text-[#00555E] transition-colors">
-                          <MessageSquare size={12} />
-                          <span>展開</span>
-                          {unreadMap[s.id] > 0 && <span className="ml-0.5 px-1.5 py-0.5 bg-[#AE1914] text-white text-[9px] rounded-full font-bold">{unreadMap[s.id]}</span>}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007A87] text-white text-xs font-medium rounded-xl hover:bg-[#00555E] transition-colors">
+                          <MessageSquare size={13} />
+                          <span>開啟討論區</span>
+                          {unreadMap[s.id] > 0 && <span className="px-1.5 py-0.5 bg-white text-[#AE1914] text-[9px] rounded-full font-bold">{unreadMap[s.id]}</span>}
                         </button>
                       </div>
                       {/* Comment list */}
