@@ -292,12 +292,12 @@ function AdminContent() {
                   onChange={setAdminFilterNote}
                 />
                 <AdminInlineDropdown
-                  label="新回覆"
+                  label="新討論"
                   value={adminFilterUnread}
                   options={[
                     { value: "", label: "全部" },
-                    { value: "有新回覆", label: "有新回覆" },
-                    { value: "無新回覆", label: "無新回覆" },
+                    { value: "有新回覆", label: "有新討論" },
+                    { value: "無新回覆", label: "無新討論" },
                   ]}
                   onChange={setAdminFilterUnread}
                 />
@@ -621,7 +621,7 @@ function AdminContent() {
             <div className="w-12 h-12 rounded-full bg-[#B5E1E5]/40 flex items-center justify-center mx-auto mb-4">
               <MessageSquare size={22} className="text-[#007A87]" />
             </div>
-            <h3 className="text-base font-bold text-[#1F2937] mb-1">你有新回覆</h3>
+            <h3 className="text-base font-bold text-[#1F2937] mb-1">你有新討論</h3>
             <p className="text-sm text-[#6B7280] mb-4">
               共 <span className="font-bold text-[#007A87]">{Object.values(unreadMap).reduce((a,b) => a+b, 0)}</span> 則未讀訊息
             </p>
