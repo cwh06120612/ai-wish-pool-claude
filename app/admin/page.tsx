@@ -206,16 +206,6 @@ function AdminContent() {
             </div>
           )}
 
-          {/* Unread alert */}
-          {showUnreadAlert && isTeam && (
-            <div className="mb-3 flex items-center justify-between bg-[#B5E1E5]/30 border border-[#007A87]/30 rounded-xl px-4 py-2.5">
-              <span className="text-sm text-[#007A87]">
-                你有 <span className="font-bold">{Object.values(unreadMap).reduce((a,b) => a+b, 0)}</span> 則新回覆
-              </span>
-              <button onClick={() => setShowUnreadAlert(false)} className="text-[#9E9E9E] hover:text-[#424242]"><X size={14} /></button>
-            </div>
-          )}
-
           {/* Search + Filter */}
           <div className="mb-4 space-y-2">
             <div className="flex gap-2">
