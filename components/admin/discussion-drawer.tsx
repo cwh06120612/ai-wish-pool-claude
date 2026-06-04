@@ -138,6 +138,12 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
       <div className="space-y-1.5 w-full">
         <textarea key={editKey} rows={2} defaultValue={val}
           onChange={e => setVal(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void onSave();
+            }
+          }}
           className="w-full text-xs border border-[#007A87] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-none bg-white"
           autoFocus
           onFocus={e => { const len = e.target.value.length; e.target.setSelectionRange(len, len); }}
