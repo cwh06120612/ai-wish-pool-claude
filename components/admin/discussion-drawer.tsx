@@ -2,18 +2,22 @@
 import { useState, useEffect, useRef } from "react";
 import { X, CornerDownRight, Send } from "lucide-react";
 import { getDiscussions, addDiscussion, markRead, Discussion } from "@/lib/discussions";
+import { updateSubmissionAsync } from "@/lib/storage";
 import type { Submission } from "@/types/submission";
 
 interface Props {
   submission: Submission;
   author: string;
   onClose: () => void;
+  onAdminNoteChange?: (newNote: string) => void;
 }
 
-export function DiscussionDrawer({ submission: s, author, onClose }: Props) {
+export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteChange }: Props) {
   const [messages, setMessages] = useState<Discussion[]>([]);
   const [input, setInput] = useState("");
   const [replyTo, setReplyTo] = useState<Discussion | null>(null);
+  const [editNoteIdx, setEditNoteIdx] = useState<number | null>(null);
+  const [editNoteVal, setEditNoteVal] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   async function load() {
@@ -144,7 +148,54 @@ export function DiscussionDrawer({ submission: s, author, onClose }: Props) {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-3">
-          {messages.length === 0 && (
+          {/* Existing adminNote messages */}
+        {s.adminNote && s.adminNote.trim() && (
+          <div className="mb-2 pb-2 border-b border-[#E5E7EB]">
+            <p className="text-[9px] text-[#9CA3AF] mb-1.5 px-1">舊備註記錄</p>
+            {s.adminNote.split(/(?=\[.+? \d{4}\/\d{2}\/\d{2}.+?\] )/).filter(Boolean).map((line, i, arr) => {
+              const match = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] ([\s\S]+)$/);
+              if (!match) return <div key={i} className="text-xs text-[#9CA3AF] px-2 py-1 bg-[#F9FAFB] rounded-lg mb-1">{line}</div>;
+              const [, noteAuthor, noteDatetime, noteContent] = match;
+              const isMe = noteAuthor === author;
+              const avatarColor = noteAuthor === '管理者' ? '#007A87' : '#BE8B55';
+              const prevMatch = i > 0 ? arr[i-1].match(/^\[(.+?) /) : null;
+              const isContinued = prevMatch && prevMatch[1] === noteAuthor;
+              const canEdit = noteAuthor === author;
+              return (
+                <div key={i} className={`flex gap-2 items-start mb-1 ${isMe ? "flex-row-reverse" : ""}`}>
+                  {!isContinued
+                    ? <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style={{backgroundColor: avatarColor}}>{noteAuthor === '管理者' ? '管' : noteAuthor.charAt(0)}</div>
+                    : <div className="w-6 flex-shrink-0" />
+                  }
+                  <div className="flex-1">
+                    {!isContinued && <div className={`flex items-baseline gap-1.5 mb-0.5 ${isMe ? "justify-end" : ""}`}><span className="text-[10px] font-medium text-[#424242]">{noteAuthor}</span><span className="text-[9px] text-[#9CA3AF]">{noteDatetime}</span>{canEdit && editNoteIdx !== i && <span className="flex gap-1"><button type="button" onClick={() => { setEditNoteIdx(i); setEditNoteVal(noteContent); }} className="text-[9px] text-[#9CA3AF] hover:text-[#007A87]">編輯</button><button type="button" onClick={async () => { setEditNoteIdx(i); setEditNoteVal("__delete__"); }} className="text-[9px] text-[#9CA3AF] hover:text-[#AE1914]">刪除</button></span>}</div>}
+                    {editNoteIdx === i && editNoteVal === "__delete__" ? (
+                      <div className="bg-[#FDF2F2] border border-[#EBCDCC] rounded-xl px-3 py-2 text-xs">
+                        <p className="text-[#AE1914] mb-2">確定要刪除？</p>
+                        <div className="flex gap-2">
+                          <button type="button" className="px-3 py-1 bg-[#AE1914] text-white text-xs rounded-lg" onClick={async () => { const lines = arr.filter((_,j) => j !== i); const newNote = lines.join("\n"); setEditNoteIdx(null); onAdminNoteChange?.(newNote); await updateSubmissionAsync(s.id, { adminNote: newNote }); }}>確定</button>
+                          <button type="button" className="px-3 py-1 bg-white border border-[#E0E0E0] text-xs rounded-lg" onClick={() => setEditNoteIdx(null)}>取消</button>
+                        </div>
+                      </div>
+                    ) : editNoteIdx === i ? (
+                      <div className="space-y-1">
+                        <textarea rows={2} value={editNoteVal} onChange={e => setEditNoteVal(e.target.value)} className="w-full text-xs border border-[#007A87] rounded-xl px-2 py-1.5 resize-none focus:outline-none" />
+                        <div className="flex gap-1.5">
+                          <button type="button" className="px-2 py-1 bg-[#007A87] text-white text-xs rounded-lg" onClick={async () => { const newLine = `[${noteAuthor} ${noteDatetime}] ${editNoteVal.trim()}`; const lines = arr.slice(); lines[i] = newLine; const newNote = lines.join("\n"); setEditNoteIdx(null); onAdminNoteChange?.(newNote); await updateSubmissionAsync(s.id, { adminNote: newNote }); }}>儲存</button>
+                          <button type="button" className="px-2 py-1 bg-white border border-[#E0E0E0] text-xs rounded-lg" onClick={() => setEditNoteIdx(null)}>取消</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`px-3 py-1.5 rounded-xl text-xs leading-relaxed ${isMe ? "bg-[#007A87] text-white rounded-tr-sm" : "bg-[#F3F4F6] text-[#424242] rounded-tl-sm"}`}>{noteContent}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {messages.length === 0 && !s.adminNote?.trim() && (
             <div className="text-center text-xs text-[#9CA3AF] py-8">還沒有討論，來發起第一則吧！</div>
           )}
           {topLevel.map(msg => (

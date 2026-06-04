@@ -353,14 +353,7 @@ function AdminContent() {
                             ? <Eye size={13} className="text-[#007A87]" />
                             : <EyeOff size={13} className="text-[#BDBDBD]" />
                           }
-                          <button type="button"
-                            onClick={e => { e.stopPropagation(); setDrawerSub(s); setUnreadMap(prev => { const n = {...prev}; delete n[s.id]; return n; }); }}
-                            className="relative ml-auto flex items-center gap-1 text-[#9E9E9E] hover:text-[#007A87] transition-colors">
-                            <MessageSquare size={13} />
-                            {unreadMap[s.id] > 0 && (
-                              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-[#AE1914] rounded-full text-[8px] text-white flex items-center justify-center font-bold">{unreadMap[s.id]}</span>
-                            )}
-                          </button>
+
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-[#BDBDBD] flex-shrink-0 mt-0.5" />
@@ -535,7 +528,16 @@ function AdminContent() {
                         className="w-full text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block text-xs font-medium text-[#757575] mb-2">負責人員討論區</label>
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-xs font-medium text-[#757575]">負責人員討論區</label>
+                        <button type="button"
+                          onClick={() => { setDrawerSub(s); }}
+                          className="flex items-center gap-1 text-xs text-[#007A87] hover:text-[#00555E] transition-colors">
+                          <MessageSquare size={12} />
+                          <span>展開</span>
+                          {unreadMap[s.id] > 0 && <span className="ml-0.5 px-1.5 py-0.5 bg-[#AE1914] text-white text-[9px] rounded-full font-bold">{unreadMap[s.id]}</span>}
+                        </button>
+                      </div>
                       {/* Comment list */}
                       {editState.adminNote && (
                         <div className="mb-3 space-y-2 max-h-40 overflow-y-auto">
@@ -573,10 +575,7 @@ function AdminContent() {
                                         <span className="text-[#E0E0E0]">·</span>
                                         <button type="button"
                                           className="text-[10px] text-[#9E9E9E] hover:text-[#AE1914] px-1.5 py-0.5 rounded hover:bg-[#AE1914]/10 transition-colors"
-                                          onClick={async () => {
-                                            setEditingNoteIdx(i);
-                                            setEditingNoteVal("__delete__");
-                                          }}>
+                                          onClick={async () => { setEditingNoteIdx(i); setEditingNoteVal("__delete__"); }}>
                                           刪除
                                         </button>
                                       </span>
@@ -783,6 +782,10 @@ function AdminContent() {
           submission={drawerSub}
           author={adminRole === "editor" ? "管理者" : myName}
           onClose={() => setDrawerSub(null)}
+          onAdminNoteChange={async (newNote) => {
+            setDrawerSub(prev => prev ? { ...prev, adminNote: newNote } : prev);
+            await reload();
+          }}
         />
       )}
     </div>
