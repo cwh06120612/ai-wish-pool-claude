@@ -15,257 +15,157 @@ interface Props {
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
+const getAvatarColor = (n: string) => n === "管理者" ? "#007A87" : "#BE8B55";
+const getAvatarChar = (n: string) => n === "管理者" ? "管" : n.charAt(0);
 
-const getAvatarColor = (name: string) => name === "管理者" ? "#007A87" : "#BE8B55";
-const getAvatarChar = (name: string) => name === "管理者" ? "管" : name.charAt(0);
-
-function parseAdminNotes(adminNote: string) {
-  if (!adminNote?.trim()) return [];
-  return adminNote.split(/(?=\[.+? \d{4}\/\d{2}\/\d{2}.+?\] )/).filter(Boolean).map((line, i) => {
-    const match = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] ([\s\S]+)$/);
-    if (!match) return { id: `note-${i}`, author: "?", datetime: "", content: line.trim(), raw: line };
-    return { id: `note-${i}`, author: match[1], datetime: match[2], content: match[3].trim(), raw: line };
+function parseNotes(note: string) {
+  if (!note?.trim()) return [];
+  return note.split(/(?=\[.+? \d{4}\/\d{2}\/\d{2}.+?\] )/).filter(Boolean).map((line, i) => {
+    const m = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] ([\s\S]+)$/);
+    if (!m) return { id: `n${i}`, author: "?", datetime: "", content: line.trim(), raw: line };
+    return { id: `n${i}`, author: m[1], datetime: m[2], content: m[3].trim(), raw: line };
   });
 }
 
 export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteChange }: Props) {
-  const [messages, setMessages] = useState<Discussion[]>([]);
+  const [msgs, setMsgs] = useState<Discussion[]>([]);
+  const [notes, setNotes] = useState(() => parseNotes(s.adminNote || ""));
   const [input, setInput] = useState("");
   const [replyTo, setReplyTo] = useState<{ id: string; author: string; content: string } | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingVal, setEditingVal] = useState("");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [editNoteIdx, setEditNoteIdx] = useState<number | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editVal, setEditVal] = useState("");
+  const [delId, setDelId] = useState<string | null>(null);
+  const [editNoteI, setEditNoteI] = useState<number | null>(null);
   const [editNoteVal, setEditNoteVal] = useState("");
-  const [confirmDeleteNoteIdx, setConfirmDeleteNoteIdx] = useState<number | null>(null);
-  const [noteItems, setNoteItems] = useState(parseAdminNotes(s.adminNote || ""));
+  const [delNoteI, setDelNoteI] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
-    const msgs = await getDiscussions(s.id);
-    setMessages(msgs);
-    const unread = msgs.filter(m => !m.readBy.includes(author)).map(m => m.id);
-    if (unread.length > 0) await markRead(unread, author);
+    const data = await getDiscussions(s.id);
+    setMsgs(data);
+    const unread = data.filter(m => !m.readBy.includes(author)).map(m => m.id);
+    if (unread.length) await markRead(unread, author);
   }, [s.id, author]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }, [messages]);
+  useEffect(() => { setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }, [msgs]);
 
-  async function handleSend() {
-    const text = input.trim();
-    if (!text) return;
+  async function send() {
+    const t = input.trim();
+    if (!t) return;
     setInput("");
-    await addDiscussion({ submissionId: s.id, author, content: text, replyTo: replyTo?.id });
+    const rid = replyTo?.id;
     setReplyTo(null);
+    await addDiscussion({ submissionId: s.id, author, content: t, replyTo: rid });
     await load();
   }
 
-  async function handleEdit(id: string) {
-    const text = editingVal.trim();
-    if (!text) return;
-    await editDiscussion(id, text);
-    setEditingId(null);
-    setEditingVal("");
-    await load();
+  async function saveEdit(id: string) {
+    const t = editVal.trim();
+    if (!t) return;
+    setMsgs(p => p.map(m => m.id === id ? { ...m, content: t } : m));
+    setEditId(null); setEditVal("");
+    await editDiscussion(id, t);
   }
 
-  async function handleDelete(id: string) {
+  async function doDelete(id: string) {
+    setMsgs(p => p.filter(m => m.id !== id && m.replyTo !== id));
+    setDelId(null);
     await deleteDiscussion(id);
-    setConfirmDeleteId(null);
-    await load();
   }
 
-  async function handleNoteEdit(idx: number) {
-    const text = editNoteVal.trim();
-    if (!text) return;
-    const items = [...noteItems];
-    const item = items[idx];
-    const newLine = `[${item.author} ${item.datetime}] ${text}`;
-    items[idx] = { ...item, content: text, raw: newLine };
-    const newNote = items.map(n => n.raw).join("\n");
-    setNoteItems(items);
-    setEditNoteIdx(null);
-    setEditNoteVal("");
+  async function saveNoteEdit(idx: number) {
+    const t = editNoteVal.trim();
+    if (!t) return;
+    const arr = [...notes];
+    const item = arr[idx];
+    const raw = `[${item.author} ${item.datetime}] ${t}`;
+    arr[idx] = { ...item, content: t, raw };
+    const newNote = arr.map(n => n.raw).join("\n");
+    setNotes(arr); setEditNoteI(null); setEditNoteVal("");
     onAdminNoteChange?.(newNote);
     await updateSubmissionAsync(s.id, { adminNote: newNote });
   }
 
-  async function handleNoteDelete(idx: number) {
-    const items = noteItems.filter((_, j) => j !== idx);
-    const newNote = items.map(n => n.raw).join("\n");
-    setNoteItems(items);
-    setConfirmDeleteNoteIdx(null);
+  async function doDeleteNote(idx: number) {
+    const arr = notes.filter((_, j) => j !== idx);
+    const newNote = arr.map(n => n.raw).join("\n");
+    setNotes(arr); setDelNoteI(null);
     onAdminNoteChange?.(newNote);
     await updateSubmissionAsync(s.id, { adminNote: newNote });
   }
 
-  const topLevel = messages.filter(m => !m.replyTo);
-  const repliesOf = (id: string) => messages.filter(m => m.replyTo === id);
-
-  function Avatar({ name }: { name: string }) {
+  function Av({ name }: { name: string }) {
     return (
-      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
+      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 mt-0.5"
         style={{ backgroundColor: getAvatarColor(name) }}>
         {getAvatarChar(name)}
       </div>
     );
   }
 
-  function MsgBubble({ msg, isReply }: { msg: Discussion; isReply?: boolean }) {
-    const isMe = msg.author === author;
-    const canEdit = msg.author === author;
-    const replyTarget = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
-    const isEditing = editingId === msg.id;
-    const isDeleting = confirmDeleteId === msg.id;
-
+  function Actions({ isMe, canEdit, onReply, onEdit, onDelete }: {
+    isMe: boolean; canEdit: boolean;
+    onReply: () => void; onEdit: () => void; onDelete: () => void;
+  }) {
     return (
-      <div className={`flex gap-2 ${isReply ? "ml-9 mt-1.5" : "mt-3"} ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-        {!isReply && !isMe && <Avatar name={msg.author} />}
-        {!isReply && isMe && <Avatar name={msg.author} />}
-        {isReply && <div className="w-7 flex-shrink-0" />}
+      <div className={`flex items-center gap-2 mt-0.5 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
+        <button onClick={onReply} className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
+          <CornerDownRight size={9} />回覆
+        </button>
+        {canEdit && <>
+          <button onClick={onEdit} className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] transition-colors"><Pencil size={9} /></button>
+          <button onClick={onDelete} className="text-[9px] text-[#9CA3AF] hover:text-[#AE1914] transition-colors"><Trash2 size={9} /></button>
+        </>}
+      </div>
+    );
+  }
 
-        <div className={`flex flex-col gap-0.5 max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
-          {!isMe && !isReply && (
-            <span className="text-[10px] text-[#9CA3AF] font-medium ml-1">{msg.author}</span>
-          )}
-
-          {isDeleting ? (
-            <div className="bg-[#FDF2F2] border border-[#EBCDCC] rounded-2xl px-3 py-2.5">
-              <p className="text-xs text-[#AE1914] mb-2">確定刪除這則訊息？</p>
-              <div className="flex gap-2">
-                <button onClick={() => handleDelete(msg.id)}
-                  className="px-3 py-1 bg-[#AE1914] text-white text-[11px] rounded-lg hover:bg-[#8B1410]">確定</button>
-                <button onClick={() => setConfirmDeleteId(null)}
-                  className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg hover:bg-[#F5F5F5]">取消</button>
-              </div>
-            </div>
-          ) : isEditing ? (
-            <div className="w-full space-y-1.5">
-              <textarea
-                className="w-full text-xs border border-[#007A87] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-none bg-white"
-                rows={2}
-                defaultValue={editingVal}
-                onChange={e => setEditingVal(e.target.value)}
-                autoFocus
-              />
-              <div className="flex gap-1.5">
-                <button onClick={() => handleEdit(msg.id)}
-                  className="px-3 py-1 bg-[#007A87] text-white text-[11px] rounded-lg hover:bg-[#00555E]">儲存</button>
-                <button onClick={() => { setEditingId(null); setEditingVal(""); }}
-                  className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg hover:bg-[#F5F5F5]">取消</button>
-              </div>
-            </div>
-          ) : (
-            <div className={`px-3.5 py-2 rounded-2xl text-xs leading-relaxed break-words ${
-              isMe
-                ? "bg-[#007A87] text-white rounded-br-sm"
-                : "bg-[#F3F4F6] text-[#2D2D2D] rounded-bl-sm"
-            }`}>
-              {replyTarget && (
-                <div className={`text-[10px] mb-1.5 pb-1.5 border-b opacity-80 flex items-start gap-1 ${isMe ? "border-white/30" : "border-[#D1D5DB]"}`}>
-                  <CornerDownRight size={10} className="mt-0.5 flex-shrink-0" />
-                  <span><span className="font-medium">{replyTarget.author}</span>：{replyTarget.content.slice(0, 40)}{replyTarget.content.length > 40 ? "…" : ""}</span>
-                </div>
-              )}
-              <span className="whitespace-pre-wrap">{msg.content}</span>
-            </div>
-          )}
-
-          {!isEditing && !isDeleting && (
-            <div className={`flex items-center gap-2 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
-              <span className="text-[9px] text-[#9CA3AF]">{formatTime(msg.createdAt)}</span>
-              <button onClick={() => setReplyTo({ id: msg.id, author: msg.author, content: msg.content })}
-                className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
-                <CornerDownRight size={9} />回覆
-              </button>
-              {canEdit && (
-                <>
-                  <button onClick={() => { setEditingId(msg.id); setEditingVal(msg.content); }}
-                    className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] transition-colors">
-                    <Pencil size={9} />
-                  </button>
-                  <button onClick={() => setConfirmDeleteId(msg.id)}
-                    className="text-[9px] text-[#9CA3AF] hover:text-[#AE1914] transition-colors">
-                    <Trash2 size={9} />
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+  function ConfirmDelete({ onConfirm, onCancel, label }: { onConfirm: () => void; onCancel: () => void; label?: string }) {
+    return (
+      <div className="bg-[#FDF2F2] border border-[#EBCDCC] rounded-2xl px-3 py-2.5 text-xs">
+        <p className="text-[#AE1914] mb-2">{label || "確定刪除？"}</p>
+        <div className="flex gap-2">
+          <button onClick={onConfirm} className="px-3 py-1 bg-[#AE1914] text-white rounded-lg hover:bg-[#8B1410]">確定</button>
+          <button onClick={onCancel} className="px-3 py-1 border border-[#E0E0E0] rounded-lg hover:bg-[#F5F5F5]">取消</button>
         </div>
       </div>
     );
   }
 
-  function NoteBubble({ item, idx }: { item: ReturnType<typeof parseAdminNotes>[0]; idx: number }) {
-    const isMe = item.author === author;
-    const canEdit = item.author === author;
-    const isEditing = editNoteIdx === idx;
-    const isDeleting = confirmDeleteNoteIdx === idx;
-
+  function EditInput({ val, setVal, onSave, onCancel }: { val: string; setVal: (v: string) => void; onSave: () => void; onCancel: () => void }) {
     return (
-      <div className={`flex gap-2 mt-3 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
-        <Avatar name={item.author} />
-        <div className={`flex flex-col gap-0.5 max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
-          {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1">{item.author}</span>}
-
-          {isDeleting ? (
-            <div className="bg-[#FDF2F2] border border-[#EBCDCC] rounded-2xl px-3 py-2.5">
-              <p className="text-xs text-[#AE1914] mb-2">確定刪除這則備註？</p>
-              <div className="flex gap-2">
-                <button onClick={() => handleNoteDelete(idx)}
-                  className="px-3 py-1 bg-[#AE1914] text-white text-[11px] rounded-lg">確定</button>
-                <button onClick={() => setConfirmDeleteNoteIdx(null)}
-                  className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg">取消</button>
-              </div>
-            </div>
-          ) : isEditing ? (
-            <div className="w-full space-y-1.5">
-              <textarea
-                className="w-full text-xs border border-[#007A87] rounded-xl px-3 py-2 focus:outline-none resize-none bg-white"
-                rows={2}
-                defaultValue={editNoteVal}
-                onChange={e => setEditNoteVal(e.target.value)}
-                autoFocus
-              />
-              <div className="flex gap-1.5">
-                <button onClick={() => handleNoteEdit(idx)}
-                  className="px-3 py-1 bg-[#007A87] text-white text-[11px] rounded-lg">儲存</button>
-                <button onClick={() => { setEditNoteIdx(null); setEditNoteVal(""); }}
-                  className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg">取消</button>
-              </div>
-            </div>
-          ) : (
-            <div className={`px-3.5 py-2 rounded-2xl text-xs leading-relaxed break-words ${
-              isMe
-                ? "bg-[#007A87] text-white rounded-br-sm"
-                : "bg-[#F3F4F6] text-[#2D2D2D] rounded-bl-sm"
-            }`}>
-              <span className="whitespace-pre-wrap">{item.content}</span>
-            </div>
-          )}
-
-          {!isEditing && !isDeleting && (
-            <div className={`flex items-center gap-2 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
-              {item.datetime && <span className="text-[9px] text-[#9CA3AF]">{item.datetime}</span>}
-              {canEdit && (
-                <>
-                  <button onClick={() => { setEditNoteIdx(idx); setEditNoteVal(item.content); }}
-                    className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] transition-colors">
-                    <Pencil size={9} />
-                  </button>
-                  <button onClick={() => setConfirmDeleteNoteIdx(idx)}
-                    className="text-[9px] text-[#9CA3AF] hover:text-[#AE1914] transition-colors">
-                    <Trash2 size={9} />
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+      <div className="space-y-1.5 w-full">
+        <textarea rows={2} value={val} onChange={e => setVal(e.target.value)}
+          className="w-full text-xs border border-[#007A87] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-none bg-white"
+          autoFocus />
+        <div className="flex gap-1.5">
+          <button onClick={onSave} className="px-3 py-1 bg-[#007A87] text-white text-[11px] rounded-lg hover:bg-[#00555E]">儲存</button>
+          <button onClick={onCancel} className="px-3 py-1 border border-[#E0E0E0] text-[11px] rounded-lg hover:bg-[#F5F5F5]">取消</button>
         </div>
       </div>
     );
   }
+
+  function Bubble({ content, isMe, replyTarget }: { content: string; isMe: boolean; replyTarget?: { author: string; content: string } | null }) {
+    return (
+      <div className={`px-3.5 py-2 rounded-2xl text-xs leading-relaxed break-words ${isMe ? "bg-[#007A87] text-white rounded-br-sm" : "bg-[#F3F4F6] text-[#2D2D2D] rounded-bl-sm"}`}>
+        {replyTarget && (
+          <div className={`text-[10px] mb-1.5 pb-1.5 border-b flex items-start gap-1 opacity-80 ${isMe ? "border-white/30" : "border-[#D1D5DB]"}`}>
+            <CornerDownRight size={10} className="mt-0.5 flex-shrink-0" />
+            <span><span className="font-medium">{replyTarget.author}</span>：{replyTarget.content.slice(0, 40)}{replyTarget.content.length > 40 ? "…" : ""}</span>
+          </div>
+        )}
+        <span className="whitespace-pre-wrap">{content}</span>
+      </div>
+    );
+  }
+
+  const topLevel = msgs.filter(m => !m.replyTo);
+  const repliesOf = (id: string) => msgs.filter(m => m.replyTo === id);
+  // Latest message for "newest" label
+  const allSorted = [...msgs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const latestId = allSorted[0]?.id;
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -273,13 +173,13 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
       <div className="w-full max-w-md bg-white h-full flex flex-col shadow-2xl border-l border-[#E5E7EB]">
 
         {/* Header */}
-        <div className="px-5 py-4 border-b border-[#E5E7EB] bg-white">
+        <div className="px-5 py-3.5 border-b border-[#E5E7EB]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-[#9CA3AF] mb-0.5 truncate">{s.departmentFullPath}</p>
+              <p className="text-[10px] text-[#9CA3AF] truncate mb-0.5">{s.departmentFullPath}</p>
               <p className="text-sm font-semibold text-[#1F2937] leading-snug line-clamp-2">{s.problemTitle}</p>
             </div>
-            <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#424242] flex-shrink-0 p-1 rounded-lg hover:bg-[#F3F4F6] transition-colors">
+            <button onClick={onClose} className="p-1 rounded-lg hover:bg-[#F3F4F6] text-[#9CA3AF] hover:text-[#424242] transition-colors flex-shrink-0">
               <X size={16} />
             </button>
           </div>
@@ -291,8 +191,8 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
           </div>
         </div>
 
-        {/* Info collapsible */}
-        <details className="border-b border-[#E5E7EB]">
+        {/* Collapsible detail */}
+        <details className="border-b border-[#E5E7EB] group">
           <summary className="px-5 py-2.5 text-xs text-[#6B7280] cursor-pointer hover:bg-[#F9FAFB] select-none flex items-center justify-between">
             <span className="font-medium">困擾詳情</span>
             <span className="text-[10px] text-[#9CA3AF]">點擊展開</span>
@@ -304,66 +204,148 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
           </div>
         </details>
 
-        {/* Messages area */}
+        {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
-          {noteItems.length === 0 && messages.length === 0 && (
+          {notes.length === 0 && msgs.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-12 h-12 rounded-full bg-[#F3F4F6] flex items-center justify-center mb-3">
-                <CornerDownRight size={20} className="text-[#9CA3AF]" />
-              </div>
               <p className="text-sm text-[#9CA3AF]">還沒有討論</p>
               <p className="text-xs text-[#D1D5DB] mt-0.5">來發起第一則吧！</p>
             </div>
           )}
 
           {/* Old notes */}
-          {noteItems.map((item, idx) => (
-            <NoteBubble key={item.id} item={item} idx={idx} />
-          ))}
+          {notes.map((item, idx) => {
+            const isMe = item.author === author;
+            const canEdit = item.author === author;
+            return (
+              <div key={item.id} className={`flex gap-2 mt-3 ${isMe ? "flex-row-reverse" : ""}`}>
+                <Av name={item.author} />
+                <div className={`flex flex-col max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
+                  {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{item.author}</span>}
+                  {delNoteI === idx
+                    ? <ConfirmDelete onConfirm={() => doDeleteNote(idx)} onCancel={() => setDelNoteI(null)} />
+                    : editNoteI === idx
+                    ? <EditInput val={editNoteVal} setVal={setEditNoteVal} onSave={() => saveNoteEdit(idx)} onCancel={() => { setEditNoteI(null); setEditNoteVal(""); }} />
+                    : <Bubble content={item.content} isMe={isMe} />
+                  }
+                  {editNoteI !== idx && delNoteI !== idx && (
+                    <div className={`flex items-center gap-2 mt-0.5 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
+                      {item.datetime && <span className="text-[9px] text-[#9CA3AF]">{item.datetime}</span>}
+                      <button onClick={() => setReplyTo({ id: item.id, author: item.author, content: item.content })}
+                        className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
+                        <CornerDownRight size={9} />回覆
+                      </button>
+                      {canEdit && <>
+                        <button onClick={() => { setEditNoteI(idx); setEditNoteVal(item.content); }} className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] transition-colors"><Pencil size={9} /></button>
+                        <button onClick={() => setDelNoteI(idx)} className="text-[9px] text-[#9CA3AF] hover:text-[#AE1914] transition-colors"><Trash2 size={9} /></button>
+                      </>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
 
           {/* New discussions */}
-          {topLevel.map(msg => (
-            <div key={msg.id}>
-              <MsgBubble msg={msg} />
-              {repliesOf(msg.id).map(reply => <MsgBubble key={reply.id} msg={reply} isReply />)}
-            </div>
-          ))}
+          {topLevel.map(msg => {
+            const isMe = msg.author === author;
+            const canEdit = msg.author === author;
+            const replyTarget = msg.replyTo ? msgs.find(m => m.id === msg.replyTo) : null;
+            const isLatest = msg.id === latestId;
+
+            return (
+              <div key={msg.id}>
+                {isLatest && (
+                  <div className="flex items-center gap-2 my-2">
+                    <div className="flex-1 h-px bg-[#E5E7EB]" />
+                    <span className="text-[9px] text-[#007A87] font-medium px-2 py-0.5 bg-[#EAF5F6] rounded-full">最新</span>
+                    <div className="flex-1 h-px bg-[#E5E7EB]" />
+                  </div>
+                )}
+                <div className={`flex gap-2 mt-3 ${isMe ? "flex-row-reverse" : ""}`}>
+                  <Av name={msg.author} />
+                  <div className={`flex flex-col max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
+                    {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{msg.author}</span>}
+                    {delId === msg.id
+                      ? <ConfirmDelete onConfirm={() => doDelete(msg.id)} onCancel={() => setDelId(null)} />
+                      : editId === msg.id
+                      ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(msg.id)} onCancel={() => { setEditId(null); setEditVal(""); }} />
+                      : <Bubble content={msg.content} isMe={isMe} replyTarget={replyTarget ? { author: replyTarget.author, content: replyTarget.content } : null} />
+                    }
+                    {editId !== msg.id && delId !== msg.id && (
+                      <div className={`flex items-center gap-2 mt-0.5 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
+                        <span className="text-[9px] text-[#9CA3AF]">{formatTime(msg.createdAt)}</span>
+                        <button onClick={() => setReplyTo({ id: msg.id, author: msg.author, content: msg.content })}
+                          className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
+                          <CornerDownRight size={9} />回覆
+                        </button>
+                        {canEdit && <>
+                          <button onClick={() => { setEditId(msg.id); setEditVal(msg.content); }} className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] transition-colors"><Pencil size={9} /></button>
+                          <button onClick={() => setDelId(msg.id)} className="text-[9px] text-[#9CA3AF] hover:text-[#AE1914] transition-colors"><Trash2 size={9} /></button>
+                        </>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Replies */}
+                {repliesOf(msg.id).map(reply => {
+                  const rIsMe = reply.author === author;
+                  const rCanEdit = reply.author === author;
+                  const rTarget = msgs.find(m => m.id === reply.replyTo);
+                  return (
+                    <div key={reply.id} className={`flex gap-2 mt-2 ml-9 ${rIsMe ? "flex-row-reverse" : ""}`}>
+                      <Av name={reply.author} />
+                      <div className={`flex flex-col max-w-[72%] ${rIsMe ? "items-end" : "items-start"}`}>
+                        {!rIsMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{reply.author}</span>}
+                        {delId === reply.id
+                          ? <ConfirmDelete onConfirm={() => doDelete(reply.id)} onCancel={() => setDelId(null)} />
+                          : editId === reply.id
+                          ? <EditInput val={editVal} setVal={setEditVal} onSave={() => saveEdit(reply.id)} onCancel={() => { setEditId(null); setEditVal(""); }} />
+                          : <Bubble content={reply.content} isMe={rIsMe} replyTarget={rTarget ? { author: rTarget.author, content: rTarget.content } : null} />
+                        }
+                        {editId !== reply.id && delId !== reply.id && (
+                          <div className={`flex items-center gap-2 mt-0.5 px-1 ${rIsMe ? "flex-row-reverse" : ""}`}>
+                            <span className="text-[9px] text-[#9CA3AF]">{formatTime(reply.createdAt)}</span>
+                            <button onClick={() => setReplyTo({ id: reply.id, author: reply.author, content: reply.content })}
+                              className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
+                              <CornerDownRight size={9} />回覆
+                            </button>
+                            {rCanEdit && <>
+                              <button onClick={() => { setEditId(reply.id); setEditVal(reply.content); }} className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] transition-colors"><Pencil size={9} /></button>
+                              <button onClick={() => setDelId(reply.id)} className="text-[9px] text-[#9CA3AF] hover:text-[#AE1914] transition-colors"><Trash2 size={9} /></button>
+                            </>}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
           <div ref={bottomRef} className="h-2" />
         </div>
 
         {/* Reply indicator */}
         {replyTo && (
-          <div className="mx-4 mb-1 px-3 py-2 bg-[#EAF5F6] border border-[#B5E1E5] rounded-xl flex items-center justify-between">
+          <div className="mx-4 mb-1 px-3 py-2 bg-[#EAF5F6] border border-[#B5E1E5] rounded-xl flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs text-[#007A87] min-w-0">
               <CornerDownRight size={11} className="flex-shrink-0" />
               <span className="truncate">回覆 <span className="font-semibold">{replyTo.author}</span>：{replyTo.content.slice(0, 35)}{replyTo.content.length > 35 ? "…" : ""}</span>
             </div>
-            <button onClick={() => setReplyTo(null)} className="text-[#9CA3AF] hover:text-[#424242] flex-shrink-0 ml-2">
-              <X size={12} />
-            </button>
+            <button onClick={() => setReplyTo(null)} className="text-[#9CA3AF] hover:text-[#424242] flex-shrink-0"><X size={12} /></button>
           </div>
         )}
 
         {/* Input */}
-        <div className="px-4 py-3 border-t border-[#E5E7EB] bg-white flex gap-2 items-end">
-          <Avatar name={author} />
-          <textarea
-            rows={1}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={async e => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                await handleSend();
-              }
-            }}
-            placeholder="輸入訊息... (Enter 送出，Shift+Enter 換行)"
-            className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 focus:border-[#007A87] resize-none leading-relaxed"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim()}
-            className="p-2.5 bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0">
+        <div className="px-4 py-3 border-t border-[#E5E7EB] flex gap-2 items-end">
+          <Av name={author} />
+          <textarea rows={1} value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={async e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); await send(); } }}
+            placeholder="輸入訊息... (Enter 送出)"
+            className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 focus:border-[#007A87] resize-none" />
+          <button onClick={send} disabled={!input.trim()}
+            className="p-2.5 bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] disabled:opacity-40 transition-colors flex-shrink-0">
             <Send size={15} />
           </button>
         </div>
