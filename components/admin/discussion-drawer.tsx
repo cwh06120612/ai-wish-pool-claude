@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, CornerDownRight, Send, Pencil, Trash2 } from "lucide-react";
+import { X, CornerDownRight, Send, Pencil, Trash2, User } from "lucide-react";
 import { getDiscussions, addDiscussion, markRead, deleteDiscussion, editDiscussion, Discussion } from "@/lib/discussions";
 import { updateSubmissionAsync } from "@/lib/storage";
 import type { Submission } from "@/types/submission";
@@ -15,16 +15,27 @@ interface Props {
 function formatTime(iso: string) {
   return new Date(iso).toLocaleString("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
-const getAvatarColor = (n: string) => n === "管理者" ? "#007A87" : "#BE8B55";
-const getAvatarChar = (n: string) => n === "管理者" ? "管" : n.charAt(0);
+const getAvatarColor = (n?: string) => n === "管理者" ? "#007A87" : n ? "#BE8B55" : "#9E9E9E";
 
 function parseNotes(note: string) {
   if (!note?.trim()) return [];
   return note.split(/(?=\[.+? \d{4}\/\d{2}\/\d{2}.+?\] )/).filter(Boolean).map((line, i) => {
     const m = line.match(/^\[(.+?) (\d{4}\/\d{2}\/\d{2}.+?)\] ([\s\S]+)$/);
-    if (!m) return { id: `n${i}`, author: "?", datetime: "", content: line.trim(), raw: line };
+    if (!m) return { id: `n${i}`, author: "", datetime: "", content: line.trim(), raw: line };
     return { id: `n${i}`, author: m[1], datetime: m[2], content: m[3].trim(), raw: line };
   });
+}
+
+function getAvatarText(name?: string) {
+  const trimmed = name?.trim();
+  if (!trimmed || trimmed === "?") return undefined;
+  return trimmed === "管理者" ? "管" : trimmed.charAt(0);
+}
+
+function getDisplayName(name?: string) {
+  const trimmed = name?.trim();
+  if (!trimmed || trimmed === "?") return "未知使用者";
+  return trimmed;
 }
 
 export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteChange }: Props) {
@@ -56,7 +67,14 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
     setInput("");
     const rid = replyTo?.id;
     setReplyTo(null);
-    await addDiscussion({ submissionId: s.id, author, content: t, replyTo: rid });
+    await addDiscussion({
+      submissionId: s.id,
+      author,
+      authorName: author,
+      avatarText: getAvatarText(author),
+      content: t,
+      replyTo: rid,
+    });
     await load();
   }
 
@@ -95,11 +113,11 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
     await updateSubmissionAsync(s.id, { adminNote: newNote });
   }
 
-  function Av({ name }: { name: string }) {
+  function Av({ name, avatarText }: { name?: string; avatarText?: string }) {
     return (
       <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 mt-0.5"
         style={{ backgroundColor: getAvatarColor(name) }}>
-        {getAvatarChar(name)}
+        {avatarText ? avatarText : <User size={12} className="text-white" />}
       </div>
     );
   }
@@ -224,13 +242,14 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
 
           {/* Old notes */}
           {notes.map((item, idx) => {
+            const displayName = getDisplayName(item.author);
             const isMe = item.author === author;
             const canEdit = item.author === author;
             return (
               <div key={item.id} className={`flex gap-2 mt-3 ${isMe ? "flex-row-reverse" : ""}`}>
-                <Av name={item.author} />
+                <Av name={item.author} avatarText={getAvatarText(item.author)} />
                 <div className={`flex flex-col max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
-                  {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{item.author}</span>}
+                  {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{displayName}</span>}
                   {delNoteI === idx
                     ? <ConfirmDelete onConfirm={() => doDeleteNote(idx)} onCancel={() => setDelNoteI(null)} />
                     : editNoteI === idx
@@ -257,6 +276,9 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
 
           {/* New discussions */}
           {topLevel.map(msg => {
+            const authorName = msg.authorName?.trim() || msg.author?.trim() || "";
+            const displayName = getDisplayName(authorName);
+            const avatarText = msg.avatarText || getAvatarText(authorName);
             const isMe = msg.author === author;
             const canEdit = msg.author === author;
             const replyTarget = msg.replyTo ? msgs.find(m => m.id === msg.replyTo) : null;
@@ -272,9 +294,9 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
                   </div>
                 )}
                 <div className={`flex gap-2 mt-3 ${isMe ? "flex-row-reverse" : ""}`}>
-                  <Av name={msg.author} />
+                  <Av name={authorName} avatarText={avatarText} />
                   <div className={`flex flex-col max-w-[72%] ${isMe ? "items-end" : "items-start"}`}>
-                    {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{msg.author}</span>}
+                    {!isMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{displayName}</span>}
                     {delId === msg.id
                       ? <ConfirmDelete onConfirm={() => doDelete(msg.id)} onCancel={() => setDelId(null)} />
                       : editId === msg.id
@@ -298,14 +320,15 @@ export function DiscussionDrawer({ submission: s, author, onClose, onAdminNoteCh
                 </div>
                 {/* Replies */}
                 {repliesOf(msg.id).map(reply => {
+                  const replyAuthorName = reply.authorName?.trim() || reply.author?.trim() || "";
                   const rIsMe = reply.author === author;
                   const rCanEdit = reply.author === author;
                   const rTarget = msgs.find(m => m.id === reply.replyTo);
                   return (
                     <div key={reply.id} className={`flex gap-2 mt-2 ml-9 ${rIsMe ? "flex-row-reverse" : ""}`}>
-                      <Av name={reply.author} />
+                      <Av name={replyAuthorName} avatarText={reply.avatarText || getAvatarText(replyAuthorName)} />
                       <div className={`flex flex-col max-w-[72%] ${rIsMe ? "items-end" : "items-start"}`}>
-                        {!rIsMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{reply.author}</span>}
+                        {!rIsMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{getDisplayName(replyAuthorName)}</span>}
                         {delId === reply.id
                           ? <ConfirmDelete onConfirm={() => doDelete(reply.id)} onCancel={() => setDelId(null)} />
                           : editId === reply.id

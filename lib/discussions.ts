@@ -4,6 +4,9 @@ export interface Discussion {
   id: string;
   submissionId: string;
   author: string;
+  authorName?: string;
+  authorEmail?: string;
+  avatarText?: string;
   content: string;
   createdAt: string;
   replyTo: string | null;
@@ -15,6 +18,9 @@ function fromDb(row: Record<string, unknown>): Discussion {
     id: row.id as string,
     submissionId: row.submission_id as string,
     author: row.author as string,
+    authorName: row.author_name as string | undefined,
+    authorEmail: row.author_email as string | undefined,
+    avatarText: row.avatar_text as string | undefined,
     content: row.content as string,
     createdAt: row.created_at as string,
     replyTo: row.reply_to as string | null,
@@ -36,16 +42,23 @@ export async function addDiscussion(params: {
   author: string;
   content: string;
   replyTo?: string | null;
+  authorName?: string;
+  authorEmail?: string;
+  avatarText?: string;
 }): Promise<Discussion | null> {
   const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  const { data } = await supabase.from("discussions").insert({
+  const insertData: Record<string, unknown> = {
     id,
     submission_id: params.submissionId,
     author: params.author,
     content: params.content,
     reply_to: params.replyTo ?? null,
     read_by: [params.author],
-  }).select().single();
+  };
+  if (params.authorName) insertData.author_name = params.authorName;
+  if (params.authorEmail) insertData.author_email = params.authorEmail;
+  if (params.avatarText) insertData.avatar_text = params.avatarText;
+  const { data } = await supabase.from("discussions").insert(insertData).select().single();
   return data ? fromDb(data) : null;
 }
 
