@@ -256,6 +256,16 @@ function AdminContent() {
                   onChange={setAdminFilterVisible}
                 />
                 <AdminInlineDropdown
+                  label="備註"
+                  value={adminFilterNote}
+                  options={[
+                    { value: "", label: "全部" },
+                    { value: "有備註", label: "有備註" },
+                    { value: "無備註", label: "無備註" },
+                  ]}
+                  onChange={setAdminFilterNote}
+                />
+                <AdminInlineDropdown
                   label="分類"
                   value={adminFilterCategory}
                   options={[{ value: "", label: "全部分類" }, ...CATEGORY_OPTIONS.map(o => ({ value: o, label: o }))]}
@@ -276,16 +286,6 @@ function AdminContent() {
                     );
                   })}
                 </div>
-                <AdminInlineDropdown
-                  label="備註"
-                  value={adminFilterNote}
-                  options={[
-                    { value: "", label: "全部" },
-                    { value: "有備註", label: "有備註" },
-                    { value: "無備註", label: "無備註" },
-                  ]}
-                  onChange={setAdminFilterNote}
-                />
                 {adminHasFilters && (
                   <button onClick={() => { setAdminFilterStatus(""); setAdminFilterPriority(""); setAdminFilterVisible(""); setAdminFilterCategory(""); setAdminFilterAssignee([]); setAdminFilterNote(""); }}
                     className="flex items-center gap-1 text-xs text-[#AE1914] px-2 py-1.5 rounded-lg hover:bg-[#EBCDCC]/20 transition-colors self-start mt-0.5">
