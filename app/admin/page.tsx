@@ -148,34 +148,34 @@ function AdminContent() {
       return;
     }
 
-    if (unreadTotal > previousUnreadTotalRef.current) {
-      if (!suppressNextToastRef.current) {
-        setToastUnreadCount(unreadTotal);
-        const unreadSubIds = Object.entries(map).filter(([, v]) => v > 0).map(([k]) => k);
-        try {
-          const allDiscussions = await Promise.all(unreadSubIds.map(id => getDiscussions(id)));
-          let latestDisc: { submissionId: string; submissionTitle: string; author: string; content: string; createdAt: string } | null = null;
-          unreadSubIds.forEach((subId, i) => {
-            const unread = allDiscussions[i].filter(d => !d.readBy.includes(personKey));
-            if (unread.length === 0) return;
-            const latest = unread.reduce((a, b) => a.createdAt > b.createdAt ? a : b);
-            const sub = submissions.find(s => s.id === subId);
-            const title = sub?.problemTitle || sub?.publicSummary || subId;
-            const author = latest.authorName || latest.author || "未顯示名稱";
-            if (!latestDisc || latest.createdAt > latestDisc.createdAt) {
-              latestDisc = { submissionId: subId, submissionTitle: title, author, content: latest.content, createdAt: latest.createdAt };
-            }
-          });
-          if (latestDisc) {
-            setLatestUnreadDiscussion(latestDisc);
-            setShowUnreadToast(true);
+    const wasSuppressed = suppressNextToastRef.current;
+    suppressNextToastRef.current = false;
+
+    if (unreadTotal > previousUnreadTotalRef.current && !wasSuppressed) {
+      setToastUnreadCount(unreadTotal);
+      const unreadSubIds = Object.entries(map).filter(([, v]) => v > 0).map(([k]) => k);
+      try {
+        const allDiscussions = await Promise.all(unreadSubIds.map(id => getDiscussions(id)));
+        let latestDisc: { submissionId: string; submissionTitle: string; author: string; content: string; createdAt: string } | null = null;
+        unreadSubIds.forEach((subId, i) => {
+          const unread = allDiscussions[i].filter(d => !d.readBy.includes(personKey));
+          if (unread.length === 0) return;
+          const latest = unread.reduce((a, b) => a.createdAt > b.createdAt ? a : b);
+          const sub = submissions.find(s => s.id === subId);
+          const title = sub?.problemTitle || sub?.publicSummary || subId;
+          const author = latest.authorName || latest.author || "未顯示名稱";
+          if (!latestDisc || latest.createdAt > latestDisc.createdAt) {
+            latestDisc = { submissionId: subId, submissionTitle: title, author, content: latest.content, createdAt: latest.createdAt };
           }
-        } catch {
-          setLatestUnreadDiscussion(null);
+        });
+        if (latestDisc) {
+          setLatestUnreadDiscussion(latestDisc);
           setShowUnreadToast(true);
         }
+      } catch {
+        setLatestUnreadDiscussion(null);
+        setShowUnreadToast(true);
       }
-      suppressNextToastRef.current = false;
     }
     previousUnreadTotalRef.current = unreadTotal;
   }, [personKey, submissions, adminRole, myName]);
@@ -831,7 +831,7 @@ function AdminContent() {
 
       {/* Real-time toast — shown when unread count increases while on page */}
       {showUnreadToast && (
-        <div className="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-2xl shadow-lg border border-[#E5E7EB] p-4">
+        <div className="fixed bottom-4 right-4 z-[60] w-80 bg-white rounded-2xl shadow-lg border border-[#E5E7EB] p-4">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex items-center gap-1.5">
               <div className="w-7 h-7 rounded-full bg-[#B5E1E5]/40 flex items-center justify-center flex-shrink-0">
