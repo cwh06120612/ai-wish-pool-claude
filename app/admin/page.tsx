@@ -80,7 +80,6 @@ function AdminContent() {
   const initialUnreadCheckedRef = useRef(false);
   const initialDialogShownRef = useRef(false);
   const previousUnreadTotalRef = useRef(0);
-  const suppressNextToastRef = useRef(false);
   const [personKey, setPersonKey] = useState("");
   const [publicSummaryDraft, setPublicSummaryDraft] = useState("");
   const [isComposingPublicSummary, setIsComposingPublicSummary] = useState(false);
@@ -148,10 +147,7 @@ function AdminContent() {
       return;
     }
 
-    const wasSuppressed = suppressNextToastRef.current;
-    suppressNextToastRef.current = false;
-
-    if (unreadTotal > previousUnreadTotalRef.current && !wasSuppressed) {
+    if (unreadTotal > previousUnreadTotalRef.current) {
       setToastUnreadCount(unreadTotal);
       const unreadSubIds = Object.entries(map).filter(([, v]) => v > 0).map(([k]) => k);
       try {
@@ -172,9 +168,8 @@ function AdminContent() {
           setLatestUnreadDiscussion(latestDisc);
           setShowUnreadToast(true);
         }
-      } catch {
-        setLatestUnreadDiscussion(null);
-        setShowUnreadToast(true);
+      } catch (e) {
+        console.error("[refreshUnread] fetch discussions failed", e);
       }
     }
     previousUnreadTotalRef.current = unreadTotal;
@@ -190,7 +185,7 @@ function AdminContent() {
     return () => clearTimeout(timer);
   }, [showUnreadToast]);
 
-  const handleDiscussionChange = useCallback(async (payload?: DiscussionChangePayload) => {
+  const handleDiscussionChange = useCallback((payload?: DiscussionChangePayload) => {
     if (
       payload?.source === "polling" &&
       payload.latestMessage &&
@@ -199,11 +194,15 @@ function AdminContent() {
       const sub = submissions.find(s => s.id === payload.submissionId);
       const title = sub?.problemTitle || sub?.publicSummary || payload.submissionId;
       const author = payload.latestMessage.authorName || payload.latestMessage.author || "未顯示名稱";
-      setLatestUnreadDiscussion({ submissionId: payload.submissionId, submissionTitle: title, author, content: payload.latestMessage.content });
+      setLatestUnreadDiscussion({
+        submissionId: payload.submissionId,
+        submissionTitle: title,
+        author,
+        content: payload.latestMessage.content,
+      });
       setShowUnreadToast(true);
-      suppressNextToastRef.current = true;
     }
-    await refreshUnread();
+    refreshUnread().catch(console.error);
   }, [personKey, submissions, refreshUnread]);
 
   function handleViewUnreadDiscussions() {
