@@ -1,12 +1,19 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, CornerDownRight, Send, Pencil, Trash2, User, Smile } from "lucide-react";
+import { X, CornerDownRight, Send, Pencil, Trash2, User, Smile, Laugh, ThumbsUp, Eye, PartyPopper, CheckCircle, CircleAlert, Lightbulb, Flame, Pin, FileText, Heart } from "lucide-react";
 import { getDiscussions, addDiscussion, markRead, deleteDiscussion, editDiscussion, Discussion } from "@/lib/discussions";
 import { updateSubmissionAsync } from "@/lib/storage";
 import { getCurrentUserDisplayInfo, CurrentUserInfo } from "@/lib/user";
 import { useImeInput } from "@/lib/use-ime-input";
 import type { AdminRole } from "@/components/admin/admin-auth";
 import type { Submission } from "@/types/submission";
+
+export type DiscussionChangePayload = {
+  submissionId: string;
+  latestMessage?: Discussion;
+  messages?: Discussion[];
+  source: "polling" | "send" | "edit" | "delete" | "read";
+};
 
 interface Props {
   submission: Submission;
@@ -15,7 +22,7 @@ interface Props {
   personKey: string;
   onClose: () => void;
   onAdminNoteChange?: (newNote: string) => void | Promise<void>;
-  onDiscussionChange?: () => void | Promise<void>;
+  onDiscussionChange?: (payload?: DiscussionChangePayload) => void | Promise<void>;
 }
 
 function formatTime(iso: string) {
@@ -76,6 +83,42 @@ function getDiscussionAuthor(info: { author?: string; authorName?: string; autho
     displayName,
     avatarText,
   };
+}
+
+const LINE_EMOJIS = [
+  { token: ":smile:",     label: "微笑",  Icon: Smile       },
+  { token: ":laugh:",     label: "開心",  Icon: Laugh       },
+  { token: ":thumbs-up:", label: "讚",    Icon: ThumbsUp    },
+  { token: ":eye:",       label: "我看看", Icon: Eye         },
+  { token: ":party:",     label: "慶祝",  Icon: PartyPopper },
+  { token: ":check:",     label: "確認",  Icon: CheckCircle },
+  { token: ":alert:",     label: "注意",  Icon: CircleAlert },
+  { token: ":idea:",      label: "想法",  Icon: Lightbulb   },
+  { token: ":fire:",      label: "重要",  Icon: Flame       },
+  { token: ":pin:",       label: "標記",  Icon: Pin         },
+  { token: ":note:",      label: "備註",  Icon: FileText    },
+  { token: ":heart:",     label: "支持",  Icon: Heart       },
+];
+
+function renderMessageContent(content: string, isMe: boolean) {
+  const TOKEN_RE = /(:[a-z-]+:)/g;
+  const parts = content.split(TOKEN_RE);
+  return parts.map((part, i) => {
+    const entry = LINE_EMOJIS.find(e => e.token === part);
+    if (entry) {
+      const { Icon, label } = entry;
+      return (
+        <Icon
+          key={i}
+          size={16}
+          strokeWidth={1.8}
+          aria-label={label}
+          className={`inline-block align-text-bottom mx-0.5 flex-shrink-0 ${isMe ? "text-white/90" : "text-[#007A87]"}`}
+        />
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
 }
 
 function discussionsSignature(items: Discussion[]) {
@@ -139,7 +182,7 @@ export function DiscussionDrawer({
 
     if (unread.length) {
       await markRead(unread, personKey);
-      await onDiscussionChange?.();
+      await onDiscussionChange?.({ submissionId: s.id, messages: data, source: "read" });
     }
   }, [s.id, personKey, onDiscussionChange]);
 
@@ -157,10 +200,13 @@ export function DiscussionDrawer({
         const nextSig = discussionsSignature(data);
 
         let needsNotify = false;
+        let latestMessage: Discussion | undefined;
 
         if (currentSig !== nextSig) {
           setMsgs(data);
           needsNotify = true;
+          const sorted = [...data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+          latestMessage = sorted[0];
         }
 
         const unread = data
@@ -173,7 +219,7 @@ export function DiscussionDrawer({
         }
 
         if (needsNotify && !cancelled) {
-          await onDiscussionChange?.();
+          await onDiscussionChange?.({ submissionId: s.id, latestMessage, messages: data, source: "polling" });
         }
       } catch (error) {
         console.error("[DiscussionDrawer] polling sync failed", error);
@@ -251,7 +297,7 @@ export function DiscussionDrawer({
       syncInputValue("");
       setReplyTo(null);
       await load();
-      await onDiscussionChange?.();
+      await onDiscussionChange?.({ submissionId: s.id, source: "send" });
     } catch (error) {
       console.error("[DiscussionDrawer] send failed", error);
       setSendError(error instanceof Error ? `留言送出失敗：${error.message}` : "留言送出失敗：未知錯誤");
@@ -260,8 +306,8 @@ export function DiscussionDrawer({
     }
   }
 
-  function insertEmoji(emoji: string) {
-    syncInputValue(getLatestInputValue() + emoji);
+  function insertLineEmoji(token: string) {
+    syncInputValue(getLatestInputValue() + token);
     setShowEmojiPanel(false);
     setTimeout(() => messageInputRef.current?.focus(), 0);
   }
@@ -274,7 +320,7 @@ export function DiscussionDrawer({
     setEditVal("");
     setActionError("");
     await load();
-    await onDiscussionChange?.();
+    await onDiscussionChange?.({ submissionId: s.id, source: "edit" });
   }
 
   async function doDelete(id: string) {
@@ -282,7 +328,7 @@ export function DiscussionDrawer({
       await deleteDiscussion(id);
       setDelId(null);
       await load();
-      await onDiscussionChange?.();
+      await onDiscussionChange?.({ submissionId: s.id, source: "delete" });
     } catch (error) {
       console.error("[DiscussionDrawer] delete failed", error);
       setActionError("刪除失敗，請稍後再試");
@@ -431,7 +477,7 @@ export function DiscussionDrawer({
             }
           </div>
         )}
-        <span className="whitespace-pre-wrap">{content}</span>
+        <span className="whitespace-pre-wrap">{renderMessageContent(content, isMe)}</span>
       </div>
     );
   }
@@ -618,15 +664,15 @@ export function DiscussionDrawer({
               {showEmojiPanel && (
                 <div className="absolute bottom-full right-0 mb-2 w-64 bg-white border border-[#E5E7EB] rounded-2xl shadow-xl p-2 z-50">
                   <div className="grid grid-cols-6 gap-1">
-                    {["😀","😄","😂","😊","👍","🙏","👀","🎉","✅","❗","💡","🔥","📌","📝"].map(emoji => (
+                    {LINE_EMOJIS.map(({ token, label, Icon }) => (
                       <button
-                        key={emoji}
+                        key={token}
                         type="button"
-                        onClick={() => insertEmoji(emoji)}
-                        aria-label={`插入 ${emoji}`}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-lg hover:bg-[#B5E1E5]/40 transition-colors"
+                        onClick={() => insertLineEmoji(token)}
+                        aria-label={`插入 ${label}`}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-[#757575] hover:bg-[#B5E1E5]/40 hover:text-[#007A87] transition-colors"
                       >
-                        {emoji}
+                        <Icon size={18} strokeWidth={1.8} />
                       </button>
                     ))}
                   </div>

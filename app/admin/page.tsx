@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Dashboard } from "@/components/admin/dashboard";
 import { AdminAuth, useAdminRole, ASSIGNEE_OPTIONS } from "@/components/admin/admin-auth";
-import { DiscussionDrawer } from "@/components/admin/discussion-drawer";
+import { DiscussionDrawer, type DiscussionChangePayload } from "@/components/admin/discussion-drawer";
 import { getUnreadCount, getDiscussions } from "@/lib/discussions";
 const ASSIGNEE_EDIT_OPTIONS = ["未指定", ...ASSIGNEE_OPTIONS];
 import {
@@ -80,6 +80,7 @@ function AdminContent() {
   const initialUnreadCheckedRef = useRef(false);
   const initialDialogShownRef = useRef(false);
   const previousUnreadTotalRef = useRef(0);
+  const suppressNextToastRef = useRef(false);
   const [personKey, setPersonKey] = useState("");
   const [publicSummaryDraft, setPublicSummaryDraft] = useState("");
   const [isComposingPublicSummary, setIsComposingPublicSummary] = useState(false);
@@ -148,30 +149,33 @@ function AdminContent() {
     }
 
     if (unreadTotal > previousUnreadTotalRef.current) {
-      setToastUnreadCount(unreadTotal);
-      const unreadSubIds = Object.entries(map).filter(([, v]) => v > 0).map(([k]) => k);
-      try {
-        const allDiscussions = await Promise.all(unreadSubIds.map(id => getDiscussions(id)));
-        let latestDisc: { submissionId: string; submissionTitle: string; author: string; content: string; createdAt: string } | null = null;
-        unreadSubIds.forEach((subId, i) => {
-          const unread = allDiscussions[i].filter(d => !d.readBy.includes(personKey));
-          if (unread.length === 0) return;
-          const latest = unread.reduce((a, b) => a.createdAt > b.createdAt ? a : b);
-          const sub = submissions.find(s => s.id === subId);
-          const title = sub?.problemTitle || sub?.publicSummary || subId;
-          const author = latest.authorName || latest.author || "未顯示名稱";
-          if (!latestDisc || latest.createdAt > latestDisc.createdAt) {
-            latestDisc = { submissionId: subId, submissionTitle: title, author, content: latest.content, createdAt: latest.createdAt };
+      if (!suppressNextToastRef.current) {
+        setToastUnreadCount(unreadTotal);
+        const unreadSubIds = Object.entries(map).filter(([, v]) => v > 0).map(([k]) => k);
+        try {
+          const allDiscussions = await Promise.all(unreadSubIds.map(id => getDiscussions(id)));
+          let latestDisc: { submissionId: string; submissionTitle: string; author: string; content: string; createdAt: string } | null = null;
+          unreadSubIds.forEach((subId, i) => {
+            const unread = allDiscussions[i].filter(d => !d.readBy.includes(personKey));
+            if (unread.length === 0) return;
+            const latest = unread.reduce((a, b) => a.createdAt > b.createdAt ? a : b);
+            const sub = submissions.find(s => s.id === subId);
+            const title = sub?.problemTitle || sub?.publicSummary || subId;
+            const author = latest.authorName || latest.author || "未顯示名稱";
+            if (!latestDisc || latest.createdAt > latestDisc.createdAt) {
+              latestDisc = { submissionId: subId, submissionTitle: title, author, content: latest.content, createdAt: latest.createdAt };
+            }
+          });
+          if (latestDisc) {
+            setLatestUnreadDiscussion(latestDisc);
+            setShowUnreadToast(true);
           }
-        });
-        if (latestDisc) {
-          setLatestUnreadDiscussion(latestDisc);
+        } catch {
+          setLatestUnreadDiscussion(null);
           setShowUnreadToast(true);
         }
-      } catch {
-        setLatestUnreadDiscussion(null);
-        setShowUnreadToast(true);
       }
+      suppressNextToastRef.current = false;
     }
     previousUnreadTotalRef.current = unreadTotal;
   }, [personKey, submissions, adminRole, myName]);
@@ -185,6 +189,22 @@ function AdminContent() {
     const timer = setTimeout(() => setShowUnreadToast(false), 5000);
     return () => clearTimeout(timer);
   }, [showUnreadToast]);
+
+  const handleDiscussionChange = useCallback(async (payload?: DiscussionChangePayload) => {
+    if (
+      payload?.source === "polling" &&
+      payload.latestMessage &&
+      !payload.latestMessage.readBy.includes(personKey)
+    ) {
+      const sub = submissions.find(s => s.id === payload.submissionId);
+      const title = sub?.problemTitle || sub?.publicSummary || payload.submissionId;
+      const author = payload.latestMessage.authorName || payload.latestMessage.author || "未顯示名稱";
+      setLatestUnreadDiscussion({ submissionId: payload.submissionId, submissionTitle: title, author, content: payload.latestMessage.content });
+      setShowUnreadToast(true);
+      suppressNextToastRef.current = true;
+    }
+    await refreshUnread();
+  }, [personKey, submissions, refreshUnread]);
 
   function handleViewUnreadDiscussions() {
     setShowInitialUnreadDialog(false);
@@ -868,7 +888,7 @@ function AdminContent() {
             setDrawerSub(prev => prev ? { ...prev, adminNote: newNote } : prev);
             await reload();
           }}
-          onDiscussionChange={refreshUnread}
+          onDiscussionChange={handleDiscussionChange}
         />
       )}
     </div>
