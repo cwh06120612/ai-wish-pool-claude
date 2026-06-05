@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getSubmissionsAsync, updateSubmissionAsync } from "@/lib/storage";
 import { exportToCsv } from "@/lib/csv";
 import type { Submission, Status, Priority, Category } from "@/types/submission";
@@ -101,17 +101,37 @@ function AdminContent() {
     return () => clearInterval(timer);
   }, [reload]);
 
+  const refreshUnread = useCallback(async () => {
+    if (!personKey || submissions.length === 0) {
+      setUnreadMap({});
+      return;
+    }
+
+    const ids =
+      adminRole === "team"
+        ? submissions
+            .filter((s) =>
+              (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName)
+            )
+            .map((s) => s.id)
+        : submissions.map((s) => s.id);
+
+    if (ids.length === 0) {
+      setUnreadMap({});
+      return;
+    }
+
+    const map = await getUnreadCount(ids, personKey);
+    setUnreadMap(map);
+
+    if (Object.values(map).reduce((a, b) => a + b, 0) > 0) {
+      setShowUnreadAlert(true);
+    }
+  }, [personKey, submissions, adminRole, myName]);
+
   useEffect(() => {
-    if (!personKey || submissions.length === 0) return;
-    const ids = adminRole === "team"
-      ? submissions.filter(s => (Array.isArray(s.assignee) ? s.assignee : [s.assignee]).includes(myName)).map(s => s.id)
-      : submissions.map(s => s.id);
-    if (ids.length === 0) return;
-    getUnreadCount(ids, personKey).then(map => {
-      setUnreadMap(map);
-      if (Object.values(map).reduce((a, b) => a + b, 0) > 0) setShowUnreadAlert(true);
-    });
-  }, [submissions.length, myName, adminRole, personKey]);
+    refreshUnread();
+  }, [refreshUnread]);
 
   function handleEdit(id: string) {
     const s = submissions.find((s) => s.id === id);
@@ -743,6 +763,7 @@ function AdminContent() {
             setDrawerSub(prev => prev ? { ...prev, adminNote: newNote } : prev);
             await reload();
           }}
+          onDiscussionChange={refreshUnread}
         />
       )}
     </div>

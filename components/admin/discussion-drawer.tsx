@@ -15,6 +15,7 @@ interface Props {
   personKey: string;
   onClose: () => void;
   onAdminNoteChange?: (newNote: string) => void | Promise<void>;
+  onDiscussionChange?: () => void | Promise<void>;
 }
 
 function formatTime(iso: string) {
@@ -77,7 +78,15 @@ function getDiscussionAuthor(info: { author?: string; authorName?: string; autho
   };
 }
 
-export function DiscussionDrawer({ submission: s, author, role, personKey, onClose, onAdminNoteChange }: Props) {
+export function DiscussionDrawer({
+  submission: s,
+  author,
+  role,
+  personKey,
+  onClose,
+  onAdminNoteChange,
+  onDiscussionChange,
+}: Props) {
   const [msgs, setMsgs] = useState<Discussion[]>([]);
   const [notes, setNotes] = useState(() => parseNotes(s.adminNote || ""));
   const {
@@ -107,11 +116,42 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
   const load = useCallback(async () => {
     const data = await getDiscussions(s.id);
     setMsgs(data);
-    const unread = data.filter(m => !m.readBy.includes(personKey)).map(m => m.id);
-    if (unread.length) await markRead(unread, personKey);
+
+    const unread = data
+      .filter((m) => !m.readBy.includes(personKey))
+      .map((m) => m.id);
+
+    if (unread.length) {
+      await markRead(unread, personKey);
+    }
   }, [s.id, personKey]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function markOpenedAsRead() {
+      const data = await getDiscussions(s.id);
+      if (cancelled) return;
+
+      const unread = data
+        .filter((m) => !m.readBy.includes(personKey))
+        .map((m) => m.id);
+
+      if (unread.length) {
+        await markRead(unread, personKey);
+        if (!cancelled) {
+          await onDiscussionChange?.();
+        }
+      }
+    }
+
+    markOpenedAsRead();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [s.id, personKey, onDiscussionChange]);
   useEffect(() => { setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }, [msgs]);
 
   useEffect(() => {
@@ -165,6 +205,7 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
       syncInputValue("");
       setReplyTo(null);
       await load();
+      await onDiscussionChange?.();
     } catch (error) {
       console.error("[DiscussionDrawer] send failed", error);
       setSendError(error instanceof Error ? `留言送出失敗：${error.message}` : "留言送出失敗：未知錯誤");
@@ -181,12 +222,14 @@ export function DiscussionDrawer({ submission: s, author, role, personKey, onClo
     setEditId(null);
     setEditVal("");
     setActionError("");
+    await onDiscussionChange?.();
   }
 
   async function doDelete(id: string) {
+    await deleteDiscussion(id);
     setMsgs(p => p.filter(m => m.id !== id && m.replyTo !== id));
     setDelId(null);
-    await deleteDiscussion(id);
+    await onDiscussionChange?.();
   }
 
   async function saveNoteEdit(idx: number, nextContent: string) {
