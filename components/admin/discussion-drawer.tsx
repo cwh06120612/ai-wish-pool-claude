@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { X, CornerDownRight, Send, Pencil, Trash2, User } from "lucide-react";
+import { X, CornerDownRight, Send, Pencil, Trash2, User, Smile } from "lucide-react";
 import { getDiscussions, addDiscussion, markRead, deleteDiscussion, editDiscussion, Discussion } from "@/lib/discussions";
 import { updateSubmissionAsync } from "@/lib/storage";
 import { getCurrentUserDisplayInfo, CurrentUserInfo } from "@/lib/user";
@@ -126,6 +126,8 @@ export function DiscussionDrawer({
   const [actionError, setActionError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const msgsRef = useRef<Discussion[]>([]);
+  const emojiPanelRef = useRef<HTMLDivElement>(null);
+  const [showEmojiPanel, setShowEmojiPanel] = useState(false);
 
   const load = useCallback(async () => {
     const data = await getDiscussions(s.id);
@@ -154,8 +156,11 @@ export function DiscussionDrawer({
         const currentSig = discussionsSignature(msgsRef.current);
         const nextSig = discussionsSignature(data);
 
+        let needsNotify = false;
+
         if (currentSig !== nextSig) {
           setMsgs(data);
+          needsNotify = true;
         }
 
         const unread = data
@@ -164,9 +169,11 @@ export function DiscussionDrawer({
 
         if (unread.length) {
           await markRead(unread, personKey);
-          if (!cancelled) {
-            await onDiscussionChange?.();
-          }
+          needsNotify = true;
+        }
+
+        if (needsNotify && !cancelled) {
+          await onDiscussionChange?.();
         }
       } catch (error) {
         console.error("[DiscussionDrawer] polling sync failed", error);
@@ -189,6 +196,17 @@ export function DiscussionDrawer({
       .catch(error => { console.error("[DiscussionDrawer] failed to load user info", error); });
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    if (!showEmojiPanel) return;
+    function handleClick(e: MouseEvent) {
+      if (emojiPanelRef.current && !emojiPanelRef.current.contains(e.target as Node)) {
+        setShowEmojiPanel(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showEmojiPanel]);
 
   async function send() {
     if (isInputComposing()) {
@@ -240,6 +258,12 @@ export function DiscussionDrawer({
     } finally {
       setSending(false);
     }
+  }
+
+  function insertEmoji(emoji: string) {
+    syncInputValue(getLatestInputValue() + emoji);
+    setShowEmojiPanel(false);
+    setTimeout(() => messageInputRef.current?.focus(), 0);
   }
 
   async function saveEdit(id: string, nextContent: string) {
@@ -401,7 +425,10 @@ export function DiscussionDrawer({
         {replyTarget && (
           <div className={`text-[10px] mb-1.5 pb-1.5 border-b flex items-start gap-1 opacity-80 ${isMe ? "border-white/30" : "border-[#D1D5DB]"}`}>
             <CornerDownRight size={10} className="mt-0.5 flex-shrink-0" />
-            <span><span className="font-medium">{replyTarget.author}</span>：{replyTarget.content.slice(0, 40)}{replyTarget.content.length > 40 ? "…" : ""}</span>
+            {replyTarget.content
+              ? <span><span className="font-medium">{replyTarget.author}</span>：{replyTarget.content.slice(0, 40)}{replyTarget.content.length > 40 ? "…" : ""}</span>
+              : <span className="font-medium">{replyTarget.author}</span>
+            }
           </div>
         )}
         <span className="whitespace-pre-wrap">{content}</span>
@@ -409,11 +436,8 @@ export function DiscussionDrawer({
     );
   }
 
-  const topLevel = msgs.filter(m => !m.replyTo);
-  const repliesOf = (id: string) => msgs.filter(m => m.replyTo === id);
-  // Latest message for "newest" label
-  const allSorted = [...msgs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  const latestId = allSorted[0]?.id;
+  const visibleMessages = [...msgs].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const latestId = visibleMessages.length > 0 ? visibleMessages[visibleMessages.length - 1].id : undefined;
   const currentActorName = role === "editor" ? "管理者" : author;
   const currentActorAvatarText = role === "editor" ? "管" : getAvatarText(author);
 
@@ -497,12 +521,17 @@ export function DiscussionDrawer({
             );
           })}
 
-          {/* New discussions */}
-          {topLevel.map(msg => {
+          {/* New discussions — flat list sorted by createdAt */}
+          {visibleMessages.map(msg => {
             const authorInfo = getDiscussionAuthor(msg);
             const isMe = msg.author === currentActorName || msg.authorName === currentActorName;
             const canEdit = msg.author === currentActorName || msg.authorName === currentActorName;
-            const replyTarget = msg.replyTo ? msgs.find(m => m.id === msg.replyTo) : null;
+            const replyTargetMsg = msg.replyTo ? msgs.find(m => m.id === msg.replyTo) : null;
+            const replyTarget = replyTargetMsg
+              ? { author: getDiscussionAuthor(replyTargetMsg).displayName, content: replyTargetMsg.content }
+              : msg.replyTo
+              ? { author: "回覆一則訊息", content: "" }
+              : null;
             const isLatest = msg.id === latestId;
 
             return (
@@ -522,7 +551,7 @@ export function DiscussionDrawer({
                       ? <ConfirmDelete onConfirm={() => doDelete(msg.id)} onCancel={() => setDelId(null)} />
                       : editId === msg.id
                       ? <EditInput val={editVal} onSave={(value) => saveEdit(msg.id, value)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`msg-${msg.id}`} />
-                      : <Bubble content={msg.content} isMe={isMe} replyTarget={replyTarget ? { author: getDiscussionAuthor(replyTarget).displayName, content: replyTarget.content } : null} />
+                      : <Bubble content={msg.content} isMe={isMe} replyTarget={replyTarget} />
                     }
                     {editId !== msg.id && delId !== msg.id && (
                       <div className={`flex items-center gap-2 mt-0.5 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
@@ -539,40 +568,6 @@ export function DiscussionDrawer({
                     )}
                   </div>
                 </div>
-                {/* Replies */}
-                {repliesOf(msg.id).map(reply => {
-                  const replyAuthorInfo = getDiscussionAuthor(reply);
-                  const rIsMe = reply.author === currentActorName || reply.authorName === currentActorName;
-                  const rCanEdit = reply.author === currentActorName || reply.authorName === currentActorName;
-                  const rTarget = msgs.find(m => m.id === reply.replyTo);
-                  return (
-                    <div key={reply.id} className={`flex gap-2 mt-2 ml-9 ${rIsMe ? "flex-row-reverse" : ""}`}>
-                      <Av name={replyAuthorInfo.displayName} avatarText={replyAuthorInfo.avatarText} />
-                      <div className={`flex flex-col max-w-[72%] ${rIsMe ? "items-end" : "items-start"}`}>
-                        {!rIsMe && <span className="text-[10px] text-[#9CA3AF] font-medium ml-1 mb-0.5">{replyAuthorInfo.displayName}</span>}
-                        {delId === reply.id
-                          ? <ConfirmDelete onConfirm={() => doDelete(reply.id)} onCancel={() => setDelId(null)} />
-                          : editId === reply.id
-                          ? <EditInput val={editVal} onSave={(value) => saveEdit(reply.id, value)} onCancel={() => { setEditId(null); setEditVal(""); }} editKey={`reply-${reply.id}`} />
-                          : <Bubble content={reply.content} isMe={rIsMe} replyTarget={rTarget ? { author: getDiscussionAuthor(rTarget).displayName, content: rTarget.content } : null} />
-                        }
-                        {editId !== reply.id && delId !== reply.id && (
-                          <div className={`flex items-center gap-2 mt-0.5 px-1 ${rIsMe ? "flex-row-reverse" : ""}`}>
-                            <span className="text-[9px] text-[#9CA3AF]">{formatTime(reply.createdAt)}</span>
-                            <button onClick={() => setReplyTo({ id: reply.id, author: getDiscussionAuthor(reply).displayName, content: reply.content })}
-                              className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
-                              <CornerDownRight size={9} />回覆
-                            </button>
-                            {rCanEdit && <>
-                              <button onClick={() => { setEditId(reply.id); setEditVal(reply.content); }} className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] transition-colors"><Pencil size={9} /></button>
-                              <button onClick={() => setDelId(reply.id)} className="text-[9px] text-[#9CA3AF] hover:text-[#AE1914] transition-colors"><Trash2 size={9} /></button>
-                            </>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             );
           })}
@@ -610,6 +605,32 @@ export function DiscussionDrawer({
               placeholder="輸入訊息... (Enter 送出)"
               disabled={sending}
               className="flex-1 text-sm border border-[#E0E0E0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 focus:border-[#007A87] resize-none disabled:cursor-not-allowed disabled:opacity-50" />
+            <div ref={emojiPanelRef} className="relative flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowEmojiPanel(v => !v)}
+                disabled={sending}
+                className="p-2.5 text-[#9CA3AF] hover:text-[#007A87] rounded-xl hover:bg-[#F0F4F4] transition-colors disabled:opacity-40"
+              >
+                <Smile size={15} />
+              </button>
+              {showEmojiPanel && (
+                <div className="absolute bottom-full right-0 mb-1 bg-white border border-[#E5E7EB] rounded-2xl shadow-lg p-2 z-10">
+                  <div className="grid grid-cols-7 gap-0.5">
+                    {["😀","😄","😂","😊","👍","🙏","👀","🎉","✅","❗","💡","🔥","📌","📝"].map(emoji => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => insertEmoji(emoji)}
+                        className="text-base hover:bg-[#F0F4F4] rounded-lg p-1.5 transition-colors leading-none"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <button onClick={send} disabled={sending || !inputValue.trim()}
               className="p-2.5 bg-[#007A87] text-white rounded-xl hover:bg-[#00555E] disabled:opacity-40 transition-colors flex-shrink-0">
               <Send size={15} />
