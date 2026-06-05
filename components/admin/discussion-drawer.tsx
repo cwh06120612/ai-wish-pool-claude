@@ -78,6 +78,19 @@ function getDiscussionAuthor(info: { author?: string; authorName?: string; autho
   };
 }
 
+function discussionsSignature(items: Discussion[]) {
+  return items
+    .map(item => [
+      item.id,
+      item.content,
+      item.createdAt,
+      item.isEdited ? "1" : "0",
+      item.replyTo ?? "",
+      Array.isArray(item.readBy) ? item.readBy.join(",") : "",
+    ].join("|"))
+    .join("||");
+}
+
 export function DiscussionDrawer({
   submission: s,
   author,
@@ -112,6 +125,7 @@ export function DiscussionDrawer({
   const [sendError, setSendError] = useState("");
   const [actionError, setActionError] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const msgsRef = useRef<Discussion[]>([]);
 
   const load = useCallback(async () => {
     const data = await getDiscussions(s.id);
@@ -128,6 +142,44 @@ export function DiscussionDrawer({
   }, [s.id, personKey, onDiscussionChange]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { msgsRef.current = msgs; }, [msgs]);
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncDiscussions = async () => {
+      try {
+        const data = await getDiscussions(s.id);
+        if (cancelled) return;
+
+        const currentSig = discussionsSignature(msgsRef.current);
+        const nextSig = discussionsSignature(data);
+
+        if (currentSig !== nextSig) {
+          setMsgs(data);
+        }
+
+        const unread = data
+          .filter((m) => !m.readBy.includes(personKey))
+          .map((m) => m.id);
+
+        if (unread.length) {
+          await markRead(unread, personKey);
+          if (!cancelled) {
+            await onDiscussionChange?.();
+          }
+        }
+      } catch (error) {
+        console.error("[DiscussionDrawer] polling sync failed", error);
+      }
+    };
+
+    const interval = window.setInterval(syncDiscussions, 3000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [s.id, personKey, onDiscussionChange]);
   useEffect(() => { setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }, [msgs]);
 
   useEffect(() => {
