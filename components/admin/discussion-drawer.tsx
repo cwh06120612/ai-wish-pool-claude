@@ -555,7 +555,7 @@ export function DiscussionDrawer({
                     }
                     {editId !== msg.id && delId !== msg.id && (
                       <div className={`flex items-center gap-2 mt-0.5 px-1 ${isMe ? "flex-row-reverse" : ""}`}>
-                        <span className="text-[9px] text-[#9CA3AF]">{formatTime(msg.createdAt)}</span>
+                        <span className="text-[9px] text-[#9CA3AF]">{formatTime(msg.createdAt)}{msg.isEdited && " · 已編輯"}</span>
                         <button onClick={() => setReplyTo({ id: msg.id, author: getDiscussionAuthor(msg).displayName, content: msg.content })}
                           className="text-[9px] text-[#9CA3AF] hover:text-[#007A87] flex items-center gap-0.5 transition-colors">
                           <CornerDownRight size={9} />回覆

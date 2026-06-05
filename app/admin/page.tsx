@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Dashboard } from "@/components/admin/dashboard";
 import { AdminAuth, useAdminRole, ASSIGNEE_OPTIONS } from "@/components/admin/admin-auth";
 import { DiscussionDrawer } from "@/components/admin/discussion-drawer";
-import { getUnreadCount } from "@/lib/discussions";
+import { getUnreadCount, getDiscussions } from "@/lib/discussions";
 const ASSIGNEE_EDIT_OPTIONS = ["未指定", ...ASSIGNEE_OPTIONS];
 import {
   LayoutDashboard, ListFilter, Download, SlidersHorizontal, Search,
@@ -71,6 +71,12 @@ function AdminContent() {
   const [showInitialUnreadDialog, setShowInitialUnreadDialog] = useState(false);
   const [showUnreadToast, setShowUnreadToast] = useState(false);
   const [toastUnreadCount, setToastUnreadCount] = useState(0);
+  const [latestUnreadDiscussion, setLatestUnreadDiscussion] = useState<{
+    submissionId: string;
+    submissionTitle: string;
+    author: string;
+    content: string;
+  } | null>(null);
   const initialUnreadCheckedRef = useRef(false);
   const initialDialogShownRef = useRef(false);
   const previousUnreadTotalRef = useRef(0);
@@ -143,7 +149,29 @@ function AdminContent() {
 
     if (unreadTotal > previousUnreadTotalRef.current) {
       setToastUnreadCount(unreadTotal);
-      setShowUnreadToast(true);
+      const unreadSubIds = Object.entries(map).filter(([, v]) => v > 0).map(([k]) => k);
+      try {
+        const allDiscussions = await Promise.all(unreadSubIds.map(id => getDiscussions(id)));
+        let latestDisc: { submissionId: string; submissionTitle: string; author: string; content: string; createdAt: string } | null = null;
+        unreadSubIds.forEach((subId, i) => {
+          const unread = allDiscussions[i].filter(d => !d.readBy.includes(personKey));
+          if (unread.length === 0) return;
+          const latest = unread.reduce((a, b) => a.createdAt > b.createdAt ? a : b);
+          const sub = submissions.find(s => s.id === subId);
+          const title = sub?.problemTitle || sub?.publicSummary || subId;
+          const author = latest.authorName || latest.author || "未顯示名稱";
+          if (!latestDisc || latest.createdAt > latestDisc.createdAt) {
+            latestDisc = { submissionId: subId, submissionTitle: title, author, content: latest.content, createdAt: latest.createdAt };
+          }
+        });
+        if (latestDisc) {
+          setLatestUnreadDiscussion(latestDisc);
+          setShowUnreadToast(true);
+        }
+      } catch {
+        setLatestUnreadDiscussion(null);
+        setShowUnreadToast(true);
+      }
     }
     previousUnreadTotalRef.current = unreadTotal;
   }, [personKey, submissions, adminRole, myName]);
@@ -783,25 +811,46 @@ function AdminContent() {
 
       {/* Real-time toast — shown when unread count increases while on page */}
       {showUnreadToast && (
-        <div className="fixed bottom-4 right-4 z-50 w-72 bg-white rounded-2xl shadow-lg border border-[#E5E7EB] p-4">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-[#B5E1E5]/40 flex items-center justify-center flex-shrink-0">
-                <MessageSquare size={15} className="text-[#007A87]" />
+        <div className="fixed bottom-4 right-4 z-50 w-80 bg-white rounded-2xl shadow-lg border border-[#E5E7EB] p-4">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex items-center gap-1.5">
+              <div className="w-7 h-7 rounded-full bg-[#B5E1E5]/40 flex items-center justify-center flex-shrink-0">
+                <MessageSquare size={13} className="text-[#007A87]" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[#1F2937]">有新的討論</p>
-                <p className="text-xs text-[#6B7280] mt-0.5">
-                  目前有 {Object.values(unreadMap).filter(c => c > 0).length} 筆困擾有新討論。
-                </p>
-              </div>
+              <p className="text-sm font-semibold text-[#1F2937]">有新的討論</p>
             </div>
-            <button onClick={() => setShowUnreadToast(false)} className="text-[#9CA3AF] hover:text-[#424242] flex-shrink-0 mt-0.5">
+            <button onClick={() => setShowUnreadToast(false)} className="text-[#9CA3AF] hover:text-[#424242] flex-shrink-0">
               <X size={14} />
             </button>
           </div>
-          <button onClick={handleViewUnreadDiscussions}
-            className="mt-3 w-full py-2 bg-[#007A87] text-white text-xs font-medium rounded-xl hover:bg-[#00555E] transition-colors">
+          {latestUnreadDiscussion ? (
+            <div className="space-y-1.5 text-xs mb-3">
+              <p className="font-medium text-[#1F2937] leading-snug line-clamp-2">{latestUnreadDiscussion.submissionTitle}</p>
+              <p className="text-[#6B7280]"><span className="text-[#9CA3AF]">傳送者：</span>{latestUnreadDiscussion.author}</p>
+              <p className="bg-[#F9FAFB] rounded-lg px-2.5 py-1.5 text-[#424242] leading-relaxed">
+                「{latestUnreadDiscussion.content.slice(0, 40)}{latestUnreadDiscussion.content.length > 40 ? "…" : ""}」
+              </p>
+              {Object.values(unreadMap).filter(c => c > 0).length > 1 && (
+                <p className="text-[#9CA3AF]">另有 {Object.values(unreadMap).filter(c => c > 0).length - 1} 筆困擾有新討論</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-[#6B7280] mb-3">
+              目前有 {Object.values(unreadMap).filter(c => c > 0).length} 筆困擾有新討論。
+            </p>
+          )}
+          <button
+            onClick={() => {
+              setShowUnreadToast(false);
+              const sub = latestUnreadDiscussion ? submissions.find(s => s.id === latestUnreadDiscussion.submissionId) : null;
+              if (sub) {
+                setTab("list");
+                setDrawerSub(sub);
+              } else {
+                handleViewUnreadDiscussions();
+              }
+            }}
+            className="w-full py-2 bg-[#007A87] text-white text-xs font-medium rounded-xl hover:bg-[#00555E] transition-colors">
             查看
           </button>
         </div>
