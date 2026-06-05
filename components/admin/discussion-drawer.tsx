@@ -123,35 +123,11 @@ export function DiscussionDrawer({
 
     if (unread.length) {
       await markRead(unread, personKey);
+      await onDiscussionChange?.();
     }
-  }, [s.id, personKey]);
+  }, [s.id, personKey, onDiscussionChange]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => {
-    let cancelled = false;
-
-    async function markOpenedAsRead() {
-      const data = await getDiscussions(s.id);
-      if (cancelled) return;
-
-      const unread = data
-        .filter((m) => !m.readBy.includes(personKey))
-        .map((m) => m.id);
-
-      if (unread.length) {
-        await markRead(unread, personKey);
-        if (!cancelled) {
-          await onDiscussionChange?.();
-        }
-      }
-    }
-
-    markOpenedAsRead();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [s.id, personKey, onDiscussionChange]);
   useEffect(() => { setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100); }, [msgs]);
 
   useEffect(() => {
@@ -218,18 +194,23 @@ export function DiscussionDrawer({
     const t = nextContent.trim();
     if (!t) return;
     await editDiscussion(id, t);
-    setMsgs(p => p.map(m => m.id === id ? { ...m, content: t, isEdited: true } : m));
     setEditId(null);
     setEditVal("");
     setActionError("");
+    await load();
     await onDiscussionChange?.();
   }
 
   async function doDelete(id: string) {
-    await deleteDiscussion(id);
-    setMsgs(p => p.filter(m => m.id !== id && m.replyTo !== id));
-    setDelId(null);
-    await onDiscussionChange?.();
+    try {
+      await deleteDiscussion(id);
+      setDelId(null);
+      await load();
+      await onDiscussionChange?.();
+    } catch (error) {
+      console.error("[DiscussionDrawer] delete failed", error);
+      setActionError("刪除失敗，請稍後再試");
+    }
   }
 
   async function saveNoteEdit(idx: number, nextContent: string) {
