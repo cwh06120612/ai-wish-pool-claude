@@ -610,19 +610,21 @@ export function DiscussionDrawer({
                 type="button"
                 onClick={() => setShowEmojiPanel(v => !v)}
                 disabled={sending}
-                className="p-2.5 text-[#9CA3AF] hover:text-[#007A87] rounded-xl hover:bg-[#F0F4F4] transition-colors disabled:opacity-40"
+                aria-label="選擇 emoji"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#E0E0E0] text-[#757575] hover:bg-[#B5E1E5]/30 hover:text-[#007A87] transition-colors disabled:opacity-40"
               >
-                <Smile size={15} />
+                <Smile size={18} strokeWidth={1.8} />
               </button>
               {showEmojiPanel && (
-                <div className="absolute bottom-full right-0 mb-1 bg-white border border-[#E5E7EB] rounded-2xl shadow-lg p-2 z-10">
-                  <div className="grid grid-cols-7 gap-0.5">
+                <div className="absolute bottom-full right-0 mb-2 w-64 bg-white border border-[#E5E7EB] rounded-2xl shadow-xl p-2 z-50">
+                  <div className="grid grid-cols-6 gap-1">
                     {["😀","😄","😂","😊","👍","🙏","👀","🎉","✅","❗","💡","🔥","📌","📝"].map(emoji => (
                       <button
                         key={emoji}
                         type="button"
                         onClick={() => insertEmoji(emoji)}
-                        className="text-base hover:bg-[#F0F4F4] rounded-lg p-1.5 transition-colors leading-none"
+                        aria-label={`插入 ${emoji}`}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-lg hover:bg-[#B5E1E5]/40 transition-colors"
                       >
                         {emoji}
                       </button>
