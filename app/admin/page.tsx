@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getSubmissionsAsync, updateSubmissionAsync } from "@/lib/storage";
 import { exportToCsv } from "@/lib/csv";
 import type { Submission, Status, Priority, Category } from "@/types/submission";
@@ -68,7 +68,12 @@ function AdminContent() {
   const [adminSort, setAdminSort] = useState<"newest"|"oldest"|"likes">("newest");
   const [drawerSub, setDrawerSub] = useState<Submission | null>(null);
   const [unreadMap, setUnreadMap] = useState<Record<string, number>>({});
-  const [showUnreadAlert, setShowUnreadAlert] = useState(false);
+  const [showInitialUnreadDialog, setShowInitialUnreadDialog] = useState(false);
+  const [showUnreadToast, setShowUnreadToast] = useState(false);
+  const [toastUnreadCount, setToastUnreadCount] = useState(0);
+  const initialUnreadCheckedRef = useRef(false);
+  const initialDialogShownRef = useRef(false);
+  const previousUnreadTotalRef = useRef(0);
   const [personKey, setPersonKey] = useState("");
   const [publicSummaryDraft, setPublicSummaryDraft] = useState("");
   const [isComposingPublicSummary, setIsComposingPublicSummary] = useState(false);
@@ -124,14 +129,43 @@ function AdminContent() {
     const map = await getUnreadCount(ids, personKey);
     setUnreadMap(map);
 
-    if (Object.values(map).reduce((a, b) => a + b, 0) > 0) {
-      setShowUnreadAlert(true);
+    const unreadTotal = Object.values(map).reduce((a, b) => a + b, 0);
+
+    if (!initialUnreadCheckedRef.current) {
+      initialUnreadCheckedRef.current = true;
+      previousUnreadTotalRef.current = unreadTotal;
+      if (unreadTotal > 0 && !initialDialogShownRef.current) {
+        setShowInitialUnreadDialog(true);
+        initialDialogShownRef.current = true;
+      }
+      return;
     }
+
+    if (unreadTotal > previousUnreadTotalRef.current) {
+      setToastUnreadCount(unreadTotal);
+      setShowUnreadToast(true);
+    }
+    previousUnreadTotalRef.current = unreadTotal;
   }, [personKey, submissions, adminRole, myName]);
 
   useEffect(() => {
     refreshUnread();
   }, [refreshUnread]);
+
+  useEffect(() => {
+    if (!showUnreadToast) return;
+    const timer = setTimeout(() => setShowUnreadToast(false), 5000);
+    return () => clearTimeout(timer);
+  }, [showUnreadToast]);
+
+  function handleViewUnreadDiscussions() {
+    setShowInitialUnreadDialog(false);
+    setShowUnreadToast(false);
+    setAdminShowFilters(true);
+    setAdminFilterUnread("有新回覆");
+    setTab("list");
+    if (adminRole === "team") setTeamTab("mine");
+  }
 
   function handleEdit(id: string) {
     const s = submissions.find((s) => s.id === id);
@@ -721,33 +755,55 @@ function AdminContent() {
         );
       })()}
 
-      {/* Unread notification modal */}
-      {showUnreadAlert && Object.values(unreadMap).reduce((a,b) => a+b, 0) > 0 && (
+      {/* Initial unread dialog — shown once on login/entry */}
+      {showInitialUnreadDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setShowUnreadAlert(false)} />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setShowInitialUnreadDialog(false)} />
           <div className="relative bg-white rounded-2xl shadow-xl p-6 w-80 text-center">
             <div className="w-12 h-12 rounded-full bg-[#B5E1E5]/40 flex items-center justify-center mx-auto mb-4">
               <MessageSquare size={22} className="text-[#007A87]" />
             </div>
-            <h3 className="text-base font-bold text-[#1F2937] mb-1">
-              {adminRole === "editor" ? "目前有" : "你負責的困擾中，有"}
-              <span className="text-[#007A87] font-semibold"> {Object.values(unreadMap).filter(c => c > 0).length} </span>
-              筆{adminRole === "editor" ? "困擾有新討論" : "有新討論"}
-            </h3>
-            <button onClick={() => {
-                setShowUnreadAlert(false);
-                setAdminShowFilters(true);
-                setAdminFilterUnread("有新回覆");
-                if (adminRole === "team") setTeamTab("mine");
-              }}
+            <h3 className="text-base font-bold text-[#1F2937] mb-1">有新的討論</h3>
+            <p className="text-sm text-[#6B7280] mb-4">
+              {adminRole === "editor"
+                ? `目前有 ${Object.values(unreadMap).filter(c => c > 0).length} 筆困擾有新討論。`
+                : `你負責的困擾中，有 ${Object.values(unreadMap).filter(c => c > 0).length} 筆有新討論。`}
+            </p>
+            <button onClick={handleViewUnreadDiscussions}
               className="w-full py-2.5 bg-[#007A87] text-white text-sm font-medium rounded-xl hover:bg-[#00555E] transition-colors">
               查看新討論
             </button>
-            <button onClick={() => setShowUnreadAlert(false)}
+            <button onClick={() => setShowInitialUnreadDialog(false)}
               className="mt-2 w-full py-2 text-sm text-[#9E9E9E] hover:text-[#616161] transition-colors">
               稍後再看
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Real-time toast — shown when unread count increases while on page */}
+      {showUnreadToast && (
+        <div className="fixed bottom-4 right-4 z-50 w-72 bg-white rounded-2xl shadow-lg border border-[#E5E7EB] p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-[#B5E1E5]/40 flex items-center justify-center flex-shrink-0">
+                <MessageSquare size={15} className="text-[#007A87]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#1F2937]">有新的討論</p>
+                <p className="text-xs text-[#6B7280] mt-0.5">
+                  目前有 {Object.values(unreadMap).filter(c => c > 0).length} 筆困擾有新討論。
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setShowUnreadToast(false)} className="text-[#9CA3AF] hover:text-[#424242] flex-shrink-0 mt-0.5">
+              <X size={14} />
+            </button>
+          </div>
+          <button onClick={handleViewUnreadDiscussions}
+            className="mt-3 w-full py-2 bg-[#007A87] text-white text-xs font-medium rounded-xl hover:bg-[#00555E] transition-colors">
+            查看
+          </button>
         </div>
       )}
 
