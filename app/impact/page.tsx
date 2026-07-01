@@ -6,6 +6,7 @@ import { getSubmissionsAsync } from "@/lib/storage";
 import { getAllFeedbacks, addFeedback, type Feedback } from "@/lib/feedback";
 import type { Submission } from "@/types/submission";
 import { StarRating } from "@/components/ui/star-rating";
+import { DepartmentSelector } from "@/components/department-selector";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Sparkles, Rocket, ThumbsUp, CheckCircle2, Clock, Quote,
@@ -17,13 +18,15 @@ function getPersonalInfo() {
     const raw = localStorage.getItem("ai-wish-personal-info");
     if (raw) {
       const info = JSON.parse(raw);
+      const deptPath = Array.isArray(info.departmentPath) ? (info.departmentPath as string[]) : [];
       return {
         name: (info.name as string) ?? "",
-        dept: info.departmentPath ? (info.departmentPath as string[]).join(" > ") : "",
+        dept: deptPath.join(" > "),
+        deptPath,
       };
     }
   } catch {}
-  return { name: "", dept: "" };
+  return { name: "", dept: "", deptPath: [] as string[] };
 }
 
 const IN_PROGRESS_STATUSES = ["整理中", "評估中", "尋找工具中", "測試中"];
@@ -73,7 +76,7 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
   onClose: () => void;
   onSubmitted: () => void;
 }) {
-  const [dept, setDept] = useState(() => getPersonalInfo().dept);
+  const [deptPath, setDeptPath] = useState<string[]>(() => getPersonalInfo().deptPath);
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -92,12 +95,12 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
 
   async function handleSubmit() {
     if (composing) return;
-    if (!dept.trim()) { setError("請填一下你的部門"); return; }
+    if (deptPath.length === 0) { setError("請選一下你的部門"); return; }
     if (rating === 0) { setError("幫我們選一下幾顆星吧"); return; }
     setSubmitting(true);
     setError("");
     const info = getPersonalInfo();
-    const created = await addFeedback({ submissionId: preselectedId ?? null, authorName: info.name, authorDept: dept, rating, content });
+    const created = await addFeedback({ submissionId: preselectedId ?? null, authorName: info.name, authorDept: deptPath.join(" > "), rating, content });
     setSubmitting(false);
     if (!created) { setError("送出失敗，請稍後再試（可能是回饋資料表尚未建立）"); return; }
     setDone(true);
@@ -138,9 +141,7 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
             {/* 部門 */}
             <div>
               <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的部門</label>
-              <input type="text" value={dept} onChange={(e) => { setDept(e.target.value); if (error) setError(""); }}
-                placeholder="例如：工務部、管理部…"
-                className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+              <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} />
             </div>
             {/* 星等 */}
             <div>

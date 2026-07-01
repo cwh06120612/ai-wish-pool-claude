@@ -7,6 +7,18 @@ import { StarRating } from "@/components/ui/star-rating";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Eye, EyeOff, Trash2, Quote, MessageSquareHeart } from "lucide-react";
 
+// 自訂 hover 提示（取代瀏覽器預設 title 灰框）
+function IconTip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <span className="relative group inline-flex">
+      {children}
+      <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2D2D2D] px-2 py-1 text-[10px] font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-md">
+        {label}
+      </span>
+    </span>
+  );
+}
+
 export function FeedbackPanel({ submissions, canEdit }: { submissions: Submission[]; canEdit: boolean }) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,11 +95,12 @@ export function FeedbackPanel({ submissions, canEdit }: { submissions: Submissio
 
               {canEdit && (
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button type="button" onClick={() => toggle(fb)} disabled={busyId === fb.id}
-                    title={fb.isVisible ? "隱藏（不在看板顯示）" : "顯示"}
-                    className="p-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F0F4F4] disabled:opacity-50 transition-colors">
-                    {fb.isVisible ? <Eye size={14} className="text-[#007A87]" /> : <EyeOff size={14} className="text-[#BDBDBD]" />}
-                  </button>
+                  <IconTip label={fb.isVisible ? "隱藏（不在看板顯示）" : "顯示"}>
+                    <button type="button" onClick={() => toggle(fb)} disabled={busyId === fb.id}
+                      className="p-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F0F4F4] disabled:opacity-50 transition-colors">
+                      {fb.isVisible ? <Eye size={14} className="text-[#007A87]" /> : <EyeOff size={14} className="text-[#BDBDBD]" />}
+                    </button>
+                  </IconTip>
                   {confirmId === fb.id ? (
                     <div className="flex items-center gap-1">
                       <button type="button" onClick={() => remove(fb.id)} disabled={busyId === fb.id}
@@ -96,11 +109,12 @@ export function FeedbackPanel({ submissions, canEdit }: { submissions: Submissio
                         className="text-xs px-2 py-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F0F4F4] transition-colors">取消</button>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => setConfirmId(fb.id)}
-                      title="刪除"
-                      className="p-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:border-[#AE1914]/50 hover:text-[#AE1914] hover:bg-[#EBCDCC]/20 transition-colors">
-                      <Trash2 size={14} />
-                    </button>
+                    <IconTip label="刪除">
+                      <button type="button" onClick={() => setConfirmId(fb.id)}
+                        className="p-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:border-[#AE1914]/50 hover:text-[#AE1914] hover:bg-[#EBCDCC]/20 transition-colors">
+                        <Trash2 size={14} />
+                      </button>
+                    </IconTip>
                   )}
                 </div>
               )}
