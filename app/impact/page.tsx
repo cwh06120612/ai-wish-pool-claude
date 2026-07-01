@@ -76,6 +76,7 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
   onClose: () => void;
   onSubmitted: () => void;
 }) {
+  const [name, setName] = useState(() => getPersonalInfo().name);
   const [deptPath, setDeptPath] = useState<string[]>(() => getPersonalInfo().deptPath);
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
@@ -99,8 +100,7 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
     if (rating === 0) { setError("幫我們選一下幾顆星吧"); return; }
     setSubmitting(true);
     setError("");
-    const info = getPersonalInfo();
-    const created = await addFeedback({ submissionId: preselectedId ?? null, authorName: info.name, authorDept: deptPath.join(" > "), rating, content });
+    const created = await addFeedback({ submissionId: preselectedId ?? null, authorName: name, authorDept: deptPath.join(" > "), rating, content });
     setSubmitting(false);
     if (!created) { setError("送出失敗，請稍後再試（可能是回饋資料表尚未建立）"); return; }
     setDone(true);
@@ -138,10 +138,17 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
                 回饋對象：<span className="font-semibold">{target.problemTitle}</span>
               </div>
             )}
+            {/* 姓名（選填）*/}
+            <div>
+              <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的姓名（選填）</label>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="不填顯示為匿名同仁"
+                className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+            </div>
             {/* 部門 */}
             <div>
               <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的部門</label>
-              <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} />
+              <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} portal />
             </div>
             {/* 星等 */}
             <div>
@@ -249,9 +256,7 @@ export default function ImpactPage() {
           大家的需求，<span className="text-[#007A87]">我們處理到哪了</span>
         </h1>
         <p className="text-[#616161] text-sm leading-relaxed max-w-xl mx-auto">
-          每一則需求我們都有收到、也在推進。這裡即時呈現處理進度與已經落地的成果，
-          <br className="hidden sm:block" />
-          讓你看得到——你說的，我們有在做。
+          每一則需求我們都有收到、也在推進。這裡即時呈現處理進度與已經落地的成果，讓你看得到——你說的，我們有在做。
         </p>
       </div>
 

@@ -130,6 +130,7 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
+  const [name, setName] = useState(() => getPersonalInfo().name);
   const [deptPath, setDeptPath] = useState<string[]>(() => getPersonalInfo().deptPath);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -148,7 +149,6 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
     if (rating === 0) { setError("幫我們選一下幾顆星吧"); return; }
     setSubmitting(true);
     setError("");
-    const { name } = getPersonalInfo();
     const created = await addFeedback({ submissionId, authorName: name, authorDept: deptPath.join(" > "), rating, content });
     setSubmitting(false);
     if (!created) { setError("送出失敗，請稍後再試"); return; }
@@ -171,9 +171,15 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
         </div>
       ) : (
         <div className="bg-white border border-[#E0E0E0]/80 rounded-xl p-3 mb-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs text-[#616161] flex-shrink-0">你的姓名：</span>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="選填，不填顯示為匿名同仁"
+              className="flex-1 min-w-0 text-sm border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+          </div>
           <div className="mb-2">
             <span className="block text-xs text-[#616161] mb-1">你的部門：</span>
-            <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} />
+            <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} portal />
           </div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs text-[#616161]">你的評價：</span>

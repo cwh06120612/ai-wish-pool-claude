@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { ChevronRight, Search, X, Check, ChevronLeft, Building2 } from "lucide-react";
 import { departments } from "@/data/departments";
 import {
@@ -13,25 +14,56 @@ interface DepartmentSelectorProps {
   value: string[];
   onChange: (path: string[]) => void;
   error?: string;
+  /** 在 Modal 等有 overflow 的容器內使用時開啟，選單會以 fixed 定位到 body，避免被裁切 */
+  portal?: boolean;
 }
 
-export function DepartmentSelector({ value, onChange, error }: DepartmentSelectorProps) {
+export function DepartmentSelector({ value, onChange, error, portal = false }: DepartmentSelectorProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [browsePath, setBrowsePath] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number; placement: "down" | "up" } | null>(null);
 
-  // Close on outside click
+  // Close on outside click（portal 時選單在 body，需一併排除）
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const t = e.target as Node;
+      if (containerRef.current?.contains(t)) return;
+      if (menuRef.current?.contains(t)) return;
+      setOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // portal 模式：計算選單位置，並在捲動/縮放時跟隨
+  useEffect(() => {
+    if (!portal || !open) return;
+    function compute() {
+      const el = containerRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const menuH = 360;
+      const spaceBelow = window.innerHeight - r.bottom;
+      const placement: "down" | "up" = spaceBelow < menuH && r.top > spaceBelow ? "up" : "down";
+      setCoords({
+        top: placement === "down" ? r.bottom + 4 : r.top - 4,
+        left: r.left,
+        width: r.width,
+        placement,
+      });
+    }
+    compute();
+    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", compute, true);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.removeEventListener("scroll", compute, true);
+    };
+  }, [portal, open]);
 
   // Focus input when opened
   useEffect(() => {
@@ -136,9 +168,16 @@ export function DepartmentSelector({ value, onChange, error }: DepartmentSelecto
       )}
 
       {/* Dropdown */}
-      {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden"
-          style={{ minWidth: "320px" }}
+      {open && (() => {
+        const menu = (
+        <div
+          ref={menuRef}
+          className={`bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden ${portal ? "" : "absolute left-0 right-0 top-full mt-1 z-50"}`}
+          style={
+            portal
+              ? { position: "fixed", top: coords?.top ?? 0, left: coords?.left ?? 0, width: Math.max(coords?.width ?? 320, 320), zIndex: 100, transform: coords?.placement === "up" ? "translateY(-100%)" : undefined }
+              : { minWidth: "320px" }
+          }
         >
           {/* Search bar */}
           <div className="p-2 border-b border-[#F5F5F5]">
@@ -254,7 +293,9 @@ export function DepartmentSelector({ value, onChange, error }: DepartmentSelecto
           </div>
 
         </div>
-      )}
+        );
+        return portal ? createPortal(menu, document.body) : menu;
+      })()}
 
       {error && <p className="mt-1.5 text-xs text-[#AE1914] flex items-center gap-1">{error}</p>}
     </div>
