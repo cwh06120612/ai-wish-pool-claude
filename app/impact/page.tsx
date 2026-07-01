@@ -269,15 +269,22 @@ export default function ImpactPage() {
             <Kpi icon={<TrendingUp size={16} />} label="收到的需求" value={stats.total} sub="累計" color="#007A87" />
             <Kpi icon={<CheckCircle2 size={16} />} label="已導入落地" value={stats.implemented} sub="完成處理" color="#198754" />
             <Kpi icon={<Clock size={16} />} label="積極處理中" value={stats.inProgress} sub="評估到測試" color="#FFAE00" />
-            <Kpi icon={<Rocket size={16} />} label="導入完成率" value={`${stats.completionRate}%`} sub="已導入 / 受理中" color="#BE8B55" />
+            <Kpi icon={<Rocket size={16} />} label="導入完成率" value={`${stats.completionRate}%`} sub="已導入" color="#BE8B55" />
           </div>
 
           {/* 已導入需求清單 */}
           <div>
-            <SectionTitle icon={<Rocket size={15} className="text-[#BE8B55]" />} hint={`${deliveredCases.length} 個已落地`}>已經幫大家解決的事</SectionTitle>
+            <SectionTitle
+              icon={<Rocket size={15} className="text-[#BE8B55]" />}
+              hint={stats.implemented > deliveredCases.length
+                ? `共 ${stats.implemented} 個已導入，此處僅顯示 ${deliveredCases.length} 個公開項目`
+                : `${deliveredCases.length} 個已導入・僅顯示公開項目`}
+            >已經幫大家解決的事</SectionTitle>
             {deliveredCases.length === 0 ? (
               <div className="border border-[#E0E0E0]/80 rounded-2xl bg-white px-4 py-8 text-center text-sm text-[#9E9E9E]">
-                目前還沒有已導入的需求，處理完成後會陸續出現在這裡。
+                {stats.implemented > 0
+                  ? `目前已導入 ${stats.implemented} 個需求，但都尚未設為公開，所以這裡暫時不顯示內容。`
+                  : "目前還沒有已導入的需求，處理完成後會陸續出現在這裡。"}
               </div>
             ) : (
               <div className="border border-[#E0E0E0]/80 rounded-2xl bg-white divide-y divide-[#F0F4F4] overflow-hidden">
@@ -337,15 +344,17 @@ export default function ImpactPage() {
           </div>
 
           {/* CTA */}
-          <div className="bg-gradient-to-br from-[#007A87] to-[#00555E] rounded-2xl p-6 text-center text-white">
-            <h3 className="text-lg font-bold mb-1.5">還有讓你頭痛的事嗎？</h3>
-            <p className="text-sm text-white/85 mb-4">你說出來，就有機會變成下一個落地的成果。</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/wish" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-white text-[#007A87] hover:bg-[#F0F4F4] transition-colors">
-                <Sparkles size={15} />許個願
+          <div className="bg-gradient-to-br from-[#007A87] to-[#00555E] rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-white">
+            <div className="min-w-0">
+              <h3 className="text-base font-bold">還有讓你頭痛的事嗎？</h3>
+              <p className="text-xs text-white/85 mt-0.5">你說出來，就有機會變成下一個落地的成果。</p>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <Link href="/wish" className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-[#007A87] hover:bg-[#F0F4F4] transition-colors">
+                <Sparkles size={14} />許個願
               </Link>
-              <Link href="/board" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-white/15 text-white border border-white/30 hover:bg-white/25 transition-colors">
-                看大家的需求<ArrowRight size={15} />
+              <Link href="/board" className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white/15 text-white border border-white/30 hover:bg-white/25 transition-colors">
+                看大家的需求<ArrowRight size={14} />
               </Link>
             </div>
           </div>
