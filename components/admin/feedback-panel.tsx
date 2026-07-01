@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getAllFeedbacks, setFeedbackVisibility, deleteFeedback, type Feedback } from "@/lib/feedback";
 import type { Submission } from "@/types/submission";
 import { StarRating } from "@/components/ui/star-rating";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Eye, EyeOff, Trash2, Quote, MessageSquareHeart } from "lucide-react";
 
 // 自訂 hover 提示（取代瀏覽器預設 title 灰框）
@@ -59,7 +58,15 @@ export function FeedbackPanel({ submissions, canEdit }: { submissions: Submissio
   const visibleCount = feedbacks.filter((f) => f.isVisible).length;
 
   if (feedbacks.length === 0) {
-    return <EmptyState title="還沒有任何回饋" description="同仁在公告欄或成果看板留下回饋後，會顯示在這裡。" icon={<MessageSquareHeart size={20} className="text-[#9E9E9E]" />} />;
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+        <div className="w-12 h-12 rounded-full bg-[#F5F5F5] flex items-center justify-center mb-4">
+          <MessageSquareHeart size={20} className="text-[#9E9E9E]" />
+        </div>
+        <h3 className="text-sm font-medium text-[#424242]">還沒有任何回饋</h3>
+        <p className="mt-1 text-sm text-[#9E9E9E] whitespace-nowrap">同仁在公告欄或成果看板留下回饋後，會顯示在這裡。</p>
+      </div>
+    );
   }
 
   return (
