@@ -200,7 +200,8 @@ export default function ImpactPage() {
   useEffect(() => {
     async function load() {
       const [subs, fbs] = await Promise.all([getSubmissionsAsync(), getAllFeedbacks()]);
-      setSubmissions(subs.filter((s) => s.isVisible));
+      // 統計要涵蓋全部需求（含不公開），清單/回饋牆才另外過濾成可公開的
+      setSubmissions(subs);
       setFeedbacks(fbs);
       setLoaded(true);
     }
@@ -213,6 +214,7 @@ export default function ImpactPage() {
     setFeedbacks(await getAllFeedbacks());
   }
 
+  // 統計：涵蓋全部需求（公開＋不公開）
   const stats = useMemo(() => {
     const total = submissions.length;
     const implemented = submissions.filter((s) => s.status === "已導入").length;
@@ -222,16 +224,19 @@ export default function ImpactPage() {
     return { total, implemented, inProgress, completionRate };
   }, [submissions]);
 
+  // 對外顯示（清單、回饋牆標題、回饋 Modal）只用可公開的需求，避免外洩不公開內容
+  const visibleSubmissions = useMemo(() => submissions.filter((s) => s.isVisible), [submissions]);
+
   const deliveredCases = useMemo(
-    () => submissions.filter((s) => s.status === "已導入").sort((a, b) => b.likeCount - a.likeCount),
-    [submissions]
+    () => visibleSubmissions.filter((s) => s.status === "已導入").sort((a, b) => b.likeCount - a.likeCount),
+    [visibleSubmissions]
   );
 
   const titleById = useMemo(() => {
     const m: Record<string, string> = {};
-    submissions.forEach((s) => { m[s.id] = s.publicSummary || s.problemTitle; });
+    visibleSubmissions.forEach((s) => { m[s.id] = s.publicSummary || s.problemTitle; });
     return m;
-  }, [submissions]);
+  }, [visibleSubmissions]);
 
   const hasRealFeedback = feedbacks.length > 0;
 
@@ -349,7 +354,7 @@ export default function ImpactPage() {
 
       {feedbackFor && (
         <FeedbackModal
-          submissions={submissions}
+          submissions={visibleSubmissions}
           preselectedId={feedbackFor.id}
           onClose={() => setFeedbackFor(null)}
           onSubmitted={refreshFeedbacks}
