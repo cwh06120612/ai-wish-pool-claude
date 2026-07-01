@@ -256,7 +256,9 @@ export default function ImpactPage() {
           大家的需求，<span className="text-[#007A87]">我們處理到哪了</span>
         </h1>
         <p className="text-[#616161] text-sm leading-relaxed max-w-xl mx-auto">
-          每一則需求我們都有收到、也在推進。這裡即時呈現處理進度與已經落地的成果，讓你看得到——你說的，我們有在做。
+          每一則需求我們都有收到、也在推進。
+          <br />
+          這裡即時呈現處理進度與已經落地的成果，讓你看得到——你說的，我們有在做。
         </p>
       </div>
 
