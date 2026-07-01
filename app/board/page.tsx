@@ -171,15 +171,15 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
         </div>
       ) : (
         <div className="bg-white border border-[#E0E0E0]/80 rounded-xl p-3 mb-3">
+          <div className="mb-2">
+            <span className="block text-xs text-[#616161] mb-1">你的部門：</span>
+            <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} portal />
+          </div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs text-[#616161] flex-shrink-0">你的姓名：</span>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)}
               placeholder="選填，不填顯示為匿名同仁"
               className="flex-1 min-w-0 text-sm border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
-          </div>
-          <div className="mb-2">
-            <span className="block text-xs text-[#616161] mb-1">你的部門：</span>
-            <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} portal />
           </div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs text-[#616161]">你的評價：</span>

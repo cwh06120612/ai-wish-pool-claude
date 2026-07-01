@@ -138,17 +138,17 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
                 回饋對象：<span className="font-semibold">{target.problemTitle}</span>
               </div>
             )}
+            {/* 部門 */}
+            <div>
+              <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的部門</label>
+              <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} portal />
+            </div>
             {/* 姓名（選填）*/}
             <div>
               <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的姓名（選填）</label>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)}
                 placeholder="不填顯示為匿名同仁"
                 className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
-            </div>
-            {/* 部門 */}
-            <div>
-              <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的部門</label>
-              <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} portal />
             </div>
             {/* 星等 */}
             <div>
