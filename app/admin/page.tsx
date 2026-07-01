@@ -8,6 +8,7 @@ import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Dashboard } from "@/components/admin/dashboard";
+import { FeedbackPanel } from "@/components/admin/feedback-panel";
 import { AdminAuth, useAdminRole, ASSIGNEE_OPTIONS } from "@/components/admin/admin-auth";
 import { DiscussionDrawer, type DiscussionChangePayload } from "@/components/admin/discussion-drawer";
 import { getUnreadCount, getDiscussions } from "@/lib/discussions";
@@ -15,7 +16,7 @@ const ASSIGNEE_EDIT_OPTIONS = ["未指定", ...ASSIGNEE_OPTIONS];
 import {
   LayoutDashboard, ListFilter, Download, SlidersHorizontal, Search,
   Eye, EyeOff, ChevronDown, ChevronRight,
-  X, Save, Check, LogOut, ThumbsUp, MessageSquare,
+  X, Save, Check, LogOut, ThumbsUp, MessageSquare, MessageSquareHeart,
 } from "lucide-react";
 
 const STATUS_OPTIONS: Status[] = [
@@ -27,7 +28,7 @@ const CATEGORY_OPTIONS: Category[] = [
   "簡報 / 報告","自動化作業","AI 學習","AI 應用","豐譽 GPT","BPM","其他","未分類",
 ];
 
-type Tab = "dashboard" | "list";
+type Tab = "dashboard" | "list" | "feedback";
 
 function formatMutationError(error: unknown) {
   if (typeof error === "object" && error !== null) {
@@ -362,6 +363,7 @@ function AdminContent() {
           [
             { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
             { id: "list", label: "所有困擾", icon: ListFilter },
+            { id: "feedback", label: "回饋", icon: MessageSquareHeart },
           ] as const
         ).map(({ id, label, icon: Icon }) => (
           <button
@@ -380,6 +382,8 @@ function AdminContent() {
       </div>
 
       {tab === "dashboard" && <Dashboard submissions={submissions} />}
+
+      {tab === "feedback" && <FeedbackPanel submissions={submissions} canEdit={canEdit} />}
 
       {tab === "list" && (
         <div>

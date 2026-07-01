@@ -32,3 +32,14 @@ drop policy if exists "feedbacks_insert_anon" on public.feedbacks;
 create policy "feedbacks_insert_anon"
   on public.feedbacks for insert
   with check (true);
+
+-- 後台可隱藏/顯示（update）與刪除（delete）回饋
+drop policy if exists "feedbacks_update_anon" on public.feedbacks;
+create policy "feedbacks_update_anon"
+  on public.feedbacks for update
+  using (true) with check (true);
+
+drop policy if exists "feedbacks_delete_anon" on public.feedbacks;
+create policy "feedbacks_delete_anon"
+  on public.feedbacks for delete
+  using (true);

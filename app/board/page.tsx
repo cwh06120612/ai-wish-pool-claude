@@ -127,6 +127,7 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
+  const [dept, setDept] = useState(() => getPersonalInfo().dept);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
@@ -140,10 +141,11 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
 
   async function handleSubmit() {
     if (composing) return;
+    if (!dept.trim()) { setError("請填一下你的部門"); return; }
     if (rating === 0) { setError("幫我們選一下幾顆星吧"); return; }
     setSubmitting(true);
     setError("");
-    const { name, dept } = getPersonalInfo();
+    const { name } = getPersonalInfo();
     const created = await addFeedback({ submissionId, authorName: name, authorDept: dept, rating, content });
     setSubmitting(false);
     if (!created) { setError("送出失敗，請稍後再試"); return; }
@@ -166,6 +168,12 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
         </div>
       ) : (
         <div className="bg-white border border-[#E0E0E0]/80 rounded-xl p-3 mb-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs text-[#616161] flex-shrink-0">你的部門：</span>
+            <input type="text" value={dept} onChange={(e) => { setDept(e.target.value); if (error) setError(""); }}
+              placeholder="例如：工務部"
+              className="flex-1 min-w-0 text-sm border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+          </div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs text-[#616161]">你的評價：</span>
             <StarRating value={rating} onChange={(v) => { setRating(v); if (error) setError(""); }} size={20} />
