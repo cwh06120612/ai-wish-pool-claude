@@ -2,10 +2,26 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { getSubmissionsAsync, incrementLikeAsync, decrementLikeAsync } from "@/lib/storage";
+import { getFeedbacks, addFeedback, type Feedback } from "@/lib/feedback";
 import type { Submission } from "@/types/submission";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, ChevronDown, Sparkles, X, SlidersHorizontal } from "lucide-react";
+import { StarRating } from "@/components/ui/star-rating";
+import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, ChevronDown, Sparkles, X, SlidersHorizontal, MessageSquareHeart, Quote, Send } from "lucide-react";
 import Link from "next/link";
+
+function getPersonalInfo() {
+  try {
+    const raw = localStorage.getItem("ai-wish-personal-info");
+    if (raw) {
+      const info = JSON.parse(raw);
+      return {
+        name: (info.name as string) ?? "",
+        dept: info.departmentPath ? (info.departmentPath as string[]).join(" > ") : "",
+      };
+    }
+  } catch {}
+  return { name: "", dept: "" };
+}
 
 type SortOption = "newest" | "oldest" | "likes";
 
@@ -106,6 +122,97 @@ function InlineFilterDropdown({ label, value, options, onChange }: {
   );
 }
 
+// ─── Feedback section（僅「已導入」需求顯示）──────────────────────────────────
+function FeedbackSection({ submissionId, delivered }: { submissionId: string; delivered: boolean }) {
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [rating, setRating] = useState(0);
+  const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+  const [composing, setComposing] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    getFeedbacks(submissionId).then((fbs) => { if (alive) setFeedbacks(fbs); });
+    return () => { alive = false; };
+  }, [submissionId]);
+
+  async function handleSubmit() {
+    if (composing) return;
+    if (rating === 0) { setError("幫我們選一下幾顆星吧"); return; }
+    setSubmitting(true);
+    setError("");
+    const { name, dept } = getPersonalInfo();
+    const created = await addFeedback({ submissionId, authorName: name, authorDept: dept, rating, content });
+    setSubmitting(false);
+    if (!created) { setError("送出失敗，請稍後再試"); return; }
+    setFeedbacks((prev) => [created, ...prev]);
+    setDone(true);
+    setRating(0);
+    setContent("");
+  }
+
+  return (
+    <div className="border-t border-[#F0F4F4] px-5 py-4 bg-[#FBFBFA]">
+      <div className="flex items-center gap-1.5 mb-3">
+        <MessageSquareHeart size={14} className="text-[#AE1914]" />
+        <p className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">{delivered ? "這個解法有幫到你嗎？" : "給這則需求一點回饋"}</p>
+      </div>
+
+      {done ? (
+        <div className="flex items-center gap-2 text-sm text-[#198754] bg-[#EAF7EE] border border-[#B7E1C4] rounded-xl px-4 py-3 mb-3">
+          <Check size={15} />謝謝你的回饋！這會出現在成果看板上，鼓勵我們繼續做下去。
+        </div>
+      ) : (
+        <div className="bg-white border border-[#E0E0E0]/80 rounded-xl p-3 mb-3">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs text-[#616161]">你的評價：</span>
+            <StarRating value={rating} onChange={(v) => { setRating(v); if (error) setError(""); }} size={20} />
+          </div>
+          <textarea
+            rows={2}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onCompositionStart={() => setComposing(true)}
+            onCompositionEnd={(e) => { setComposing(false); setContent(e.currentTarget.value); }}
+            placeholder={delivered ? "說說哪裡幫到你、省了多少時間…（選填）" : "說說你的想法、期待或補充…（選填）"}
+            className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none"
+          />
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-xs text-[#AE1914]">{error}</span>
+            <button type="button" onClick={handleSubmit} disabled={submitting || composing}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
+              <Send size={12} />{submitting ? "送出中…" : "送出回饋"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {feedbacks.length > 0 && (
+        <div className="space-y-2.5">
+          {feedbacks.map((fb) => (
+            <div key={fb.id} className="bg-white border border-[#E0E0E0]/70 rounded-xl px-3.5 py-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <StarRating value={fb.rating} readOnly size={12} />
+                <span className="text-[11px] text-[#9E9E9E]">{new Date(fb.createdAt).toLocaleDateString("zh-TW")}</span>
+              </div>
+              {fb.content && (
+                <p className="text-sm text-[#2D2D2D] leading-relaxed flex items-start gap-1.5">
+                  <Quote size={12} className="text-[#BE8B55] flex-shrink-0 mt-1" />{fb.content}
+                </p>
+              )}
+              <p className="text-[11px] text-[#9E9E9E] mt-1">
+                — {fb.authorName}{fb.authorDept ? ` · ${fb.authorDept.split(" > ").slice(-1)[0]}` : ""}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isLiked: boolean; onLike: () => void; onClose: () => void }) {
   const st = ANNOYANCE_STYLE[item.annoyanceLevel] ?? ANNOYANCE_STYLE["還好，但可以優化"];
@@ -172,6 +279,7 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
               <p className="text-sm text-[#2D2D2D] leading-relaxed bg-[#F7F7F5] rounded-lg px-4 py-3">{item.freeText}</p>
             </div>
           )}
+          <div className="-mx-5 -mb-4"><FeedbackSection submissionId={item.id} delivered={item.status === "已導入"} /></div>
         </div>
         <div className="border-t border-[#F0F4F4] px-5 py-3 flex-shrink-0">
           <button onClick={onLike}
@@ -271,20 +379,6 @@ export default function BoardPage() {
     );
 
   const visibleLevels = ANNOYANCE_ORDER.filter(level => filtered.some(s => s.annoyanceLevel === level));
-
-  function getPersonalInfo() {
-    try {
-      const raw = localStorage.getItem("ai-wish-personal-info");
-      if (raw) {
-        const info = JSON.parse(raw);
-        return {
-          name: info.name ?? "",
-          dept: info.departmentPath ? info.departmentPath.join(" > ") : "",
-        };
-      }
-    } catch {}
-    return { name: "", dept: "" };
-  }
 
   function handleLike(id: string) {
     const isLiked = likedIds.has(id);
