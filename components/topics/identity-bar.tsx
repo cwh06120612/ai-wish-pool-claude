@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DepartmentSelector } from "@/components/department-selector";
 import { saveIdentity, identityIsSet, deptLast, type Identity } from "@/lib/identity";
-import { Crown, User, Check, X } from "lucide-react";
+import { Crown, User, Check } from "lucide-react";
 
 // 頁首的留言身分控制項
 export function IdentityBar({ identity, staff, onChange }: {
@@ -15,8 +15,17 @@ export function IdentityBar({ identity, staff, onChange }: {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(identity.name);
   const [deptPath, setDeptPath] = useState<string[]>(identity.deptPath);
+  const ref = useRef<HTMLDivElement>(null);
 
   function open() { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }
+
+  // 點外面自動關閉編輯
+  useEffect(() => {
+    if (!editing) return;
+    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setEditing(false); }
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [editing]);
 
   // 官方身分：與其他人相同排版（圓形 icon + 姓名 + 標籤），不可修改
   if (staff.isStaff) {
@@ -30,7 +39,7 @@ export function IdentityBar({ identity, staff, onChange }: {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       {/* 觸發器 */}
       {set ? (
         <div className="flex items-center gap-2 text-xs">
@@ -50,22 +59,21 @@ export function IdentityBar({ identity, staff, onChange }: {
 
       {/* 編輯浮層：絕對定位，不推擠其他內容 */}
       {editing && (
-        <div className="absolute right-0 top-full mt-2 z-40 flex flex-wrap items-center gap-2 border border-[#E0E0E0] bg-white rounded-xl shadow-lg px-3 py-2">
+        <div className="absolute right-0 top-full mt-2 z-40 flex flex-wrap items-center gap-2 border border-[#E0E0E0] bg-white rounded-xl shadow-lg px-3 py-2.5">
           <input type="text" value={name} onChange={(e) => setName(e.target.value)}
             placeholder="姓名"
-            className="w-44 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
-          <div className="w-44"><DepartmentSelector value={deptPath} onChange={setDeptPath} hidePath /></div>
-          <button type="button" disabled={!name.trim() || deptPath.length === 0}
-            onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] disabled:opacity-40 transition-colors">
-            <Check size={13} />儲存
-          </button>
+            className="w-44 text-sm border border-[#E0E0E0] rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+          <div className="w-44"><DepartmentSelector value={deptPath} onChange={setDeptPath} hidePath compact /></div>
           {set && (
             <button type="button"
               onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#AE1914] hover:bg-[#EBCDCC]/30 transition-colors">清除</button>
           )}
-          <button type="button" onClick={() => setEditing(false)} className="p-1 rounded-lg hover:bg-[#F0F4F4]"><X size={14} className="text-[#9E9E9E]" /></button>
+          <button type="button" disabled={!name.trim() || deptPath.length === 0}
+            onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] disabled:opacity-40 transition-colors">
+            <Check size={13} />儲存
+          </button>
         </div>
       )}
     </div>

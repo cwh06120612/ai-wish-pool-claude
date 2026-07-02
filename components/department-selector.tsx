@@ -18,9 +18,11 @@ interface DepartmentSelectorProps {
   portal?: boolean;
   /** 精簡模式：隱藏觸發器下方的完整路徑麵包屑（觸發器已顯示所選部門）*/
   hidePath?: boolean;
+  /** 矮版觸發器（較小的高度）*/
+  compact?: boolean;
 }
 
-export function DepartmentSelector({ value, onChange, error, portal = false, hidePath = false }: DepartmentSelectorProps) {
+export function DepartmentSelector({ value, onChange, error, portal = false, hidePath = false, compact = false }: DepartmentSelectorProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [browsePath, setBrowsePath] = useState<string[]>([]);
@@ -133,7 +135,7 @@ export function DepartmentSelector({ value, onChange, error, portal = false, hid
         onClick={handleOpen}
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") handleOpen(); }}
         className={`
-          w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm text-left cursor-pointer
+          w-full flex items-center gap-2 px-3 ${compact ? "py-1.5" : "py-2.5"} rounded-lg border text-sm text-left cursor-pointer
           focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 bg-white transition-colors
           ${error ? "border-[#AE1914]" : "border-[#E0E0E0] hover:border-[#007A87]/60"}
           ${open ? "border-[#007A87]" : ""}
