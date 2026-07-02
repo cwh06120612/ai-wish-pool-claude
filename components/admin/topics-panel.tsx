@@ -112,7 +112,7 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                     <div className="flex items-center gap-x-3 mt-1 text-[11px] text-[#9E9E9E] flex-wrap">
                       <span className="inline-flex items-center gap-1">
                         <span className={t.isStaff ? "font-semibold text-[#007A87]" : ""}>{t.authorName}</span>
-                        {!t.isStaff && t.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161] border border-[#E0E0E0]">{displayDept(t.authorDept)}</span>}
+                        {!t.isStaff && t.authorDept && <span className="text-xs px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161] border border-[#E0E0E0]">{displayDept(t.authorDept)}</span>}
                         {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>}
                       </span>
                       <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>

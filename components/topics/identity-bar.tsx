@@ -46,7 +46,7 @@ export function IdentityBar({ identity, staff, onChange }: {
           className="inline-flex items-center gap-1.5 text-xs border border-[#E0E0E0] rounded-lg px-2 py-1 cursor-pointer hover:border-[#007A87]/50 hover:bg-[#F0F4F4]/60 transition-colors">
           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
           <span className="font-semibold text-[#2D2D2D]">{identity.name}</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(identity.deptPath.join(" > "))}</span>
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(identity.deptPath.join(" > "))}</span>
         </button>
       ) : (
         <button type="button" onClick={open}
