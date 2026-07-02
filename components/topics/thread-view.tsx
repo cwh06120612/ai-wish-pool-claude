@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { getTopicPosts, addTopicPost, type Topic, type TopicPost } from "@/lib/topics";
+import { supabase } from "@/lib/supabase";
 import { getStaffInfo, deptLast, identityIsSet, type Identity } from "@/lib/identity";
 import { MessageSquare, ArrowLeft, Clock, User, Send, Crown } from "lucide-react";
 
@@ -43,9 +44,15 @@ export function ThreadView({ topic, identity, onBack }: { topic: Topic; identity
 
   useEffect(() => {
     reload();
+    // 後援輪詢（若未開啟 Realtime 仍會更新）
     const timer = setInterval(reload, 20000);
-    return () => clearInterval(timer);
-  }, [reload]);
+    // 即時訂閱：此主題有新留言就立刻重抓
+    const channel = supabase
+      .channel(`topic_posts:${topic.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "topic_posts", filter: `topic_id=eq.${topic.id}` }, () => { reload(); })
+      .subscribe();
+    return () => { clearInterval(timer); supabase.removeChannel(channel); };
+  }, [reload, topic.id]);
 
   async function handleSubmit() {
     if (composing) return;
