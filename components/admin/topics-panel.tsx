@@ -112,7 +112,7 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                     <div className="flex items-center gap-x-3 mt-1 text-[11px] text-[#9E9E9E] flex-wrap">
                       <span className="inline-flex items-center gap-1">
                         {t.authorName}{!t.isStaff && t.authorDept ? ` · ${displayDept(t.authorDept)}` : ""}
-                        {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full"><Crown size={9} />數位創新處</span>}
+                        {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={9} />數位創新處</span>}
                       </span>
                       <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>
                       <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(t.createdAt)} 發起</span>
