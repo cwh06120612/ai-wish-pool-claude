@@ -16,40 +16,34 @@ export function IdentityBar({ identity, staff, onChange }: {
   const [name, setName] = useState(identity.name);
   const [deptPath, setDeptPath] = useState<string[]>(identity.deptPath);
 
-  const cardClass = "bg-white border border-[#E0E0E0]/80 rounded-xl p-3";
-
-  // 官方身分（負責人員/管理員）
+  // 官方身分（負責人員/管理員）— 精簡一行
   if (staff.isStaff) {
     return (
-      <div className={cardClass}>
-        <p className="text-[11px] font-semibold text-[#9E9E9E] mb-1.5">你的留言身分</p>
-        <div className="flex flex-wrap items-center gap-1.5 text-sm">
-          <span className="font-semibold text-[#007A87]">{staff.name}</span>
-          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>
-        </div>
+      <div className="flex flex-wrap items-center gap-1.5 text-xs bg-white border border-[#E0E0E0]/80 rounded-lg px-3 py-2">
+        <span className="font-semibold text-[#007A87]">{staff.name}</span>
+        <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>
       </div>
     );
   }
 
-  // 已設定且非編輯中
+  // 已設定且非編輯中 — 精簡卡片
   if (set && !editing) {
     return (
-      <div className={cardClass}>
-        <p className="text-[11px] font-semibold text-[#9E9E9E] mb-1.5">你的留言身分</p>
-        <div className="flex items-center gap-1.5 text-sm mb-2">
+      <div className="bg-white border border-[#E0E0E0]/80 rounded-lg px-3 py-2 text-xs">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
           <span className="font-medium text-[#2D2D2D]">{identity.name}</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(identity.deptPath.join(" > "))}</span>
+          <button type="button" onClick={() => { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }}
+            className="ml-auto text-[11px] text-[#007A87] hover:text-[#00555E] font-medium transition-colors">修改</button>
         </div>
-        <button type="button" onClick={() => { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }}
-          className="text-xs text-[#007A87] hover:text-[#00555E] font-medium transition-colors">修改</button>
       </div>
     );
   }
 
   // 尚未設定或編輯中：直式表單
   return (
-    <div className={cardClass}>
+    <div className="bg-white border border-[#E0E0E0]/80 rounded-xl p-3">
       <p className="text-[11px] font-semibold text-[#9E9E9E] mb-2">設定留言身分</p>
       <input type="text" value={name} onChange={(e) => setName(e.target.value)}
         placeholder="姓名"
