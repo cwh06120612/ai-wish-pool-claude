@@ -39,14 +39,14 @@ function getStaffInfo(): { isStaff: boolean; name: string } {
 }
 
 function StaffBadge() {
-  return <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>;
+  return <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#198754] px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>;
 }
 
 // 作者顯示：官方回覆顯示「人員 + 數位創新處」，一般同仁顯示「姓名 · 部門」
 function PostAuthor({ p }: { p: TopicPost }) {
   if (p.isStaff) {
     const showName = p.authorName && p.authorName !== "數位創新處";
-    return <>{showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}<StaffBadge /></>;
+    return <>{showName && <span className="font-semibold text-[#198754]">{p.authorName}</span>}<StaffBadge /></>;
   }
   return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span>· {displayDept(p.authorDept)}</span>}</>;
 }
@@ -215,9 +215,9 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
         <ArrowLeft size={15} />返回主題列表
       </button>
 
-      {/* 主題標頭 */}
-      <div className="bg-white border border-[#E0E0E0]/80 rounded-2xl p-5 mb-4">
-        <h1 className="text-lg font-bold text-[#2D2D2D] leading-snug">{topic.title}</h1>
+      {/* 主題標頭 — 綠色框（主題不可修改） */}
+      <div className="bg-[#EAF7EE]/50 border border-[#198754]/50 rounded-2xl p-5 mb-4">
+        <h1 className="text-lg font-bold text-[#198754] leading-snug">{topic.title}</h1>
         {topic.description && <p className="text-sm text-[#616161] mt-1.5 leading-relaxed whitespace-pre-wrap">{topic.description}</p>}
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
           <span className="flex items-center gap-1"><User size={11} />{topic.authorName}{topic.authorDept ? ` · ${displayDept(topic.authorDept)}` : ""}</span>
@@ -264,7 +264,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                 {replyingTo === p.id ? (
                   <div className="mt-3 pl-3 border-l-2 border-[#BE8B55]/60">
                     {staff.isStaff && (
-                      <div className="flex items-center gap-1.5 mb-1.5 text-xs text-[#00555E]">
+                      <div className="flex items-center gap-1.5 mb-1.5 text-xs text-[#198754]">
                         <StaffBadge />
                         <span>以 <b>{staff.name}</b> 身分回覆</span>
                       </div>
@@ -275,7 +275,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                       onCompositionEnd={(e) => { setReplyComposing(false); setReplyContent(e.currentTarget.value); }}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !replyComposing && !e.nativeEvent.isComposing) { e.preventDefault(); submitReply(p.id); } }}
                       placeholder={staff.isStaff ? "以數位創新處身分回覆…（Enter 送出、Shift+Enter 換行）" : "回覆這則留言…（Enter 送出、Shift+Enter 換行）"}
-                      className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
+                      className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none" />
                     <div className="flex items-center justify-end gap-2 mt-1.5">
                       <button type="button" onClick={() => { setReplyingTo(null); setReplyContent(""); }}
                         className="text-xs px-3 py-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F0F4F4] transition-colors">取消</button>
@@ -300,11 +300,11 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
       {/* 留言表單 — 白底 + 副色棕色框，與上方留言區隔 */}
       <div className="bg-white border border-[#BE8B55]/60 rounded-2xl p-4 mt-5">
         <div className="flex items-center gap-1.5 mb-2">
-          <Send size={13} className="text-[#007A87]" />
-          <p className="text-xs font-bold text-[#00555E] uppercase tracking-wider">在這個主題留言</p>
+          <Send size={13} className="text-[#BE8B55]" />
+          <p className="text-xs font-bold text-[#8C6A3F] uppercase tracking-wider">在這個主題留言</p>
         </div>
         {staff.isStaff && (
-          <div className="flex items-center gap-1.5 mb-2 text-xs text-[#00555E]">
+          <div className="flex items-center gap-1.5 mb-2 text-xs text-[#198754]">
             <StaffBadge />
             <span>以 <b>{staff.name}</b> 身分留言</span>
           </div>
@@ -315,7 +315,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
           onCompositionEnd={(e) => { setComposing(false); setContent(e.currentTarget.value); }}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !composing && !e.nativeEvent.isComposing) { e.preventDefault(); handleSubmit(); } }}
           placeholder="分享你在使用上的問題、心得或建議…（Enter 送出、Shift+Enter 換行）"
-          className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none mb-2" />
+          className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none mb-2" />
         {!staff.isStaff && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
             <div>
@@ -326,7 +326,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
               <span className="block text-xs text-[#616161] mb-1">姓名</span>
               <input type="text" value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }}
                 placeholder="請填你的姓名"
-                className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+                className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40" />
             </div>
           </div>
         )}
@@ -433,7 +433,7 @@ export default function TopicsPage() {
                   <MessageSquare size={16} className="text-[#007A87]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors">{t.title}</h3>
+                  <h3 className="text-sm font-semibold text-[#198754] leading-snug group-hover:text-[#146c43] transition-colors">{t.title}</h3>
                   {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                   <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-[#9E9E9E] flex-wrap">
                     <span className="flex items-center gap-1"><User size={10} />{t.authorName}{t.authorDept ? ` · ${displayDept(t.authorDept)}` : ""}</span>
