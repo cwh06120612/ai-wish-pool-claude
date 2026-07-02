@@ -9,7 +9,7 @@ import { DepartmentSelector } from "@/components/department-selector";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   MessagesSquare, MessageSquare, Plus, ArrowLeft, Clock, User,
-  Send, X, ChevronRight,
+  Send, X, ChevronRight, Search,
 } from "lucide-react";
 
 function getPersonalInfo() {
@@ -39,7 +39,7 @@ function getStaffInfo(): { isStaff: boolean; name: string } {
 }
 
 function StaffBadge() {
-  return <span className="text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full">數位創新處</span>;
+  return <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full">👑 數位創新處</span>;
 }
 
 // 作者顯示：官方回覆顯示「人員 + 數位創新處」，一般同仁顯示「姓名 · 部門」
@@ -201,7 +201,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
   return (
     <div>
       <button type="button" onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-[#007A87] font-medium hover:underline mb-4">
+        className="flex items-center gap-1.5 text-sm text-[#007A87] font-medium hover:text-[#00555E] mb-4">
         <ArrowLeft size={15} />返回主題列表
       </button>
 
@@ -263,7 +263,8 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                       onChange={(e) => setReplyContent(e.target.value)}
                       onCompositionStart={() => setReplyComposing(true)}
                       onCompositionEnd={(e) => { setReplyComposing(false); setReplyContent(e.currentTarget.value); }}
-                      placeholder={staff.isStaff ? "以數位創新處身分回覆…" : "回覆這則留言…"}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !replyComposing && !e.nativeEvent.isComposing) { e.preventDefault(); submitReply(p.id); } }}
+                      placeholder={staff.isStaff ? "以數位創新處身分回覆…（Enter 送出、Shift+Enter 換行）" : "回覆這則留言…（Enter 送出、Shift+Enter 換行）"}
                       className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
                     <div className="flex items-center justify-end gap-2 mt-1.5">
                       <button type="button" onClick={() => { setReplyingTo(null); setReplyContent(""); }}
@@ -296,7 +297,8 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
           onChange={(e) => { setContent(e.target.value); if (error) setError(""); }}
           onCompositionStart={() => setComposing(true)}
           onCompositionEnd={(e) => { setComposing(false); setContent(e.currentTarget.value); }}
-          placeholder="分享你在使用上的問題、心得或建議…"
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !composing && !e.nativeEvent.isComposing) { e.preventDefault(); handleSubmit(); } }}
+          placeholder="分享你在使用上的問題、心得或建議…（Enter 送出、Shift+Enter 換行）"
           className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none mb-2" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <div>
@@ -329,6 +331,7 @@ export default function TopicsPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Topic | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [query, setQuery] = useState("");
 
   const reload = useCallback(async () => {
     const [ts, st] = await Promise.all([getTopics(), getTopicStats()]);
@@ -351,6 +354,12 @@ export default function TopicsPage() {
       return lb.localeCompare(la);
     });
   }, [topics, stats]);
+
+  const filteredTopics = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return sortedTopics;
+    return sortedTopics.filter((t) => `${t.title} ${t.description}`.toLowerCase().includes(q));
+  }, [sortedTopics, query]);
 
   if (selected) {
     return (
@@ -384,8 +393,20 @@ export default function TopicsPage() {
           action={<button type="button" onClick={() => setShowNew(true)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors"><Plus size={14} />開新主題</button>}
         />
       ) : (
-        <div className="space-y-3">
-          {sortedTopics.map((t) => {
+        <>
+          <div className="flex items-center gap-2 mb-4 px-3 py-2.5 bg-white border border-[#E0E0E0]/80 rounded-xl shadow-sm">
+            <Search size={14} className="text-[#BDBDBD] flex-shrink-0" />
+            <input type="text" placeholder="搜尋主題，開新主題前先找找有沒有重複…" value={query} onChange={(e) => setQuery(e.target.value)}
+              className="flex-1 text-sm text-[#2D2D2D] placeholder:text-[#BDBDBD] outline-none bg-transparent" />
+            {query && <button onClick={() => setQuery("")}><X size={13} className="text-[#BDBDBD]" /></button>}
+          </div>
+          {filteredTopics.length === 0 ? (
+            <p className="py-12 text-center text-sm text-[#9E9E9E]">
+              找不到符合「{query}」的主題，可以<button type="button" onClick={() => setShowNew(true)} className="text-[#007A87] font-medium hover:text-[#00555E]">開一個新主題</button>。
+            </p>
+          ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {filteredTopics.map((t) => {
             const st = stats[t.id];
             return (
               <button key={t.id} type="button" onClick={() => setSelected(t)}
@@ -406,7 +427,9 @@ export default function TopicsPage() {
               </button>
             );
           })}
-        </div>
+          </div>
+          )}
+        </>
       )}
 
       {showNew && (
