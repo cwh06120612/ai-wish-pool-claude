@@ -51,7 +51,7 @@ export function IdentityBar({ identity, staff, onChange }: {
         <div className="absolute right-0 top-full mt-2 z-40 flex flex-wrap items-center gap-2 border border-[#E0E0E0] bg-white rounded-xl shadow-lg px-3 py-2">
           <input type="text" value={name} onChange={(e) => setName(e.target.value)}
             placeholder="姓名"
-            className="w-32 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+            className="w-44 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
           <div className="w-44"><DepartmentSelector value={deptPath} onChange={setDeptPath} hidePath /></div>
           <button type="button" disabled={!name.trim() || deptPath.length === 0}
             onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
