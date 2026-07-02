@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { getTopicPosts, addTopicPost, type Topic, type TopicPost } from "@/lib/topics";
 import { supabase } from "@/lib/supabase";
-import { getStaffInfo, deptLast, identityIsSet, type Identity } from "@/lib/identity";
+import { deptLast, identityIsSet, type Identity } from "@/lib/identity";
+import { IdentityBar } from "@/components/topics/identity-bar";
 import { MessageSquare, ArrowLeft, Clock, User, Send, Crown } from "lucide-react";
 
 function StaffBadge() {
@@ -35,14 +36,19 @@ function fmtTime(iso: string) {
   return new Date(iso).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-export function ThreadView({ topic, identity, onBack }: { topic: Topic; identity: Identity; onBack: () => void }) {
+export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }: {
+  topic: Topic;
+  identity: Identity;
+  staff: { isStaff: boolean; name: string };
+  onIdentityChange: (id: Identity) => void;
+  onBack: () => void;
+}) {
   const [posts, setPosts] = useState<TopicPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [composing, setComposing] = useState(false);
-  const [staff] = useState(() => getStaffInfo());
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyBusy, setReplyBusy] = useState<string | null>(null);
   const [composingReplyId, setComposingReplyId] = useState<string | null>(null);
@@ -113,10 +119,13 @@ export function ThreadView({ topic, identity, onBack }: { topic: Topic; identity
 
   return (
     <div>
-      <button type="button" onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-[#007A87] font-medium hover:text-[#00555E] mb-4">
-        <ArrowLeft size={15} />返回主題列表
-      </button>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <button type="button" onClick={onBack}
+          className="flex items-center gap-1.5 text-sm text-[#007A87] font-medium hover:text-[#00555E]">
+          <ArrowLeft size={15} />返回主題列表
+        </button>
+        <IdentityBar identity={identity} staff={staff} onChange={onIdentityChange} />
+      </div>
 
       {/* 主題標頭 — 主色框（主題不可修改） */}
       <div className="bg-[#EFF7F8] border border-[#007A87]/40 rounded-2xl p-5 mb-4">
