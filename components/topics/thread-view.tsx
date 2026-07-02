@@ -179,14 +179,6 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
 
                 {/* 回覆框（直接顯示；身分用上方設定的統一身分）*/}
                 <div className="mt-3 pl-3 border-l-2 border-[#BE8B55]/60">
-                  {staff.isStaff && (
-                    <div className="flex items-center gap-1 mb-1.5 text-xs text-[#9E9E9E]">
-                      <span>以</span>
-                      <span className="font-semibold text-[#007A87]">{staff.name}</span>
-                      <StaffBadge />
-                      <span>身分回覆</span>
-                    </div>
-                  )}
                   <div className="flex items-end gap-2">
                     <textarea rows={1} value={replyDrafts[p.id] ?? ""} disabled={!canPost}
                       onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))}
@@ -213,14 +205,6 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
           <Send size={13} className="text-[#BE8B55]" />
           <p className="text-xs font-bold text-[#8C6A3F] uppercase tracking-wider">在這個主題留言</p>
         </div>
-        {staff.isStaff && (
-          <div className="flex items-center gap-1 mb-2 text-xs text-[#9E9E9E]">
-            <span>以</span>
-            <span className="font-semibold text-[#007A87]">{staff.name}</span>
-            <StaffBadge />
-            <span>身分留言</span>
-          </div>
-        )}
         <textarea rows={3} value={content} disabled={!canPost}
           onChange={(e) => { setContent(e.target.value); if (error) setError(""); }}
           onCompositionStart={() => setComposing(true)}
