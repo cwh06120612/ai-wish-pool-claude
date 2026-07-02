@@ -133,7 +133,7 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                           {p.parentId && <CornerDownRight size={12} className="text-[#BDBDBD] flex-shrink-0 mt-1" />}
                           <div className="flex-1 min-w-0 bg-white border border-[#E0E0E0]/70 rounded-lg px-3 py-2">
                             <div className="flex items-center gap-2 mb-0.5 text-[11px] text-[#9E9E9E]">
-                              <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>
+                              <span className={`font-semibold ${p.isStaff ? "text-[#007A87]" : "text-[#2D2D2D]"}`}>{p.authorName}</span>
                               {p.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full"><Crown size={9} />數位創新處</span>}
                               <span className="ml-auto">{fmtTime(p.createdAt)}</span>
                             </div>

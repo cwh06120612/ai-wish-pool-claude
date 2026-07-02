@@ -46,7 +46,7 @@ function StaffBadge() {
 function PostAuthor({ p }: { p: TopicPost }) {
   if (p.isStaff) {
     const showName = p.authorName && p.authorName !== "數位創新處";
-    return <>{showName && <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>}<StaffBadge /></>;
+    return <>{showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}<StaffBadge /></>;
   }
   return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span>· {displayDept(p.authorDept)}</span>}</>;
 }
@@ -162,6 +162,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
 
   async function handleSubmit() {
     if (composing) return;
+    if (deptPath.length === 0) { setError("請選一下你的部門"); return; }
     if (!name.trim()) { setError("請填一下你的姓名"); return; }
     if (!content.trim()) { setError("留言不能是空的喔"); return; }
     setSubmitting(true);
@@ -303,11 +304,11 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
           className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none mb-2" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
           <div>
-            <span className="block text-xs text-[#616161] mb-1">部門（選填）</span>
-            <DepartmentSelector value={deptPath} onChange={setDeptPath} />
+            <span className="block text-xs text-[#616161] mb-1">部門</span>
+            <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} />
           </div>
           <div>
-            <span className="block text-xs text-[#616161] mb-1">姓名 <span className="text-[#AE1914]">*</span></span>
+            <span className="block text-xs text-[#616161] mb-1">姓名</span>
             <input type="text" value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }}
               placeholder="請填你的姓名"
               className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
