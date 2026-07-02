@@ -34,6 +34,9 @@ export function IdentityBar({ identity, staff, onChange }: {
         <span>目前以 <b className="text-[#616161] font-medium">{identity.name}．{deptLast(identity.deptPath.join(" > "))}</b> 發言</span>
         <button type="button" onClick={() => { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }}
           className="text-[#007A87] hover:text-[#00555E] transition-colors flex-shrink-0">修改</button>
+        <span className="text-[#E0E0E0]">|</span>
+        <button type="button" onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
+          className="text-[#AE1914] hover:text-[#8C1915] transition-colors flex-shrink-0">清除</button>
       </div>
     );
   }
