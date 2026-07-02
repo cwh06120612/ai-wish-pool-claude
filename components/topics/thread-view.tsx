@@ -41,7 +41,7 @@ function PostAuthor({ p }: { p: TopicPost }) {
     const showName = p.authorName && p.authorName !== "數位創新處";
     return <>{showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}<StaffBadge /></>;
   }
-  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span>· {displayDept(p.authorDept)}</span>}</>;
+  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span> · {displayDept(p.authorDept)}</span>}</>;
 }
 
 function fmtTime(iso: string) {
