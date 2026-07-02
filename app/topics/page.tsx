@@ -262,7 +262,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
 
                 {/* 回覆動作 */}
                 {replyingTo === p.id ? (
-                  <div className="mt-3 pl-3 border-l-2 border-[#007A87]/30">
+                  <div className="mt-3 pl-3 border-l-2 border-[#BE8B55]/60">
                     {staff.isStaff && (
                       <div className="flex items-center gap-1.5 mb-1.5 text-xs text-[#00555E]">
                         <StaffBadge />
@@ -287,7 +287,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                   </div>
                 ) : (
                   <button type="button" onClick={() => { setReplyingTo(p.id); setReplyContent(""); }}
-                    className="mt-2 flex items-center gap-1 text-xs font-medium text-[#007A87] hover:text-[#00555E] transition-colors">
+                    className="mt-2 flex items-center gap-1 text-xs font-medium text-[#BE8B55] hover:text-[#8C6A3F] transition-colors">
                     <MessageSquare size={12} />回覆{staff.isStaff && "（以數位創新處身分）"}
                   </button>
                 )}
@@ -297,8 +297,8 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
         </div>
       )}
 
-      {/* 留言表單 — 淡青底 + 主色邊框，與上方白底留言區隔 */}
-      <div className="bg-[#EFF7F8] border border-[#007A87]/25 rounded-2xl p-4 mt-5">
+      {/* 留言表單 — 白底 + 副色棕色框，與上方留言區隔 */}
+      <div className="bg-white border border-[#BE8B55]/60 rounded-2xl p-4 mt-5">
         <div className="flex items-center gap-1.5 mb-2">
           <Send size={13} className="text-[#007A87]" />
           <p className="text-xs font-bold text-[#00555E] uppercase tracking-wider">在這個主題留言</p>
