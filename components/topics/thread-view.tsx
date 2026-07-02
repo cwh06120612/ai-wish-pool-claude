@@ -25,7 +25,7 @@ function PostAuthor({ p }: { p: TopicPost }) {
   }
   return (
     <span className="inline-flex items-center gap-1">
-      <User size={11} className="text-[#BDBDBD] flex-shrink-0" />
+      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
       <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>
       {p.authorDept && <span className="text-xs px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161] border border-[#E0E0E0]">{deptLast(p.authorDept)}</span>}
     </span>
