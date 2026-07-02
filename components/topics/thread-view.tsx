@@ -16,7 +16,7 @@ function PostAuthor({ p }: { p: TopicPost }) {
     const showName = p.authorName && p.authorName !== "數位創新處";
     return (
       <span className="inline-flex items-center gap-1">
-        <User size={11} className="text-[#BDBDBD] flex-shrink-0" />
+        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#F0F4F4] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
         {showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}
         <StaffBadge />
       </span>
@@ -124,7 +124,8 @@ export function ThreadView({ topic, identity, onBack }: { topic: Topic; identity
         {topic.description && <p className="text-sm text-[#616161] mt-1.5 leading-relaxed whitespace-pre-wrap">{topic.description}</p>}
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
           <span className="flex items-center gap-1">
-            <User size={11} />{topic.authorName}
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#F0F4F4] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
+            <span className={topic.isStaff ? "font-semibold text-[#007A87]" : ""}>{topic.authorName}</span>
             {!topic.isStaff && topic.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(topic.authorDept)}</span>}
             {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>}
           </span>

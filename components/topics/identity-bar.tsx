@@ -43,7 +43,7 @@ export function IdentityBar({ identity, staff, onChange }: {
     <div className="mb-4 bg-white border border-[#E0E0E0]/80 rounded-xl p-3">
       <div className="flex items-center gap-1.5 mb-2">
         <User size={13} className="text-[#007A87]" />
-        <span className="text-xs font-semibold text-[#2D2D2D]">設定發言身分</span>
+        <span className="text-xs font-semibold text-[#2D2D2D]">設定留言身分</span>
       </div>
       <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
         <input type="text" value={name} onChange={(e) => setName(e.target.value)}

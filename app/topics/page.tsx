@@ -237,7 +237,8 @@ export default function TopicsPage() {
                       {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                       <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-[#9E9E9E] flex-wrap">
                         <span className="flex items-center gap-1">
-                          <User size={10} />{t.authorName}
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#F0F4F4] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
+                          <span className={t.isStaff ? "font-semibold text-[#007A87]" : ""}>{t.authorName}</span>
                           {!t.isStaff && t.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(t.authorDept)}</span>}
                           {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>}
                         </span>
