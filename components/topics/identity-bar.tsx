@@ -41,19 +41,25 @@ export function IdentityBar({ identity, staff, onChange }: {
     );
   }
 
-  // 尚未設定或編輯中：精簡一列
+  // 尚未設定或編輯中：乾淨的小卡片
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
-      <span className="text-[#7A5A30] whitespace-nowrap">發言身分（設定一次即記住）</span>
-      <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-        placeholder="姓名"
-        className="w-24 text-sm border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
-      <div className="w-52"><DepartmentSelector value={deptPath} onChange={setDeptPath} /></div>
-      <button type="button" disabled={!name.trim() || deptPath.length === 0}
-        onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
-        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] disabled:opacity-40 transition-colors">
-        <Check size={13} />儲存
-      </button>
+    <div className="mb-4 bg-white border border-[#E0E0E0]/80 rounded-xl p-3">
+      <div className="flex items-center gap-1.5 mb-2">
+        <User size={13} className="text-[#007A87]" />
+        <span className="text-xs font-semibold text-[#2D2D2D]">設定發言身分</span>
+        <span className="text-[11px] text-[#9E9E9E]">設定一次，之後所有主題自動帶入</span>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+          placeholder="姓名"
+          className="sm:w-32 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+        <div className="flex-1 min-w-0"><DepartmentSelector value={deptPath} onChange={setDeptPath} /></div>
+        <button type="button" disabled={!name.trim() || deptPath.length === 0}
+          onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
+          className="flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] disabled:opacity-40 transition-colors flex-shrink-0">
+          <Check size={14} />儲存
+        </button>
+      </div>
     </div>
   );
 }
