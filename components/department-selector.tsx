@@ -16,9 +16,11 @@ interface DepartmentSelectorProps {
   error?: string;
   /** 在 Modal 等有 overflow 的容器內使用時開啟，選單會以 fixed 定位到 body，避免被裁切 */
   portal?: boolean;
+  /** 精簡模式：隱藏觸發器下方的完整路徑麵包屑（觸發器已顯示所選部門）*/
+  hidePath?: boolean;
 }
 
-export function DepartmentSelector({ value, onChange, error, portal = false }: DepartmentSelectorProps) {
+export function DepartmentSelector({ value, onChange, error, portal = false, hidePath = false }: DepartmentSelectorProps) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [browsePath, setBrowsePath] = useState<string[]>([]);
@@ -153,7 +155,7 @@ export function DepartmentSelector({ value, onChange, error, portal = false }: D
       </div>
 
       {/* Selected path display */}
-      {value.length > 0 && (
+      {!hidePath && value.length > 0 && (
         <div className="mt-1.5 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs px-1">
           {value.map((seg, i) => (
             <React.Fragment key={i}>
