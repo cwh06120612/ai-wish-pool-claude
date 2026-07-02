@@ -14,9 +14,21 @@ function StaffBadge() {
 function PostAuthor({ p }: { p: TopicPost }) {
   if (p.isStaff) {
     const showName = p.authorName && p.authorName !== "數位創新處";
-    return <>{showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}<StaffBadge /></>;
+    return (
+      <span className="inline-flex items-center gap-1">
+        <User size={11} className="text-[#BDBDBD] flex-shrink-0" />
+        {showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}
+        <StaffBadge />
+      </span>
+    );
   }
-  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(p.authorDept)}</span>}</>;
+  return (
+    <span className="inline-flex items-center gap-1">
+      <User size={11} className="text-[#BDBDBD] flex-shrink-0" />
+      <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>
+      {p.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(p.authorDept)}</span>}
+    </span>
+  );
 }
 
 function fmtTime(iso: string) {
