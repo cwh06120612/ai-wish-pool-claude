@@ -57,13 +57,9 @@ export function IdentityBar({ identity, staff, onChange }: {
             <Check size={14} />儲存
           </button>
           {set && (
-            <>
-              <button type="button"
-                onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-[#AE1914] hover:bg-[#EBCDCC]/30 transition-colors">清除</button>
-              <button type="button" onClick={() => setEditing(false)}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-[#616161] hover:bg-[#F0F4F4] transition-colors">取消</button>
-            </>
+            <button type="button"
+              onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
+              className="px-3 py-2 rounded-lg text-sm font-medium text-[#AE1914] hover:bg-[#EBCDCC]/30 transition-colors">清除</button>
           )}
         </div>
       </div>

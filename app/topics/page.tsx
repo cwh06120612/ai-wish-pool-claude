@@ -102,9 +102,11 @@ function NewTopicModal({ identity, staff, onClose, onCreated, onIdentityChange }
               className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
           </div>
           {staff.isStaff ? (
-            <div className="flex items-center gap-1 text-xs text-[#00555E]">
-              <Crown size={12} className="text-[#007A87] flex-shrink-0" />
-              <span>以 <b>{staff.name}</b>（數位創新處）身分開主題</span>
+            <div className="flex items-center gap-1 text-xs text-[#9E9E9E]">
+              <span>以</span>
+              <span className="font-semibold text-[#007A87]">{staff.name}</span>
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#007A87]"><Crown size={10} />數位創新處</span>
+              <span>身分開主題</span>
             </div>
           ) : identitySet ? (
             <div className="flex items-center gap-1.5 text-xs text-[#616161]">
