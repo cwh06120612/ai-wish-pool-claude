@@ -184,22 +184,16 @@ export default function TopicsPage() {
 
   return (
     <div className="max-w-[860px] mx-auto px-6 py-8">
-      <div className="flex items-center justify-between gap-3 mb-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <MessagesSquare size={20} className="text-[#007A87]" />
           <h1 className="text-2xl font-bold text-[#2D2D2D]">主題討論</h1>
         </div>
-        <button type="button" onClick={() => setShowNew(true)}
-          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors flex-shrink-0">
-          <Plus size={15} />開新主題
-        </button>
+        <IdentityBar identity={identity} staff={staff} onChange={setIdentity} />
       </div>
       <div className="mb-5">
         <p className="text-sm text-[#9E9E9E]">依主題（例如某個系統）開討論串，在裡面留下使用上的問題、心得或建議。</p>
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
-          <p className="text-xs text-[#8C6A3F]">※ 本專區請使用真實部門與姓名，以利追蹤問題並聯絡相關人員。</p>
-          <IdentityBar identity={identity} staff={staff} onChange={setIdentity} />
-        </div>
+        <p className="text-xs text-[#8C6A3F] mt-1">※ 本專區請使用真實部門與姓名，以利追蹤問題並聯絡相關人員。</p>
       </div>
 
       {loading ? (
@@ -213,11 +207,17 @@ export default function TopicsPage() {
         />
       ) : (
         <>
-          <div className="flex items-center gap-2 mb-4 px-3 py-2.5 bg-white border border-[#E0E0E0]/80 rounded-xl shadow-sm">
-            <Search size={14} className="text-[#BDBDBD] flex-shrink-0" />
-            <input type="text" placeholder="搜尋主題，開新主題前先找找有沒有重複…" value={query} onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 text-sm text-[#2D2D2D] placeholder:text-[#BDBDBD] outline-none bg-transparent" />
-            {query && <button onClick={() => setQuery("")}><X size={13} className="text-[#BDBDBD]" /></button>}
+          <div className="flex gap-2 mb-4">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 bg-white border border-[#E0E0E0]/80 rounded-xl shadow-sm">
+              <Search size={14} className="text-[#BDBDBD] flex-shrink-0" />
+              <input type="text" placeholder="搜尋主題，開新主題前先找找有沒有重複…" value={query} onChange={(e) => setQuery(e.target.value)}
+                className="flex-1 text-sm text-[#2D2D2D] placeholder:text-[#BDBDBD] outline-none bg-transparent" />
+              {query && <button onClick={() => setQuery("")}><X size={13} className="text-[#BDBDBD]" /></button>}
+            </div>
+            <button type="button" onClick={() => setShowNew(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors flex-shrink-0">
+              <Plus size={15} />開新主題
+            </button>
           </div>
           {filteredTopics.length === 0 ? (
             <p className="py-12 text-center text-sm text-[#9E9E9E]">
