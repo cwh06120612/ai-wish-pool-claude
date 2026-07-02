@@ -9,7 +9,7 @@ import { DepartmentSelector } from "@/components/department-selector";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   MessagesSquare, MessageSquare, Plus, ArrowLeft, Clock, User,
-  Send, X, ChevronRight, Search,
+  Send, X, ChevronRight, Search, Crown,
 } from "lucide-react";
 
 function getPersonalInfo() {
@@ -39,7 +39,7 @@ function getStaffInfo(): { isStaff: boolean; name: string } {
 }
 
 function StaffBadge() {
-  return <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full">👑 數位創新處</span>;
+  return <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>;
 }
 
 // 作者顯示：官方回覆顯示「人員 + 數位創新處」，一般同仁顯示「姓名 · 部門」
@@ -162,6 +162,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
 
   async function handleSubmit() {
     if (composing) return;
+    if (!name.trim()) { setError("請填一下你的姓名"); return; }
     if (!content.trim()) { setError("留言不能是空的喔"); return; }
     setSubmitting(true);
     setError("");
@@ -277,7 +278,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                   </div>
                 ) : (
                   <button type="button" onClick={() => { setReplyingTo(p.id); setReplyContent(""); }}
-                    className="mt-2 flex items-center gap-1 text-xs font-medium text-[#007A87] hover:underline">
+                    className="mt-2 flex items-center gap-1 text-xs font-medium text-[#007A87] hover:text-[#00555E] transition-colors">
                     <MessageSquare size={12} />回覆{staff.isStaff && "（以數位創新處身分）"}
                   </button>
                 )}
@@ -306,9 +307,9 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
             <DepartmentSelector value={deptPath} onChange={setDeptPath} />
           </div>
           <div>
-            <span className="block text-xs text-[#616161] mb-1">姓名（選填）</span>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-              placeholder="不填顯示為匿名同仁"
+            <span className="block text-xs text-[#616161] mb-1">姓名 <span className="text-[#AE1914]">*</span></span>
+            <input type="text" value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }}
+              placeholder="請填你的姓名"
               className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
           </div>
         </div>

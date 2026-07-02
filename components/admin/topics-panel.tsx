@@ -5,7 +5,7 @@ import {
   getTopics, getTopicStats, getTopicPosts, deleteTopic, deleteTopicPost,
   type Topic, type TopicPost, type TopicStat,
 } from "@/lib/topics";
-import { Trash2, ChevronDown, ChevronRight, MessagesSquare, MessageSquare, Clock, CornerDownRight } from "lucide-react";
+import { Trash2, ChevronDown, ChevronRight, MessagesSquare, MessageSquare, Clock, CornerDownRight, Crown } from "lucide-react";
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -134,7 +134,7 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                           <div className="flex-1 min-w-0 bg-white border border-[#E0E0E0]/70 rounded-lg px-3 py-2">
                             <div className="flex items-center gap-2 mb-0.5 text-[11px] text-[#9E9E9E]">
                               <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>
-                              {p.isStaff && <span className="text-[9px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full">數位創新處</span>}
+                              {p.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full"><Crown size={9} />數位創新處</span>}
                               <span className="ml-auto">{fmtTime(p.createdAt)}</span>
                             </div>
                             <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>
