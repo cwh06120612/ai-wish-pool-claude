@@ -38,31 +38,36 @@ export function IdentityBar({ identity, staff, onChange }: {
     );
   }
 
-  // 尚未設定或編輯中：乾淨的小卡片
+  // 尚未設定且未展開：預設收合成一行小提示
+  if (!editing) {
+    return (
+      <div className="mb-4 flex items-center gap-1.5 text-xs text-[#9E9E9E]">
+        <User size={12} className="text-[#BDBDBD] flex-shrink-0" />
+        <span>留言前請先設定留言身分</span>
+        <button type="button" onClick={() => { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }}
+          className="text-[#007A87] hover:text-[#00555E] font-medium transition-colors">設定</button>
+      </div>
+    );
+  }
+
+  // 編輯中：精簡一列
   return (
-    <div className="mb-4 bg-white border border-[#E0E0E0]/80 rounded-xl p-3">
-      <div className="flex items-center gap-1.5 mb-2">
-        <User size={13} className="text-[#007A87]" />
-        <span className="text-xs font-semibold text-[#2D2D2D]">設定留言身分</span>
-      </div>
-      <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-          placeholder="姓名"
-          className="sm:w-32 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
-        <div className="flex-1 min-w-0"><DepartmentSelector value={deptPath} onChange={setDeptPath} hidePath /></div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button type="button" disabled={!name.trim() || deptPath.length === 0}
-            onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
-            className="flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] disabled:opacity-40 transition-colors">
-            <Check size={14} />儲存
-          </button>
-          {set && (
-            <button type="button"
-              onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
-              className="px-3 py-2 rounded-lg text-sm font-medium text-[#AE1914] hover:bg-[#EBCDCC]/30 transition-colors">清除</button>
-          )}
-        </div>
-      </div>
+    <div className="mb-4 flex flex-wrap items-center gap-2">
+      <span className="flex items-center gap-1 text-xs text-[#616161] whitespace-nowrap"><User size={12} className="text-[#007A87]" />留言身分</span>
+      <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+        placeholder="姓名"
+        className="w-24 text-sm border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+      <div className="w-48"><DepartmentSelector value={deptPath} onChange={setDeptPath} hidePath /></div>
+      <button type="button" disabled={!name.trim() || deptPath.length === 0}
+        onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] disabled:opacity-40 transition-colors">
+        <Check size={13} />儲存
+      </button>
+      {set && (
+        <button type="button"
+          onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
+          className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#AE1914] hover:bg-[#EBCDCC]/30 transition-colors">清除</button>
+      )}
     </div>
   );
 }
