@@ -32,7 +32,7 @@ function getStaffInfo(): { isStaff: boolean; name: string } {
 }
 
 function StaffBadge() {
-  return <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#9E9E9E]"><Crown size={11} className="text-[#FFAE00]" />數位創新處</span>;
+  return <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#007A87]"><Crown size={11} />數位創新處</span>;
 }
 
 // 作者顯示：官方回覆顯示「人員 + 數位創新處」，一般同仁顯示「姓名 · 部門」
@@ -41,7 +41,7 @@ function PostAuthor({ p }: { p: TopicPost }) {
     const showName = p.authorName && p.authorName !== "數位創新處";
     return <>{showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}<StaffBadge /></>;
   }
-  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span> · {displayDept(p.authorDept)}</span>}</>;
+  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span>．{displayDept(p.authorDept)}</span>}</>;
 }
 
 function fmtTime(iso: string) {
@@ -134,8 +134,8 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
         {topic.description && <p className="text-sm text-[#616161] mt-1.5 leading-relaxed whitespace-pre-wrap">{topic.description}</p>}
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
           <span className="flex items-center gap-1">
-            <User size={11} />{topic.authorName}{!topic.isStaff && topic.authorDept ? ` · ${displayDept(topic.authorDept)}` : ""}
-            {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[#9E9E9E] font-medium"><Crown size={11} className="text-[#FFAE00]" />數位創新處</span>}
+            <User size={11} />{topic.authorName}{!topic.isStaff && topic.authorDept ? `．${displayDept(topic.authorDept)}` : ""}
+            {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={11} />數位創新處</span>}
           </span>
           <span className="flex items-center gap-1"><Clock size={11} />{fmtTime(topic.createdAt)} 發起</span>
           <span className="flex items-center gap-1"><MessageSquare size={11} />{posts.length} 則留言</span>

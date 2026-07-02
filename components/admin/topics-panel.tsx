@@ -111,8 +111,8 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                     {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                     <div className="flex items-center gap-x-3 mt-1 text-[11px] text-[#9E9E9E] flex-wrap">
                       <span className="inline-flex items-center gap-1">
-                        {t.authorName}{!t.isStaff && t.authorDept ? ` · ${displayDept(t.authorDept)}` : ""}
-                        {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[#9E9E9E] font-medium"><Crown size={10} className="text-[#FFAE00]" />數位創新處</span>}
+                        {t.authorName}{!t.isStaff && t.authorDept ? `．${displayDept(t.authorDept)}` : ""}
+                        {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={10} />數位創新處</span>}
                       </span>
                       <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>
                       <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(t.createdAt)} 發起</span>
@@ -148,7 +148,7 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                           <div className="flex-1 min-w-0 bg-white border border-[#E0E0E0]/70 rounded-lg px-3 py-2">
                             <div className="flex items-center gap-2 mb-0.5 text-[11px] text-[#9E9E9E]">
                               <span className={`font-semibold ${p.isStaff ? "text-[#007A87]" : "text-[#2D2D2D]"}`}>{p.authorName}</span>
-                              {p.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[#9E9E9E]"><Crown size={10} className="text-[#FFAE00]" />數位創新處</span>}
+                              {p.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[#007A87]"><Crown size={10} />數位創新處</span>}
                               <span className="ml-auto">{fmtTime(p.createdAt)}</span>
                             </div>
                             <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>
