@@ -59,6 +59,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
   const [composing, setComposing] = useState(false);
   const [staff] = useState(() => getStaffInfo());
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyName, setReplyName] = useState(() => getPersonalInfo().name);
   const [replyBusy, setReplyBusy] = useState<string | null>(null);
   const [composingReplyId, setComposingReplyId] = useState<string | null>(null);
 
@@ -99,6 +100,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
     if (composingReplyId === parentId) return;
     const text = (replyDrafts[parentId] ?? "").trim();
     if (!text) return;
+    if (!staff.isStaff && !replyName.trim()) return;
     setReplyBusy(parentId);
     const personal = getPersonalInfo();
     const created = await addTopicPost({
@@ -106,7 +108,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
       content: text,
       parentId,
       isStaff: staff.isStaff,
-      authorName: staff.isStaff ? staff.name : personal.name,
+      authorName: staff.isStaff ? staff.name : replyName.trim(),
       authorDept: staff.isStaff ? "" : personal.dept,
     });
     setReplyBusy(null);
@@ -178,11 +180,15 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
 
                 {/* 回覆框（直接顯示，不用先按回覆）*/}
                 <div className="mt-3 pl-3 border-l-2 border-[#BE8B55]/60">
-                  {staff.isStaff && (
+                  {staff.isStaff ? (
                     <div className="flex items-center gap-1.5 mb-1.5 text-xs text-[#00555E]">
                       <StaffBadge />
                       <span>以 <b>{staff.name}</b> 身分回覆</span>
                     </div>
+                  ) : (
+                    <input type="text" value={replyName} onChange={(e) => setReplyName(e.target.value)}
+                      placeholder="你的姓名（必填）"
+                      className="w-40 mb-1.5 text-sm border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40" />
                   )}
                   <div className="flex items-end gap-2">
                     <textarea rows={1} value={replyDrafts[p.id] ?? ""}
@@ -192,7 +198,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && composingReplyId !== p.id && !e.nativeEvent.isComposing) { e.preventDefault(); submitReply(p.id); } }}
                       placeholder={staff.isStaff ? "以數位創新處身分回覆…（Enter 送出）" : "回覆這則留言…（Enter 送出）"}
                       className="flex-1 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none" />
-                    <button type="button" onClick={() => submitReply(p.id)} disabled={replyBusy === p.id || !(replyDrafts[p.id] ?? "").trim()}
+                    <button type="button" onClick={() => submitReply(p.id)} disabled={replyBusy === p.id || !(replyDrafts[p.id] ?? "").trim() || (!staff.isStaff && !replyName.trim())}
                       className="flex-shrink-0 flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#BE8B55] text-white font-semibold hover:bg-[#8C6A3F] disabled:opacity-40 transition-colors">
                       <Send size={12} />{replyBusy === p.id ? "…" : "送出"}
                     </button>
