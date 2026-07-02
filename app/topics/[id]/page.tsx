@@ -30,7 +30,7 @@ export default function TopicThreadPage() {
   }, [id]);
 
   return (
-    <div className="max-w-[860px] mx-auto px-6 py-8">
+    <div className="max-w-[960px] mx-auto px-6 py-8">
       {loading ? (
         <div className="py-16 text-center text-sm text-[#9E9E9E]">載入中…</div>
       ) : !topic ? (
@@ -42,10 +42,16 @@ export default function TopicThreadPage() {
           </button>
         </div>
       ) : (
-        <>
-          <IdentityBar identity={identity} staff={staff} onChange={setIdentity} />
-          <ThreadView topic={topic} identity={identity} onBack={() => router.push("/topics")} />
-        </>
+        <div className="flex flex-col lg:flex-row gap-5">
+          <aside className="order-1 lg:order-2 lg:w-56 flex-shrink-0">
+            <div className="lg:sticky lg:top-20">
+              <IdentityBar identity={identity} staff={staff} onChange={setIdentity} />
+            </div>
+          </aside>
+          <main className="order-2 lg:order-1 flex-1 min-w-0">
+            <ThreadView topic={topic} identity={identity} onBack={() => router.push("/topics")} />
+          </main>
+        </div>
       )}
     </div>
   );
