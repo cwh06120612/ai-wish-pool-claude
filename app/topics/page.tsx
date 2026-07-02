@@ -32,14 +32,24 @@ function displayDept(dept: string) {
 function getStaffInfo(): { isStaff: boolean; name: string } {
   try {
     const role = sessionStorage.getItem("ai-wish-admin-auth");
-    if (role === "editor") return { isStaff: true, name: "管理者" };
-    if (role === "team") return { isStaff: true, name: sessionStorage.getItem("ai-wish-admin-assignee") || "負責人員" };
+    // editor 為共用管理者身分、無固定人名，讓對方回覆時自行填寫
+    if (role === "editor") return { isStaff: true, name: "" };
+    if (role === "team") return { isStaff: true, name: sessionStorage.getItem("ai-wish-admin-assignee") || "" };
   } catch {}
   return { isStaff: false, name: "" };
 }
 
 function StaffBadge() {
   return <span className="text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full">數位創新處</span>;
+}
+
+// 作者顯示：官方回覆顯示「人員 + 數位創新處」，一般同仁顯示「姓名 · 部門」
+function PostAuthor({ p }: { p: TopicPost }) {
+  if (p.isStaff) {
+    const showName = p.authorName && p.authorName !== "數位創新處";
+    return <>{showName && <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>}<StaffBadge /></>;
+  }
+  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span>· {displayDept(p.authorDept)}</span>}</>;
 }
 
 function fmtTime(iso: string) {
@@ -136,6 +146,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
   const [composing, setComposing] = useState(false);
   const [staff] = useState(() => getStaffInfo());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyStaffName, setReplyStaffName] = useState(() => getStaffInfo().name);
   const [replyContent, setReplyContent] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [replyComposing, setReplyComposing] = useState(false);
@@ -173,7 +184,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
       content: replyContent,
       parentId,
       isStaff: staff.isStaff,
-      authorName: staff.isStaff ? staff.name : personal.name,
+      authorName: staff.isStaff ? (replyStaffName.trim() || "數位創新處") : personal.name,
       authorDept: staff.isStaff ? "" : personal.dept,
     });
     setReplySubmitting(false);
@@ -221,9 +232,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
             return (
               <div key={p.id} className="bg-white border border-[#E0E0E0]/80 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-1.5 text-xs text-[#9E9E9E]">
-                  <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>
-                  {p.isStaff && <StaffBadge />}
-                  {!p.isStaff && p.authorDept && <span>· {displayDept(p.authorDept)}</span>}
+                  <PostAuthor p={p} />
                   <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}</span>
                 </div>
                 <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>
@@ -234,9 +243,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                     {replies.map((r) => (
                       <div key={r.id}>
                         <div className="flex items-center gap-2 mb-1 text-xs text-[#9E9E9E]">
-                          <span className="font-semibold text-[#2D2D2D]">{r.authorName}</span>
-                          {r.isStaff && <StaffBadge />}
-                          {!r.isStaff && r.authorDept && <span>· {displayDept(r.authorDept)}</span>}
+                          <PostAuthor p={r} />
                           <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(r.createdAt)}</span>
                         </div>
                         <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{r.content}</p>
@@ -248,6 +255,14 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                 {/* 回覆動作 */}
                 {replyingTo === p.id ? (
                   <div className="mt-3 pl-3 border-l-2 border-[#007A87]/30">
+                    {staff.isStaff && (
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <StaffBadge />
+                        <input type="text" value={replyStaffName} onChange={(e) => setReplyStaffName(e.target.value)}
+                          placeholder="回覆人員姓名（選填）"
+                          className="flex-1 min-w-0 text-xs border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+                      </div>
+                    )}
                     <textarea rows={2} value={replyContent} autoFocus
                       onChange={(e) => setReplyContent(e.target.value)}
                       onCompositionStart={() => setReplyComposing(true)}
