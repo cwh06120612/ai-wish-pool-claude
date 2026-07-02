@@ -13,11 +13,17 @@ create table if not exists public.topics (
 create table if not exists public.topic_posts (
   id           text primary key,
   topic_id     text not null references public.topics(id) on delete cascade,
+  parent_id    text references public.topic_posts(id) on delete cascade,  -- null = 主留言；有值 = 回覆某則留言
   author_name  text not null default '匿名同仁',
   author_dept  text default '',
+  is_staff     boolean not null default false,  -- 是否為負責人員（數位創新處）回覆
   content      text not null,
   created_at   timestamptz not null default now()
 );
+
+-- 若你先前已建過 topic_posts，補上新欄位（可安全重複執行）：
+alter table public.topic_posts add column if not exists parent_id text references public.topic_posts(id) on delete cascade;
+alter table public.topic_posts add column if not exists is_staff boolean not null default false;
 
 create index if not exists topic_posts_topic_id_idx on public.topic_posts (topic_id);
 create index if not exists topics_created_at_idx on public.topics (created_at desc);

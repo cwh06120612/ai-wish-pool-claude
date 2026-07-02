@@ -12,8 +12,10 @@ export interface Topic {
 export interface TopicPost {
   id: string;
   topicId: string;
+  parentId: string | null;
   authorName: string;
   authorDept: string;
+  isStaff: boolean;
   content: string;
   createdAt: string;
 }
@@ -38,8 +40,10 @@ function postFromDb(row: Record<string, unknown>): TopicPost {
   return {
     id: row.id as string,
     topicId: row.topic_id as string,
+    parentId: (row.parent_id as string) ?? null,
     authorName: (row.author_name as string) ?? "匿名同仁",
     authorDept: (row.author_dept as string) ?? "",
+    isStaff: (row.is_staff as boolean) ?? false,
     content: (row.content as string) ?? "",
     createdAt: row.created_at as string,
   };
@@ -99,6 +103,8 @@ export async function addTopic(params: {
 export async function addTopicPost(params: {
   topicId: string;
   content: string;
+  parentId?: string | null;
+  isStaff?: boolean;
   authorName?: string;
   authorDept?: string;
 }): Promise<TopicPost | null> {
@@ -106,6 +112,8 @@ export async function addTopicPost(params: {
   const insertData = {
     id,
     topic_id: params.topicId,
+    parent_id: params.parentId ?? null,
+    is_staff: params.isStaff ?? false,
     content: params.content.trim(),
     author_name: params.authorName?.trim() || "匿名同仁",
     author_dept: params.authorDept?.trim() || "",

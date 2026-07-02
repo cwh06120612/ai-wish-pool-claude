@@ -28,6 +28,20 @@ function displayDept(dept: string) {
   return dept ? dept.split(" > ").slice(-1)[0] : "";
 }
 
+// 從後台登入狀態判斷是否為負責人員（數位創新處）
+function getStaffInfo(): { isStaff: boolean; name: string } {
+  try {
+    const role = sessionStorage.getItem("ai-wish-admin-auth");
+    if (role === "editor") return { isStaff: true, name: "管理者" };
+    if (role === "team") return { isStaff: true, name: sessionStorage.getItem("ai-wish-admin-assignee") || "負責人員" };
+  } catch {}
+  return { isStaff: false, name: "" };
+}
+
+function StaffBadge() {
+  return <span className="text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full">數位創新處</span>;
+}
+
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
@@ -120,6 +134,11 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [composing, setComposing] = useState(false);
+  const [staff] = useState(() => getStaffInfo());
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
+  const [replyComposing, setReplyComposing] = useState(false);
 
   const reload = useCallback(async () => {
     setPosts(await getTopicPosts(topic.id));
@@ -143,6 +162,32 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
     setPosts((prev) => [...prev, created]);
     setContent("");
   }
+
+  async function submitReply(parentId: string) {
+    if (replyComposing) return;
+    if (!replyContent.trim()) return;
+    setReplySubmitting(true);
+    const personal = getPersonalInfo();
+    const created = await addTopicPost({
+      topicId: topic.id,
+      content: replyContent,
+      parentId,
+      isStaff: staff.isStaff,
+      authorName: staff.isStaff ? staff.name : personal.name,
+      authorDept: staff.isStaff ? "" : personal.dept,
+    });
+    setReplySubmitting(false);
+    if (!created) return;
+    setPosts((prev) => [...prev, created]);
+    setReplyContent("");
+    setReplyingTo(null);
+  }
+
+  const topLevel = posts.filter((p) => !p.parentId);
+  const repliesByParent = posts.reduce<Record<string, TopicPost[]>>((acc, p) => {
+    if (p.parentId) (acc[p.parentId] = acc[p.parentId] ?? []).push(p);
+    return acc;
+  }, {});
 
   return (
     <div>
@@ -171,16 +216,62 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
         </div>
       ) : (
         <div className="space-y-3 mb-4">
-          {posts.map((p) => (
-            <div key={p.id} className="bg-white border border-[#E0E0E0]/80 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-1.5 text-xs text-[#9E9E9E]">
-                <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>
-                {p.authorDept && <span>· {displayDept(p.authorDept)}</span>}
-                <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}</span>
+          {topLevel.map((p) => {
+            const replies = repliesByParent[p.id] ?? [];
+            return (
+              <div key={p.id} className="bg-white border border-[#E0E0E0]/80 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-1.5 text-xs text-[#9E9E9E]">
+                  <span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>
+                  {p.isStaff && <StaffBadge />}
+                  {!p.isStaff && p.authorDept && <span>· {displayDept(p.authorDept)}</span>}
+                  <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}</span>
+                </div>
+                <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>
+
+                {/* 回覆串 */}
+                {replies.length > 0 && (
+                  <div className="mt-3 pl-3 border-l-2 border-[#E0E0E0] space-y-3">
+                    {replies.map((r) => (
+                      <div key={r.id}>
+                        <div className="flex items-center gap-2 mb-1 text-xs text-[#9E9E9E]">
+                          <span className="font-semibold text-[#2D2D2D]">{r.authorName}</span>
+                          {r.isStaff && <StaffBadge />}
+                          {!r.isStaff && r.authorDept && <span>· {displayDept(r.authorDept)}</span>}
+                          <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(r.createdAt)}</span>
+                        </div>
+                        <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{r.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* 回覆動作 */}
+                {replyingTo === p.id ? (
+                  <div className="mt-3 pl-3 border-l-2 border-[#007A87]/30">
+                    <textarea rows={2} value={replyContent} autoFocus
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      onCompositionStart={() => setReplyComposing(true)}
+                      onCompositionEnd={(e) => { setReplyComposing(false); setReplyContent(e.currentTarget.value); }}
+                      placeholder={staff.isStaff ? "以數位創新處身分回覆…" : "回覆這則留言…"}
+                      className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
+                    <div className="flex items-center justify-end gap-2 mt-1.5">
+                      <button type="button" onClick={() => { setReplyingTo(null); setReplyContent(""); }}
+                        className="text-xs px-3 py-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F0F4F4] transition-colors">取消</button>
+                      <button type="button" onClick={() => submitReply(p.id)} disabled={replySubmitting || replyComposing}
+                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-[#007A87] text-white font-semibold hover:bg-[#00555E] disabled:opacity-50 transition-colors">
+                        <Send size={11} />{replySubmitting ? "送出中…" : "送出回覆"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => { setReplyingTo(p.id); setReplyContent(""); }}
+                    className="mt-2 flex items-center gap-1 text-xs font-medium text-[#007A87] hover:underline">
+                    <MessageSquare size={12} />回覆{staff.isStaff && "（以數位創新處身分）"}
+                  </button>
+                )}
               </div>
-              <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
