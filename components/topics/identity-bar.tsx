@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import { DepartmentSelector } from "@/components/department-selector";
 import { saveIdentity, identityIsSet, deptLast, type Identity } from "@/lib/identity";
-import { Crown, User, Check } from "lucide-react";
+import { Crown, User, Check, X } from "lucide-react";
 
-// inline 精簡的留言身分控制項：放在頁首（開新主題／返回列表）旁
+// 頁首的留言身分控制項
 export function IdentityBar({ identity, staff, onChange }: {
   identity: Identity;
   staff: { isStaff: boolean; name: string };
@@ -16,7 +16,9 @@ export function IdentityBar({ identity, staff, onChange }: {
   const [name, setName] = useState(identity.name);
   const [deptPath, setDeptPath] = useState<string[]>(identity.deptPath);
 
-  // 官方身分
+  function open() { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }
+
+  // 官方身分：直接顯示
   if (staff.isStaff) {
     return (
       <div className="flex items-center gap-1.5 text-xs text-[#9E9E9E]">
@@ -27,10 +29,10 @@ export function IdentityBar({ identity, staff, onChange }: {
     );
   }
 
-  // 編輯中：精簡一列
+  // 編輯中：一行、用框圈起來
   if (editing) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="inline-flex flex-wrap items-center gap-2 border border-[#007A87]/40 bg-[#FAFCFC] rounded-xl px-2.5 py-2">
         <input type="text" value={name} onChange={(e) => setName(e.target.value)}
           placeholder="姓名"
           className="w-24 text-sm border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
@@ -45,6 +47,7 @@ export function IdentityBar({ identity, staff, onChange }: {
             onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
             className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#AE1914] hover:bg-[#EBCDCC]/30 transition-colors">清除</button>
         )}
+        <button type="button" onClick={() => setEditing(false)} className="p-1 rounded-lg hover:bg-[#F0F4F4]"><X size={14} className="text-[#9E9E9E]" /></button>
       </div>
     );
   }
@@ -56,15 +59,14 @@ export function IdentityBar({ identity, staff, onChange }: {
         <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
         <span className="font-medium text-[#2D2D2D]">{identity.name}</span>
         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(identity.deptPath.join(" > "))}</span>
-        <button type="button" onClick={() => { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }}
-          className="text-[#007A87] hover:text-[#00555E] font-medium transition-colors">修改</button>
+        <button type="button" onClick={open} className="text-[#007A87] hover:text-[#00555E] font-medium transition-colors">修改</button>
       </div>
     );
   }
 
   // 尚未設定：設定按鈕
   return (
-    <button type="button" onClick={() => { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }}
+    <button type="button" onClick={open}
       className="flex items-center gap-1 text-xs font-medium text-[#007A87] border border-[#007A87]/40 rounded-lg px-3 py-1.5 hover:bg-[#B5E1E5]/20 transition-colors">
       <User size={12} />設定留言身分
     </button>
