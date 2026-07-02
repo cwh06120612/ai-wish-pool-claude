@@ -58,10 +58,9 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
   const [error, setError] = useState("");
   const [composing, setComposing] = useState(false);
   const [staff] = useState(() => getStaffInfo());
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyContent, setReplyContent] = useState("");
-  const [replySubmitting, setReplySubmitting] = useState(false);
-  const [replyComposing, setReplyComposing] = useState(false);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [replyBusy, setReplyBusy] = useState<string | null>(null);
+  const [composingReplyId, setComposingReplyId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     setPosts(await getTopicPosts(topic.id));
@@ -97,23 +96,23 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
   }
 
   async function submitReply(parentId: string) {
-    if (replyComposing) return;
-    if (!replyContent.trim()) return;
-    setReplySubmitting(true);
+    if (composingReplyId === parentId) return;
+    const text = (replyDrafts[parentId] ?? "").trim();
+    if (!text) return;
+    setReplyBusy(parentId);
     const personal = getPersonalInfo();
     const created = await addTopicPost({
       topicId: topic.id,
-      content: replyContent,
+      content: text,
       parentId,
       isStaff: staff.isStaff,
       authorName: staff.isStaff ? staff.name : personal.name,
       authorDept: staff.isStaff ? "" : personal.dept,
     });
-    setReplySubmitting(false);
+    setReplyBusy(null);
     if (!created) return;
     setPosts((prev) => [...prev, created]);
-    setReplyContent("");
-    setReplyingTo(null);
+    setReplyDrafts((prev) => ({ ...prev, [parentId]: "" }));
   }
 
   const topLevel = posts.filter((p) => !p.parentId);
@@ -174,37 +173,28 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
                   </div>
                 )}
 
-                {/* 回覆動作 */}
-                {replyingTo === p.id ? (
-                  <div className="mt-3 pl-3 border-l-2 border-[#BE8B55]/60">
-                    {staff.isStaff && (
-                      <div className="flex items-center gap-1.5 mb-1.5 text-xs text-[#00555E]">
-                        <StaffBadge />
-                        <span>以 <b>{staff.name}</b> 身分回覆</span>
-                      </div>
-                    )}
-                    <textarea rows={2} value={replyContent} autoFocus
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      onCompositionStart={() => setReplyComposing(true)}
-                      onCompositionEnd={(e) => { setReplyComposing(false); setReplyContent(e.currentTarget.value); }}
-                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !replyComposing && !e.nativeEvent.isComposing) { e.preventDefault(); submitReply(p.id); } }}
-                      placeholder={staff.isStaff ? "以數位創新處身分回覆…（Enter 送出、Shift+Enter 換行）" : "回覆這則留言…（Enter 送出、Shift+Enter 換行）"}
-                      className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none" />
-                    <div className="flex items-center justify-end gap-2 mt-1.5">
-                      <button type="button" onClick={() => { setReplyingTo(null); setReplyContent(""); }}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F0F4F4] transition-colors">取消</button>
-                      <button type="button" onClick={() => submitReply(p.id)} disabled={replySubmitting || replyComposing}
-                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-[#BE8B55] text-white font-semibold hover:bg-[#8C6A3F] disabled:opacity-50 transition-colors">
-                        <Send size={11} />{replySubmitting ? "送出中…" : "送出回覆"}
-                      </button>
+                {/* 回覆框（直接顯示，不用先按回覆）*/}
+                <div className="mt-3 pl-3 border-l-2 border-[#BE8B55]/60">
+                  {staff.isStaff && (
+                    <div className="flex items-center gap-1.5 mb-1.5 text-xs text-[#00555E]">
+                      <StaffBadge />
+                      <span>以 <b>{staff.name}</b> 身分回覆</span>
                     </div>
+                  )}
+                  <div className="flex items-end gap-2">
+                    <textarea rows={1} value={replyDrafts[p.id] ?? ""}
+                      onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                      onCompositionStart={() => setComposingReplyId(p.id)}
+                      onCompositionEnd={(e) => { setComposingReplyId(null); const v = e.currentTarget.value; setReplyDrafts((prev) => ({ ...prev, [p.id]: v })); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && composingReplyId !== p.id && !e.nativeEvent.isComposing) { e.preventDefault(); submitReply(p.id); } }}
+                      placeholder={staff.isStaff ? "以數位創新處身分回覆…（Enter 送出）" : "回覆這則留言…（Enter 送出）"}
+                      className="flex-1 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none" />
+                    <button type="button" onClick={() => submitReply(p.id)} disabled={replyBusy === p.id || !(replyDrafts[p.id] ?? "").trim()}
+                      className="flex-shrink-0 flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#BE8B55] text-white font-semibold hover:bg-[#8C6A3F] disabled:opacity-40 transition-colors">
+                      <Send size={12} />{replyBusy === p.id ? "…" : "送出"}
+                    </button>
                   </div>
-                ) : (
-                  <button type="button" onClick={() => { setReplyingTo(p.id); setReplyContent(""); }}
-                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#616161] bg-[#F0F4F4] hover:bg-[#E4E7E7] hover:text-[#2D2D2D] px-2.5 py-1.5 rounded-lg transition-colors">
-                    <MessageSquare size={12} />回覆{staff.isStaff && "（以數位創新處身分）"}
-                  </button>
-                )}
+                </div>
               </div>
             );
           })}

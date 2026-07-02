@@ -7,8 +7,21 @@ import { DepartmentSelector } from "@/components/department-selector";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   MessagesSquare, MessageSquare, Plus, Clock, User,
-  X, ChevronRight, Search,
+  X, ChevronRight, Search, Crown,
 } from "lucide-react";
+
+function getStaffInfo(): { isStaff: boolean; name: string } {
+  try {
+    const role = sessionStorage.getItem("ai-wish-admin-auth");
+    if (role === "editor") return { isStaff: true, name: "管理員" };
+    if (role === "team") return { isStaff: true, name: sessionStorage.getItem("ai-wish-admin-assignee") || "負責人員" };
+  } catch {}
+  return { isStaff: false, name: "" };
+}
+
+function StaffBadge() {
+  return <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>;
+}
 
 function getPersonalInfo() {
   try {
@@ -39,6 +52,7 @@ function NewTopicModal({ onClose, onCreated }: { onClose: () => void; onCreated:
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [composing, setComposing] = useState(false);
+  const [staff] = useState(() => getStaffInfo());
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -50,9 +64,19 @@ function NewTopicModal({ onClose, onCreated }: { onClose: () => void; onCreated:
   async function handleSubmit() {
     if (composing) return;
     if (!title.trim()) { setError("請填一下主題名稱"); return; }
+    if (!description.trim()) { setError("請填一下主題說明"); return; }
+    if (!staff.isStaff) {
+      if (deptPath.length === 0) { setError("請選一下你的部門"); return; }
+      if (!name.trim()) { setError("請填一下你的姓名"); return; }
+    }
     setSubmitting(true);
     setError("");
-    const created = await addTopic({ title, description, authorName: name, authorDept: deptPath.join(" > ") });
+    const created = await addTopic({
+      title,
+      description,
+      authorName: staff.isStaff ? staff.name : name,
+      authorDept: staff.isStaff ? "" : deptPath.join(" > "),
+    });
     setSubmitting(false);
     if (!created) { setError("建立失敗，請稍後再試（可能是資料表尚未建立）"); return; }
     onCreated(created);
@@ -79,24 +103,33 @@ function NewTopicModal({ onClose, onCreated }: { onClose: () => void; onCreated:
               className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
           </div>
           <div>
-            <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">主題說明（選填）</label>
+            <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">主題說明</label>
             <textarea rows={2} value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => { setDescription(e.target.value); if (error) setError(""); }}
               onCompositionStart={() => setComposing(true)}
               onCompositionEnd={(e) => { setComposing(false); setDescription(e.currentTarget.value); }}
               placeholder="這個主題想討論什麼？"
               className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none" />
           </div>
-          <div>
-            <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的部門（選填）</label>
-            <DepartmentSelector value={deptPath} onChange={setDeptPath} portal />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的姓名（選填）</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-              placeholder="不填顯示為匿名同仁"
-              className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
-          </div>
+          {staff.isStaff ? (
+            <div className="flex items-center gap-1.5 text-xs text-[#00555E]">
+              <StaffBadge />
+              <span>以 <b>{staff.name}</b> 身分開主題</span>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的部門</label>
+                <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} portal />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">你的姓名</label>
+                <input type="text" value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }}
+                  placeholder="請填你的姓名"
+                  className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+              </div>
+            </>
+          )}
           {error && <p className="text-xs text-[#AE1914]">{error}</p>}
           <button type="button" onClick={handleSubmit} disabled={submitting || composing}
             className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
