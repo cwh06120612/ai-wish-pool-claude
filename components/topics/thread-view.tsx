@@ -2,66 +2,39 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { getTopicPosts, addTopicPost, type Topic, type TopicPost } from "@/lib/topics";
-import { DepartmentSelector } from "@/components/department-selector";
+import { getStaffInfo, deptLast, identityIsSet, type Identity } from "@/lib/identity";
 import { MessageSquare, ArrowLeft, Clock, User, Send, Crown } from "lucide-react";
-
-function getPersonalInfo() {
-  try {
-    const raw = localStorage.getItem("ai-wish-personal-info");
-    if (raw) {
-      const info = JSON.parse(raw);
-      const deptPath = Array.isArray(info.departmentPath) ? (info.departmentPath as string[]) : [];
-      return { name: (info.name as string) ?? "", deptPath, dept: deptPath.join(" > ") };
-    }
-  } catch {}
-  return { name: "", deptPath: [] as string[], dept: "" };
-}
-
-function displayDept(dept: string) {
-  return dept ? dept.split(" > ").slice(-1)[0] : "";
-}
-
-// 從後台登入狀態判斷是否為負責人員（數位創新處）
-function getStaffInfo(): { isStaff: boolean; name: string } {
-  try {
-    const role = sessionStorage.getItem("ai-wish-admin-auth");
-    if (role === "editor") return { isStaff: true, name: "管理員" };
-    if (role === "team") return { isStaff: true, name: sessionStorage.getItem("ai-wish-admin-assignee") || "負責人員" };
-  } catch {}
-  return { isStaff: false, name: "" };
-}
 
 function StaffBadge() {
   return <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#007A87]"><Crown size={11} />數位創新處</span>;
 }
 
-// 作者顯示：官方回覆顯示「人員 + 數位創新處」，一般同仁顯示「姓名 · 部門」
+// 作者顯示：官方顯示「人員 + 數位創新處」，一般同仁顯示「姓名．部門」
 function PostAuthor({ p }: { p: TopicPost }) {
   if (p.isStaff) {
     const showName = p.authorName && p.authorName !== "數位創新處";
     return <>{showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}<StaffBadge /></>;
   }
-  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span>．{displayDept(p.authorDept)}</span>}</>;
+  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span>．{deptLast(p.authorDept)}</span>}</>;
 }
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
+export function ThreadView({ topic, identity, onBack }: { topic: Topic; identity: Identity; onBack: () => void }) {
   const [posts, setPosts] = useState<TopicPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
-  const [name, setName] = useState(() => getPersonalInfo().name);
-  const [deptPath, setDeptPath] = useState<string[]>(() => getPersonalInfo().deptPath);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [composing, setComposing] = useState(false);
   const [staff] = useState(() => getStaffInfo());
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
-  const [replyName, setReplyName] = useState(() => getPersonalInfo().name);
   const [replyBusy, setReplyBusy] = useState<string | null>(null);
   const [composingReplyId, setComposingReplyId] = useState<string | null>(null);
+
+  const canPost = staff.isStaff || identityIsSet(identity);
 
   const reload = useCallback(async () => {
     setPosts(await getTopicPosts(topic.id));
@@ -76,10 +49,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
 
   async function handleSubmit() {
     if (composing) return;
-    if (!staff.isStaff) {
-      if (deptPath.length === 0) { setError("請選一下你的部門"); return; }
-      if (!name.trim()) { setError("請填一下你的姓名"); return; }
-    }
+    if (!canPost) { setError("請先在上方設定你的部門與姓名"); return; }
     if (!content.trim()) { setError("留言不能是空的喔"); return; }
     setSubmitting(true);
     setError("");
@@ -87,8 +57,8 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
       topicId: topic.id,
       content,
       isStaff: staff.isStaff,
-      authorName: staff.isStaff ? staff.name : name,
-      authorDept: staff.isStaff ? "" : deptPath.join(" > "),
+      authorName: staff.isStaff ? staff.name : identity.name.trim(),
+      authorDept: staff.isStaff ? "" : identity.deptPath.join(" > "),
     });
     setSubmitting(false);
     if (!created) { setError("送出失敗，請稍後再試（可能是資料表尚未建立）"); return; }
@@ -98,18 +68,17 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
 
   async function submitReply(parentId: string) {
     if (composingReplyId === parentId) return;
+    if (!canPost) return;
     const text = (replyDrafts[parentId] ?? "").trim();
     if (!text) return;
-    if (!staff.isStaff && !replyName.trim()) return;
     setReplyBusy(parentId);
-    const personal = getPersonalInfo();
     const created = await addTopicPost({
       topicId: topic.id,
       content: text,
       parentId,
       isStaff: staff.isStaff,
-      authorName: staff.isStaff ? staff.name : replyName.trim(),
-      authorDept: staff.isStaff ? "" : personal.dept,
+      authorName: staff.isStaff ? staff.name : identity.name.trim(),
+      authorDept: staff.isStaff ? "" : identity.deptPath.join(" > "),
     });
     setReplyBusy(null);
     if (!created) return;
@@ -136,7 +105,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
         {topic.description && <p className="text-sm text-[#616161] mt-1.5 leading-relaxed whitespace-pre-wrap">{topic.description}</p>}
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
           <span className="flex items-center gap-1">
-            <User size={11} />{topic.authorName}{!topic.isStaff && topic.authorDept ? `．${displayDept(topic.authorDept)}` : ""}
+            <User size={11} />{topic.authorName}{!topic.isStaff && topic.authorDept ? `．${deptLast(topic.authorDept)}` : ""}
             {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={11} />數位創新處</span>}
           </span>
           <span className="flex items-center gap-1"><Clock size={11} />{fmtTime(topic.createdAt)} 發起</span>
@@ -178,27 +147,23 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
                   </div>
                 )}
 
-                {/* 回覆框（直接顯示，不用先按回覆）*/}
+                {/* 回覆框（直接顯示；身分用上方設定的統一身分）*/}
                 <div className="mt-3 pl-3 border-l-2 border-[#BE8B55]/60">
-                  {staff.isStaff ? (
+                  {staff.isStaff && (
                     <div className="flex items-center gap-1.5 mb-1.5 text-xs text-[#00555E]">
                       <StaffBadge />
                       <span>以 <b>{staff.name}</b> 身分回覆</span>
                     </div>
-                  ) : (
-                    <input type="text" value={replyName} onChange={(e) => setReplyName(e.target.value)}
-                      placeholder="你的姓名（必填）"
-                      className="w-40 mb-1.5 text-sm border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40" />
                   )}
                   <div className="flex items-end gap-2">
-                    <textarea rows={1} value={replyDrafts[p.id] ?? ""}
+                    <textarea rows={1} value={replyDrafts[p.id] ?? ""} disabled={!canPost}
                       onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))}
                       onCompositionStart={() => setComposingReplyId(p.id)}
                       onCompositionEnd={(e) => { setComposingReplyId(null); const v = e.currentTarget.value; setReplyDrafts((prev) => ({ ...prev, [p.id]: v })); }}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && composingReplyId !== p.id && !e.nativeEvent.isComposing) { e.preventDefault(); submitReply(p.id); } }}
-                      placeholder={staff.isStaff ? "以數位創新處身分回覆…（Enter 送出）" : "回覆這則留言…（Enter 送出）"}
-                      className="flex-1 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none" />
-                    <button type="button" onClick={() => submitReply(p.id)} disabled={replyBusy === p.id || !(replyDrafts[p.id] ?? "").trim() || (!staff.isStaff && !replyName.trim())}
+                      placeholder={!canPost ? "請先在上方設定身分" : staff.isStaff ? "以數位創新處身分回覆…（Enter 送出）" : "回覆這則留言…（Enter 送出）"}
+                      className="flex-1 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none disabled:bg-[#F5F5F5]" />
+                    <button type="button" onClick={() => submitReply(p.id)} disabled={replyBusy === p.id || !(replyDrafts[p.id] ?? "").trim() || !canPost}
                       className="flex-shrink-0 flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#BE8B55] text-white font-semibold hover:bg-[#8C6A3F] disabled:opacity-40 transition-colors">
                       <Send size={12} />{replyBusy === p.id ? "…" : "送出"}
                     </button>
@@ -210,7 +175,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
         </div>
       )}
 
-      {/* 留言表單 — 白底 + 副色棕色框，與上方留言區隔 */}
+      {/* 留言表單 — 白底 + 副色棕色框 */}
       <div className="bg-white border border-[#BE8B55]/60 rounded-2xl p-4 mt-5">
         <div className="flex items-center gap-1.5 mb-2">
           <Send size={13} className="text-[#BE8B55]" />
@@ -222,30 +187,16 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
             <span>以 <b>{staff.name}</b> 身分留言</span>
           </div>
         )}
-        <textarea rows={3} value={content}
+        <textarea rows={3} value={content} disabled={!canPost}
           onChange={(e) => { setContent(e.target.value); if (error) setError(""); }}
           onCompositionStart={() => setComposing(true)}
           onCompositionEnd={(e) => { setComposing(false); setContent(e.currentTarget.value); }}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !composing && !e.nativeEvent.isComposing) { e.preventDefault(); handleSubmit(); } }}
-          placeholder="分享你在使用上的問題、心得或建議…（Enter 送出、Shift+Enter 換行）"
-          className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none mb-2" />
-        {!staff.isStaff && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-            <div>
-              <span className="block text-xs text-[#616161] mb-1">部門</span>
-              <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} />
-            </div>
-            <div>
-              <span className="block text-xs text-[#616161] mb-1">姓名</span>
-              <input type="text" value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }}
-                placeholder="請填你的姓名"
-                className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40" />
-            </div>
-          </div>
-        )}
+          placeholder={!canPost ? "請先在上方設定你的部門與姓名，即可留言" : "分享你在使用上的問題、心得或建議…（Enter 送出、Shift+Enter 換行）"}
+          className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none mb-2 disabled:bg-[#F5F5F5]" />
         <div className="flex items-center justify-between">
           <span className="text-xs text-[#AE1914]">{error}</span>
-          <button type="button" onClick={handleSubmit} disabled={submitting || composing}
+          <button type="button" onClick={handleSubmit} disabled={submitting || composing || !canPost}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#BE8B55] text-white hover:bg-[#8C6A3F] transition-colors disabled:opacity-50">
             <Send size={13} />{submitting ? "送出中…" : "送出留言"}
           </button>

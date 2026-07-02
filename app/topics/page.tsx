@@ -3,40 +3,17 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getTopics, getTopicStats, addTopic, type Topic, type TopicStat } from "@/lib/topics";
+import { getIdentity, saveIdentity, getStaffInfo, identityIsSet, deptLast, type Identity } from "@/lib/identity";
 import { DepartmentSelector } from "@/components/department-selector";
+import { IdentityBar } from "@/components/topics/identity-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   MessagesSquare, MessageSquare, Plus, Clock, User,
   X, ChevronRight, Search, Crown,
 } from "lucide-react";
 
-function getStaffInfo(): { isStaff: boolean; name: string } {
-  try {
-    const role = sessionStorage.getItem("ai-wish-admin-auth");
-    if (role === "editor") return { isStaff: true, name: "管理員" };
-    if (role === "team") return { isStaff: true, name: sessionStorage.getItem("ai-wish-admin-assignee") || "負責人員" };
-  } catch {}
-  return { isStaff: false, name: "" };
-}
-
 function StaffBadge() {
-  return <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#007A87]"><Crown size={11} />數位創新處</span>;
-}
-
-function getPersonalInfo() {
-  try {
-    const raw = localStorage.getItem("ai-wish-personal-info");
-    if (raw) {
-      const info = JSON.parse(raw);
-      const deptPath = Array.isArray(info.departmentPath) ? (info.departmentPath as string[]) : [];
-      return { name: (info.name as string) ?? "", deptPath, dept: deptPath.join(" > ") };
-    }
-  } catch {}
-  return { name: "", deptPath: [] as string[], dept: "" };
-}
-
-function displayDept(dept: string) {
-  return dept ? dept.split(" > ").slice(-1)[0] : "";
+  return <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#007A87]"><Crown size={10} />數位創新處</span>;
 }
 
 function fmtTime(iso: string) {
@@ -44,15 +21,23 @@ function fmtTime(iso: string) {
 }
 
 // ─── 開新主題 Modal ─────────────────────────────────────────────────────────────
-function NewTopicModal({ onClose, onCreated }: { onClose: () => void; onCreated: (t: Topic) => void }) {
+function NewTopicModal({ identity, staff, onClose, onCreated, onIdentityChange }: {
+  identity: Identity;
+  staff: { isStaff: boolean; name: string };
+  onClose: () => void;
+  onCreated: (t: Topic) => void;
+  onIdentityChange: (id: Identity) => void;
+}) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [name, setName] = useState(() => getPersonalInfo().name);
-  const [deptPath, setDeptPath] = useState<string[]>(() => getPersonalInfo().deptPath);
+  const [name, setName] = useState(identity.name);
+  const [deptPath, setDeptPath] = useState<string[]>(identity.deptPath);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [composing, setComposing] = useState(false);
-  const [staff] = useState(() => getStaffInfo());
+
+  const identitySet = identityIsSet(identity);
+  const needFields = !staff.isStaff && !identitySet; // 尚未設定身分才在此填
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -65,19 +50,27 @@ function NewTopicModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     if (composing) return;
     if (!title.trim()) { setError("請填一下主題名稱"); return; }
     if (!description.trim()) { setError("請填一下主題說明"); return; }
-    if (!staff.isStaff) {
+
+    let authorName = "";
+    let authorDept = "";
+    if (staff.isStaff) {
+      authorName = staff.name;
+    } else if (identitySet) {
+      authorName = identity.name;
+      authorDept = identity.deptPath.join(" > ");
+    } else {
       if (deptPath.length === 0) { setError("請選一下你的部門"); return; }
       if (!name.trim()) { setError("請填一下你的姓名"); return; }
+      const id = { name: name.trim(), deptPath };
+      saveIdentity(id);
+      onIdentityChange(id);
+      authorName = id.name;
+      authorDept = id.deptPath.join(" > ");
     }
+
     setSubmitting(true);
     setError("");
-    const created = await addTopic({
-      title,
-      description,
-      authorName: staff.isStaff ? staff.name : name,
-      authorDept: staff.isStaff ? "" : deptPath.join(" > "),
-      isStaff: staff.isStaff,
-    });
+    const created = await addTopic({ title, description, authorName, authorDept, isStaff: staff.isStaff });
     setSubmitting(false);
     if (!created) { setError("建立失敗，請稍後再試（可能是資料表尚未建立）"); return; }
     onCreated(created);
@@ -117,6 +110,11 @@ function NewTopicModal({ onClose, onCreated }: { onClose: () => void; onCreated:
               <StaffBadge />
               <span>以 <b>{staff.name}</b> 身分開主題</span>
             </div>
+          ) : identitySet ? (
+            <div className="flex items-center gap-1.5 text-xs text-[#616161]">
+              <User size={12} className="text-[#9E9E9E]" />
+              以 <b className="text-[#2D2D2D]">{identity.name}．{deptLast(identity.deptPath.join(" > "))}</b> 開主題
+            </div>
           ) : (
             <>
               <div>
@@ -131,6 +129,7 @@ function NewTopicModal({ onClose, onCreated }: { onClose: () => void; onCreated:
               </div>
             </>
           )}
+          {needFields && <p className="text-[11px] text-[#9E9E9E]">設定後會記住，之後所有主題自動帶入。</p>}
           {error && <p className="text-xs text-[#AE1914]">{error}</p>}
           <button type="button" onClick={handleSubmit} disabled={submitting || composing}
             className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
@@ -150,6 +149,13 @@ export default function TopicsPage() {
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [query, setQuery] = useState("");
+  const [identity, setIdentity] = useState<Identity>({ name: "", deptPath: [] });
+  const [staff, setStaff] = useState<{ isStaff: boolean; name: string }>({ isStaff: false, name: "" });
+
+  useEffect(() => {
+    setIdentity(getIdentity());
+    setStaff(getStaffInfo());
+  }, []);
 
   const reload = useCallback(async () => {
     const [ts, st] = await Promise.all([getTopics(), getTopicStats()]);
@@ -164,7 +170,6 @@ export default function TopicsPage() {
     return () => clearInterval(timer);
   }, [reload]);
 
-  // 依「最後活動時間」排序（有留言的排前面，越新越前）
   const sortedTopics = useMemo(() => {
     return [...topics].sort((a, b) => {
       const la = stats[a.id]?.lastAt ?? a.createdAt;
@@ -195,6 +200,8 @@ export default function TopicsPage() {
         <p className="text-sm text-[#9E9E9E]">依主題（例如某個系統）開討論串，在裡面留下使用上的問題、心得或建議。</p>
         <p className="text-xs text-[#8C6A3F] mt-1">※ 本專區請使用真實部門與姓名，以利追蹤問題並聯絡相關人員。</p>
       </div>
+
+      <IdentityBar identity={identity} staff={staff} onChange={setIdentity} />
 
       {loading ? (
         <div className="py-16 text-center text-sm text-[#9E9E9E]">載入中…</div>
@@ -232,7 +239,7 @@ export default function TopicsPage() {
                       {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                       <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-[#9E9E9E] flex-wrap">
                         <span className="flex items-center gap-1">
-                          <User size={10} />{t.authorName}{!t.isStaff && t.authorDept ? `．${displayDept(t.authorDept)}` : ""}
+                          <User size={10} />{t.authorName}{!t.isStaff && t.authorDept ? `．${deptLast(t.authorDept)}` : ""}
                           {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={10} />數位創新處</span>}
                         </span>
                         <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>
@@ -250,8 +257,11 @@ export default function TopicsPage() {
 
       {showNew && (
         <NewTopicModal
+          identity={identity}
+          staff={staff}
           onClose={() => setShowNew(false)}
           onCreated={(t) => { setShowNew(false); router.push(`/topics/${t.id}`); }}
+          onIdentityChange={setIdentity}
         />
       )}
     </div>

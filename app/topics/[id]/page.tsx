@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getTopic, type Topic } from "@/lib/topics";
+import { getIdentity, getStaffInfo, type Identity } from "@/lib/identity";
 import { ThreadView } from "@/components/topics/thread-view";
+import { IdentityBar } from "@/components/topics/identity-bar";
 import { ArrowLeft } from "lucide-react";
 
 export default function TopicThreadPage() {
@@ -12,6 +14,13 @@ export default function TopicThreadPage() {
   const id = params?.id;
   const [topic, setTopic] = useState<Topic | null>(null);
   const [loading, setLoading] = useState(true);
+  const [identity, setIdentity] = useState<Identity>({ name: "", deptPath: [] });
+  const [staff, setStaff] = useState<{ isStaff: boolean; name: string }>({ isStaff: false, name: "" });
+
+  useEffect(() => {
+    setIdentity(getIdentity());
+    setStaff(getStaffInfo());
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -33,7 +42,10 @@ export default function TopicThreadPage() {
           </button>
         </div>
       ) : (
-        <ThreadView topic={topic} onBack={() => router.push("/topics")} />
+        <>
+          <IdentityBar identity={identity} staff={staff} onChange={setIdentity} />
+          <ThreadView topic={topic} identity={identity} onBack={() => router.push("/topics")} />
+        </>
       )}
     </div>
   );
