@@ -21,7 +21,7 @@ export function IdentityBar({ identity, staff, onChange }: {
   // 官方身分：與其他人相同排版（圓形 icon + 姓名 + 標籤），不可修改
   if (staff.isStaff) {
     return (
-      <div className="flex items-center gap-1.5 text-xs">
+      <div className="inline-flex items-center gap-1.5 text-xs border border-[#E0E0E0] rounded-lg px-2 py-1">
         <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
         <span className="font-semibold text-[#2D2D2D]">{staff.name}</span>
         <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>
@@ -33,10 +33,12 @@ export function IdentityBar({ identity, staff, onChange }: {
     <div className="relative">
       {/* 觸發器 */}
       {set ? (
-        <div className="flex items-center gap-1.5 text-xs">
-          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
-          <span className="font-semibold text-[#2D2D2D]">{identity.name}</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161] border border-[#E0E0E0]">{deptLast(identity.deptPath.join(" > "))}</span>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="inline-flex items-center gap-1.5 border border-[#E0E0E0] rounded-lg px-2 py-1">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
+            <span className="font-semibold text-[#2D2D2D]">{identity.name}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(identity.deptPath.join(" > "))}</span>
+          </div>
           <button type="button" onClick={open} className="text-[#007A87] hover:text-[#00555E] font-medium transition-colors">修改</button>
         </div>
       ) : (
