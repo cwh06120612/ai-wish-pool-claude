@@ -162,12 +162,20 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
 
   async function handleSubmit() {
     if (composing) return;
-    if (deptPath.length === 0) { setError("請選一下你的部門"); return; }
-    if (!name.trim()) { setError("請填一下你的姓名"); return; }
+    if (!staff.isStaff) {
+      if (deptPath.length === 0) { setError("請選一下你的部門"); return; }
+      if (!name.trim()) { setError("請填一下你的姓名"); return; }
+    }
     if (!content.trim()) { setError("留言不能是空的喔"); return; }
     setSubmitting(true);
     setError("");
-    const created = await addTopicPost({ topicId: topic.id, content, authorName: name, authorDept: deptPath.join(" > ") });
+    const created = await addTopicPost({
+      topicId: topic.id,
+      content,
+      isStaff: staff.isStaff,
+      authorName: staff.isStaff ? staff.name : name,
+      authorDept: staff.isStaff ? "" : deptPath.join(" > "),
+    });
     setSubmitting(false);
     if (!created) { setError("送出失敗，請稍後再試（可能是資料表尚未建立）"); return; }
     setPosts((prev) => [...prev, created]);
@@ -295,6 +303,12 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
           <Send size={13} className="text-[#007A87]" />
           <p className="text-xs font-bold text-[#00555E] uppercase tracking-wider">在這個主題留言</p>
         </div>
+        {staff.isStaff && (
+          <div className="flex items-center gap-1.5 mb-2 text-xs text-[#00555E]">
+            <StaffBadge />
+            <span>以 <b>{staff.name}</b> 身分留言</span>
+          </div>
+        )}
         <textarea rows={3} value={content}
           onChange={(e) => { setContent(e.target.value); if (error) setError(""); }}
           onCompositionStart={() => setComposing(true)}
@@ -302,18 +316,20 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !composing && !e.nativeEvent.isComposing) { e.preventDefault(); handleSubmit(); } }}
           placeholder="分享你在使用上的問題、心得或建議…（Enter 送出、Shift+Enter 換行）"
           className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none mb-2" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-          <div>
-            <span className="block text-xs text-[#616161] mb-1">部門</span>
-            <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} />
+        {!staff.isStaff && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+            <div>
+              <span className="block text-xs text-[#616161] mb-1">部門</span>
+              <DepartmentSelector value={deptPath} onChange={(p) => { setDeptPath(p); if (error) setError(""); }} />
+            </div>
+            <div>
+              <span className="block text-xs text-[#616161] mb-1">姓名</span>
+              <input type="text" value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }}
+                placeholder="請填你的姓名"
+                className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+            </div>
           </div>
-          <div>
-            <span className="block text-xs text-[#616161] mb-1">姓名</span>
-            <input type="text" value={name} onChange={(e) => { setName(e.target.value); if (error) setError(""); }}
-              placeholder="請填你的姓名"
-              className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
-          </div>
-        </div>
+        )}
         <div className="flex items-center justify-between">
           <span className="text-xs text-[#AE1914]">{error}</span>
           <button type="button" onClick={handleSubmit} disabled={submitting || composing}

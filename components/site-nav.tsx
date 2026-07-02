@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, Menu, X } from "lucide-react";
+import { Sparkles, Menu, X, Lock, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 
-const navLinks = [
+const navLinks: { href: string; label: string; icon?: LucideIcon }[] = [
   { href: "/", label: "首頁" },
   { href: "/wish", label: "我要許願" },
   { href: "/board", label: "公告欄" },
   { href: "/topics", label: "主題討論" },
   { href: "/impact", label: "成果看板" },
-  { href: "/admin", label: "管理員專區" },
+  { href: "/admin", label: "管理員專區", icon: Lock },
 ];
 
 export function SiteNav() {
@@ -29,16 +29,20 @@ export function SiteNav() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-0.5">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href}
-              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                pathname === link.href
-                  ? "bg-[#007A87] text-white shadow-sm"
-                  : "text-[#616161] hover:text-[#2D2D2D] hover:bg-[#F0F4F4]"
-              }`}>
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link key={link.href} href={link.href}
+                className={`inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  pathname === link.href
+                    ? "bg-[#007A87] text-white shadow-sm"
+                    : "text-[#616161] hover:text-[#2D2D2D] hover:bg-[#F0F4F4]"
+                }`}>
+                {Icon && <Icon size={13} />}
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <button className="md:hidden p-2 rounded-lg hover:bg-[#F0F4F4]" onClick={() => setMobileOpen(v => !v)}>
@@ -48,16 +52,20 @@ export function SiteNav() {
 
       {mobileOpen && (
         <div className="md:hidden border-t border-[#E0E0E0]/60 bg-white px-4 py-2">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}
-              className={`block px-3 py-2.5 rounded-lg text-sm mb-0.5 font-medium transition-all ${
-                pathname === link.href
-                  ? "bg-[#007A87] text-white"
-                  : "text-[#616161] hover:text-[#2D2D2D] hover:bg-[#F0F4F4]"
-              }`}>
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm mb-0.5 font-medium transition-all ${
+                  pathname === link.href
+                    ? "bg-[#007A87] text-white"
+                    : "text-[#616161] hover:text-[#2D2D2D] hover:bg-[#F0F4F4]"
+                }`}>
+                {Icon && <Icon size={14} />}
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
       )}
     </header>
