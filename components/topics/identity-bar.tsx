@@ -42,14 +42,12 @@ export function IdentityBar({ identity, staff, onChange }: {
     <div className="relative" ref={ref}>
       {/* 觸發器 */}
       {set ? (
-        <div className="flex items-center gap-2 text-xs">
-          <div className="inline-flex items-center gap-1.5 border border-[#E0E0E0] rounded-lg px-2 py-1">
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
-            <span className="font-semibold text-[#2D2D2D]">{identity.name}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(identity.deptPath.join(" > "))}</span>
-          </div>
-          <button type="button" onClick={open} className="text-[#007A87] hover:text-[#00555E] font-medium transition-colors">修改</button>
-        </div>
+        <button type="button" onClick={open}
+          className="inline-flex items-center gap-1.5 text-xs border border-[#E0E0E0] rounded-lg px-2 py-1 hover:border-[#007A87]/50 hover:bg-[#F0F4F4]/60 transition-colors">
+          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
+          <span className="font-semibold text-[#2D2D2D]">{identity.name}</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(identity.deptPath.join(" > "))}</span>
+        </button>
       ) : (
         <button type="button" onClick={open}
           className="flex items-center gap-1 text-xs font-medium text-[#007A87] border border-[#007A87]/40 rounded-lg px-3 py-1.5 hover:bg-[#B5E1E5]/20 transition-colors">
