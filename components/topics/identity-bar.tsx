@@ -33,7 +33,7 @@ export function IdentityBar({ identity, staff, onChange }: {
       <div className="inline-flex items-center gap-1.5 text-xs border border-[#E0E0E0] rounded-lg px-2 py-1">
         <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
         <span className="font-semibold text-[#2D2D2D]">{staff.name}</span>
-        <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>
+        <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>
       </div>
     );
   }
