@@ -184,9 +184,12 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
         </div>
       )}
 
-      {/* 留言表單 */}
-      <div className="bg-white border border-[#E0E0E0]/80 rounded-2xl p-4">
-        <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">在這個主題留言</p>
+      {/* 留言表單 — 淡青底 + 主色邊框，與上方白底留言區隔 */}
+      <div className="bg-[#EFF7F8] border border-[#007A87]/25 rounded-2xl p-4 mt-5">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Send size={13} className="text-[#007A87]" />
+          <p className="text-xs font-bold text-[#00555E] uppercase tracking-wider">在這個主題留言</p>
+        </div>
         <textarea rows={3} value={content}
           onChange={(e) => { setContent(e.target.value); if (error) setError(""); }}
           onCompositionStart={() => setComposing(true)}
