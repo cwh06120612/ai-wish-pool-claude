@@ -23,6 +23,7 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmTopic, setConfirmTopic] = useState<string | null>(null);
   const [confirmPost, setConfirmPost] = useState<string | null>(null);
+  const [actionError, setActionError] = useState("");
 
   const reload = useCallback(async () => {
     const [ts, st] = await Promise.all([getTopics(), getTopicStats()]);
@@ -44,15 +45,19 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
 
   async function removeTopic(id: string) {
     setBusy(id);
+    setActionError("");
     try {
       await deleteTopic(id);
       setTopics((prev) => prev.filter((t) => t.id !== id));
       if (expanded === id) setExpanded(null);
-    } catch { /* logged in lib */ } finally { setBusy(null); setConfirmTopic(null); }
+    } catch {
+      setActionError("刪除主題失敗，請確認 Supabase 已建立 topics 的 delete 權限（policy）。");
+    } finally { setBusy(null); setConfirmTopic(null); }
   }
 
   async function removePost(topicId: string, postId: string) {
     setBusy(postId);
+    setActionError("");
     try {
       await deleteTopicPost(postId);
       // 同時移除其底下的回覆（DB 會 cascade，本地也一併移除）
@@ -61,7 +66,9 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
         [topicId]: (prev[topicId] ?? []).filter((p) => p.id !== postId && p.parentId !== postId),
       }));
       reload();
-    } catch { /* noop */ } finally { setBusy(null); setConfirmPost(null); }
+    } catch {
+      setActionError("刪除留言失敗，請確認 Supabase 已建立 topic_posts 的 delete 權限（policy）。");
+    } finally { setBusy(null); setConfirmPost(null); }
   }
 
   if (loading) return <div className="py-16 text-center text-sm text-[#9E9E9E]">載入中…</div>;
@@ -85,6 +92,10 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
         共 <span className="font-bold text-[#2D2D2D]">{topics.length}</span> 個主題
       </div>
 
+      {actionError && (
+        <div className="mb-3 text-sm text-[#AE1914] bg-[#EBCDCC]/30 border border-[#AE1914]/30 rounded-xl px-4 py-2.5">{actionError}</div>
+      )}
+
       <div className="space-y-3">
         {topics.map((t) => {
           const st = stats[t.id];
@@ -99,7 +110,10 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                     <p className="text-sm font-semibold text-[#2D2D2D] leading-snug">{t.title}</p>
                     {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                     <div className="flex items-center gap-x-3 mt-1 text-[11px] text-[#9E9E9E] flex-wrap">
-                      <span>{t.authorName}{t.authorDept ? ` · ${displayDept(t.authorDept)}` : ""}</span>
+                      <span className="inline-flex items-center gap-1">
+                        {t.authorName}{!t.isStaff && t.authorDept ? ` · ${displayDept(t.authorDept)}` : ""}
+                        {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full"><Crown size={9} />數位創新處</span>}
+                      </span>
                       <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>
                       <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(t.createdAt)} 發起</span>
                     </div>

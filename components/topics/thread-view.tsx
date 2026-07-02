@@ -133,7 +133,10 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
         <h1 className="text-lg font-bold text-[#007A87] leading-snug">{topic.title}</h1>
         {topic.description && <p className="text-sm text-[#616161] mt-1.5 leading-relaxed whitespace-pre-wrap">{topic.description}</p>}
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
-          <span className="flex items-center gap-1"><User size={11} />{topic.authorName}{topic.authorDept ? ` · ${displayDept(topic.authorDept)}` : ""}</span>
+          <span className="flex items-center gap-1">
+            <User size={11} />{topic.authorName}{!topic.isStaff && topic.authorDept ? ` · ${displayDept(topic.authorDept)}` : ""}
+            {topic.isStaff && <StaffBadge />}
+          </span>
           <span className="flex items-center gap-1"><Clock size={11} />{fmtTime(topic.createdAt)} 發起</span>
           <span className="flex items-center gap-1"><MessageSquare size={11} />{posts.length} 則留言</span>
         </div>

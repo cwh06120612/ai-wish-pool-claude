@@ -76,6 +76,7 @@ function NewTopicModal({ onClose, onCreated }: { onClose: () => void; onCreated:
       description,
       authorName: staff.isStaff ? staff.name : name,
       authorDept: staff.isStaff ? "" : deptPath.join(" > "),
+      isStaff: staff.isStaff,
     });
     setSubmitting(false);
     if (!created) { setError("建立失敗，請稍後再試（可能是資料表尚未建立）"); return; }
@@ -227,7 +228,10 @@ export default function TopicsPage() {
                       <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors">{t.title}</h3>
                       {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                       <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-[#9E9E9E] flex-wrap">
-                        <span className="flex items-center gap-1"><User size={10} />{t.authorName}{t.authorDept ? ` · ${displayDept(t.authorDept)}` : ""}</span>
+                        <span className="flex items-center gap-1">
+                          <User size={10} />{t.authorName}{!t.isStaff && t.authorDept ? ` · ${displayDept(t.authorDept)}` : ""}
+                          {t.isStaff && <StaffBadge />}
+                        </span>
                         <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>
                         {st?.lastAt && <span className="flex items-center gap-1"><Clock size={10} />最後活動 {fmtTime(st.lastAt)}</span>}
                       </div>

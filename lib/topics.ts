@@ -6,6 +6,7 @@ export interface Topic {
   description: string;
   authorName: string;
   authorDept: string;
+  isStaff: boolean;
   createdAt: string;
 }
 
@@ -32,6 +33,7 @@ function topicFromDb(row: Record<string, unknown>): Topic {
     description: (row.description as string) ?? "",
     authorName: (row.author_name as string) ?? "匿名同仁",
     authorDept: (row.author_dept as string) ?? "",
+    isStaff: (row.is_staff as boolean) ?? false,
     createdAt: row.created_at as string,
   };
 }
@@ -92,6 +94,7 @@ export async function addTopic(params: {
   description?: string;
   authorName?: string;
   authorDept?: string;
+  isStaff?: boolean;
 }): Promise<Topic | null> {
   const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
   const insertData = {
@@ -100,20 +103,24 @@ export async function addTopic(params: {
     description: params.description?.trim() ?? "",
     author_name: params.authorName?.trim() || "匿名同仁",
     author_dept: params.authorDept?.trim() || "",
+    is_staff: params.isStaff ?? false,
   };
   const { data, error } = await supabase.from("topics").insert(insertData).select().single();
   if (error) { console.error("[topics.addTopic]", error); return null; }
   return data ? topicFromDb(data) : null;
 }
 
+// 刪除並確認真的刪掉（RLS 擋刪時不會回 error，只會 0 筆，故用 select 驗證）
 export async function deleteTopic(id: string): Promise<void> {
-  const { error } = await supabase.from("topics").delete().eq("id", id);
+  const { data, error } = await supabase.from("topics").delete().eq("id", id).select("id");
   if (error) { console.error("[topics.deleteTopic]", error); throw error; }
+  if (!data || data.length === 0) throw new Error("刪除未生效（可能是刪除權限未開）");
 }
 
 export async function deleteTopicPost(id: string): Promise<void> {
-  const { error } = await supabase.from("topic_posts").delete().eq("id", id);
+  const { data, error } = await supabase.from("topic_posts").delete().eq("id", id).select("id");
   if (error) { console.error("[topics.deleteTopicPost]", error); throw error; }
+  if (!data || data.length === 0) throw new Error("刪除未生效（可能是刪除權限未開）");
 }
 
 export async function addTopicPost(params: {

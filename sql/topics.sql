@@ -7,8 +7,12 @@ create table if not exists public.topics (
   description  text default '',
   author_name  text not null default '匿名同仁',
   author_dept  text default '',
+  is_staff     boolean not null default false,  -- 是否為負責人員/管理員（數位創新處）開的主題
   created_at   timestamptz not null default now()
 );
+
+-- 若先前已建過 topics，補上欄位（可安全重複執行）：
+alter table public.topics add column if not exists is_staff boolean not null default false;
 
 create table if not exists public.topic_posts (
   id           text primary key,
