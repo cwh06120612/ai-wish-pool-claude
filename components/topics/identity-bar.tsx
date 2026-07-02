@@ -34,9 +34,6 @@ export function IdentityBar({ identity, staff, onChange }: {
         <span>目前以 <b className="text-[#616161] font-medium">{identity.name}．{deptLast(identity.deptPath.join(" > "))}</b> 發言</span>
         <button type="button" onClick={() => { setName(identity.name); setDeptPath(identity.deptPath); setEditing(true); }}
           className="text-[#007A87] hover:text-[#00555E] transition-colors flex-shrink-0">修改</button>
-        <span className="text-[#E0E0E0]">|</span>
-        <button type="button" onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
-          className="text-[#AE1914] hover:text-[#8C1915] transition-colors flex-shrink-0">清除</button>
       </div>
     );
   }
@@ -53,11 +50,22 @@ export function IdentityBar({ identity, staff, onChange }: {
           placeholder="姓名"
           className="sm:w-32 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
         <div className="flex-1 min-w-0"><DepartmentSelector value={deptPath} onChange={setDeptPath} hidePath /></div>
-        <button type="button" disabled={!name.trim() || deptPath.length === 0}
-          onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
-          className="flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] disabled:opacity-40 transition-colors flex-shrink-0">
-          <Check size={14} />儲存
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button type="button" disabled={!name.trim() || deptPath.length === 0}
+            onClick={() => { const id = { name: name.trim(), deptPath }; saveIdentity(id); onChange(id); setEditing(false); }}
+            className="flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] disabled:opacity-40 transition-colors">
+            <Check size={14} />儲存
+          </button>
+          {set && (
+            <>
+              <button type="button"
+                onClick={() => { const empty = { name: "", deptPath: [] }; saveIdentity(empty); onChange(empty); setName(""); setDeptPath([]); setEditing(false); }}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-[#AE1914] hover:bg-[#EBCDCC]/30 transition-colors">清除</button>
+              <button type="button" onClick={() => setEditing(false)}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-[#616161] hover:bg-[#F0F4F4] transition-colors">取消</button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
