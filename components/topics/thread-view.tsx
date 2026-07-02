@@ -201,7 +201,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
                   </div>
                 ) : (
                   <button type="button" onClick={() => { setReplyingTo(p.id); setReplyContent(""); }}
-                    className="mt-2 flex items-center gap-1 text-xs font-medium text-[#BE8B55] hover:text-[#8C6A3F] transition-colors">
+                    className="mt-2 flex items-center gap-1 text-xs font-medium text-[#616161] hover:text-[#2D2D2D] transition-colors">
                     <MessageSquare size={12} />回覆{staff.isStaff && "（以數位創新處身分）"}
                   </button>
                 )}
