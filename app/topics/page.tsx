@@ -237,7 +237,8 @@ export default function TopicsPage() {
                       {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                       <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-[#9E9E9E] flex-wrap">
                         <span className="flex items-center gap-1">
-                          <User size={10} />{t.authorName}{!t.isStaff && t.authorDept ? `．${deptLast(t.authorDept)}` : ""}
+                          <User size={10} />{t.authorName}
+                          {!t.isStaff && t.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(t.authorDept)}</span>}
                           {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={10} />數位創新處</span>}
                         </span>
                         <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>

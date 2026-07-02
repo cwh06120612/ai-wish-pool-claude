@@ -16,7 +16,7 @@ function PostAuthor({ p }: { p: TopicPost }) {
     const showName = p.authorName && p.authorName !== "數位創新處";
     return <>{showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}<StaffBadge /></>;
   }
-  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span>．{deptLast(p.authorDept)}</span>}</>;
+  return <><span className="font-semibold text-[#2D2D2D]">{p.authorName}</span>{p.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(p.authorDept)}</span>}</>;
 }
 
 function fmtTime(iso: string) {
@@ -112,7 +112,8 @@ export function ThreadView({ topic, identity, onBack }: { topic: Topic; identity
         {topic.description && <p className="text-sm text-[#616161] mt-1.5 leading-relaxed whitespace-pre-wrap">{topic.description}</p>}
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
           <span className="flex items-center gap-1">
-            <User size={11} />{topic.authorName}{!topic.isStaff && topic.authorDept ? `．${deptLast(topic.authorDept)}` : ""}
+            <User size={11} />{topic.authorName}
+            {!topic.isStaff && topic.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(topic.authorDept)}</span>}
             {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={11} />數位創新處</span>}
           </span>
           <span className="flex items-center gap-1"><Clock size={11} />{fmtTime(topic.createdAt)} 發起</span>
