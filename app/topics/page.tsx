@@ -191,7 +191,10 @@ export default function TopicsPage() {
           <Plus size={15} />開新主題
         </button>
       </div>
-      <p className="text-sm text-[#9E9E9E] mb-5">依主題（例如某個系統）開討論串，在裡面留下使用上的問題、心得或建議。</p>
+      <div className="mb-5">
+        <p className="text-sm text-[#9E9E9E]">依主題（例如某個系統）開討論串，在裡面留下使用上的問題、心得或建議。</p>
+        <p className="text-xs text-[#8C6A3F] mt-1">※ 本專區請使用真實部門與姓名，以利追蹤問題並聯絡相關人員。</p>
+      </div>
 
       {loading ? (
         <div className="py-16 text-center text-sm text-[#9E9E9E]">載入中…</div>
