@@ -100,6 +100,16 @@ export async function addTopic(params: {
   return data ? topicFromDb(data) : null;
 }
 
+export async function deleteTopic(id: string): Promise<void> {
+  const { error } = await supabase.from("topics").delete().eq("id", id);
+  if (error) { console.error("[topics.deleteTopic]", error); throw error; }
+}
+
+export async function deleteTopicPost(id: string): Promise<void> {
+  const { error } = await supabase.from("topic_posts").delete().eq("id", id);
+  if (error) { console.error("[topics.deleteTopicPost]", error); throw error; }
+}
+
 export async function addTopicPost(params: {
   topicId: string;
   content: string;

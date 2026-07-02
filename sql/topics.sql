@@ -40,3 +40,9 @@ drop policy if exists "topic_posts_select_anon" on public.topic_posts;
 create policy "topic_posts_select_anon" on public.topic_posts for select using (true);
 drop policy if exists "topic_posts_insert_anon" on public.topic_posts;
 create policy "topic_posts_insert_anon" on public.topic_posts for insert with check (true);
+
+-- 後台可刪除主題與留言
+drop policy if exists "topics_delete_anon" on public.topics;
+create policy "topics_delete_anon" on public.topics for delete using (true);
+drop policy if exists "topic_posts_delete_anon" on public.topic_posts;
+create policy "topic_posts_delete_anon" on public.topic_posts for delete using (true);

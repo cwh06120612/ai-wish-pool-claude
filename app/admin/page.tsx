@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Dashboard } from "@/components/admin/dashboard";
 import { FeedbackPanel } from "@/components/admin/feedback-panel";
+import { TopicsPanel } from "@/components/admin/topics-panel";
 import { AdminAuth, useAdminRole, ASSIGNEE_OPTIONS } from "@/components/admin/admin-auth";
 import { DiscussionDrawer, type DiscussionChangePayload } from "@/components/admin/discussion-drawer";
 import { getUnreadCount, getDiscussions } from "@/lib/discussions";
@@ -16,7 +17,7 @@ const ASSIGNEE_EDIT_OPTIONS = ["未指定", ...ASSIGNEE_OPTIONS];
 import {
   LayoutDashboard, ListFilter, Download, SlidersHorizontal, Search,
   Eye, EyeOff, ChevronDown, ChevronRight,
-  X, Save, Check, LogOut, ThumbsUp, MessageSquare, MessageSquareHeart,
+  X, Save, Check, LogOut, ThumbsUp, MessageSquare, MessageSquareHeart, MessagesSquare,
 } from "lucide-react";
 
 const STATUS_OPTIONS: Status[] = [
@@ -28,7 +29,7 @@ const CATEGORY_OPTIONS: Category[] = [
   "簡報 / 報告","自動化作業","AI 學習","AI 應用","豐譽 GPT","BPM","其他","未分類",
 ];
 
-type Tab = "dashboard" | "list" | "feedback";
+type Tab = "dashboard" | "list" | "feedback" | "topics";
 
 function formatMutationError(error: unknown) {
   if (typeof error === "object" && error !== null) {
@@ -364,6 +365,7 @@ function AdminContent() {
             { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
             { id: "list", label: "所有困擾", icon: ListFilter },
             { id: "feedback", label: "回饋", icon: MessageSquareHeart },
+            { id: "topics", label: "主題", icon: MessagesSquare },
           ] as const
         ).map(({ id, label, icon: Icon }) => (
           <button
@@ -384,6 +386,8 @@ function AdminContent() {
       {tab === "dashboard" && <Dashboard submissions={submissions} />}
 
       {tab === "feedback" && <FeedbackPanel submissions={submissions} canEdit={canEdit} />}
+
+      {tab === "topics" && <TopicsPanel canEdit={canEdit} />}
 
       {tab === "list" && (
         <div>
