@@ -55,6 +55,12 @@ export async function getTopics(): Promise<Topic[]> {
   return (data ?? []).map(topicFromDb);
 }
 
+export async function getTopic(id: string): Promise<Topic | null> {
+  const { data, error } = await supabase.from("topics").select("*").eq("id", id).maybeSingle();
+  if (error) { console.error("[topics.getTopic]", error); return null; }
+  return data ? topicFromDb(data) : null;
+}
+
 // 每個主題的留言數與最後活動時間（列表用）
 export async function getTopicStats(): Promise<Record<string, TopicStat>> {
   const { data, error } = await supabase.from("topic_posts").select("topic_id, created_at");
