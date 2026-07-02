@@ -7,7 +7,7 @@ import { getStaffInfo, deptLast, identityIsSet, type Identity } from "@/lib/iden
 import { MessageSquare, ArrowLeft, Clock, User, Send, Crown } from "lucide-react";
 
 function StaffBadge() {
-  return <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#007A87]"><Crown size={11} />數位創新處</span>;
+  return <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>;
 }
 
 // 作者顯示：官方顯示「人員 + 數位創新處」，一般同仁顯示「姓名．部門」
@@ -114,7 +114,7 @@ export function ThreadView({ topic, identity, onBack }: { topic: Topic; identity
           <span className="flex items-center gap-1">
             <User size={11} />{topic.authorName}
             {!topic.isStaff && topic.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{deptLast(topic.authorDept)}</span>}
-            {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={11} />數位創新處</span>}
+            {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>}
           </span>
           <span className="flex items-center gap-1"><Clock size={11} />{fmtTime(topic.createdAt)} 發起</span>
           <span className="flex items-center gap-1"><MessageSquare size={11} />{posts.length} 則留言</span>

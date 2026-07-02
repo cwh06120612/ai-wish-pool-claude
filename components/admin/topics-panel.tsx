@@ -113,7 +113,7 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                       <span className="inline-flex items-center gap-1">
                         {t.authorName}
                         {!t.isStaff && t.authorDept && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{displayDept(t.authorDept)}</span>}
-                        {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={10} />數位創新處</span>}
+                        {t.isStaff && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>}
                       </span>
                       <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>
                       <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(t.createdAt)} 發起</span>
@@ -149,7 +149,7 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                           <div className="flex-1 min-w-0 bg-white border border-[#E0E0E0]/70 rounded-lg px-3 py-2">
                             <div className="flex items-center gap-2 mb-0.5 text-[11px] text-[#9E9E9E]">
                               <span className={`font-semibold ${p.isStaff ? "text-[#007A87]" : "text-[#2D2D2D]"}`}>{p.authorName}</span>
-                              {p.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[#007A87]"><Crown size={10} />數位創新處</span>}
+                              {p.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={9} />數位創新處</span>}
                               <span className="ml-auto">{fmtTime(p.createdAt)}</span>
                             </div>
                             <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>
