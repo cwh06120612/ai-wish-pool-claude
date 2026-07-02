@@ -184,22 +184,22 @@ export default function TopicsPage() {
 
   return (
     <div className="max-w-[860px] mx-auto px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+      <div className="flex items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <MessagesSquare size={20} className="text-[#007A87]" />
           <h1 className="text-2xl font-bold text-[#2D2D2D]">主題討論</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <IdentityBar identity={identity} staff={staff} onChange={setIdentity} />
-          <button type="button" onClick={() => setShowNew(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors flex-shrink-0">
-            <Plus size={15} />開新主題
-          </button>
-        </div>
+        <button type="button" onClick={() => setShowNew(true)}
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors flex-shrink-0">
+          <Plus size={15} />開新主題
+        </button>
       </div>
       <div className="mb-5">
         <p className="text-sm text-[#9E9E9E]">依主題（例如某個系統）開討論串，在裡面留下使用上的問題、心得或建議。</p>
-        <p className="text-xs text-[#8C6A3F] mt-1">※ 本專區請使用真實部門與姓名，以利追蹤問題並聯絡相關人員。</p>
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-1.5">
+          <p className="text-xs text-[#8C6A3F]">※ 本專區請使用真實部門與姓名，以利追蹤問題並聯絡相關人員。</p>
+          <IdentityBar identity={identity} staff={staff} onChange={setIdentity} />
+        </div>
       </div>
 
       {loading ? (
