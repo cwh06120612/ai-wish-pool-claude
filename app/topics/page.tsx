@@ -280,7 +280,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                       <button type="button" onClick={() => { setReplyingTo(null); setReplyContent(""); }}
                         className="text-xs px-3 py-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F0F4F4] transition-colors">取消</button>
                       <button type="button" onClick={() => submitReply(p.id)} disabled={replySubmitting || replyComposing}
-                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-[#007A87] text-white font-semibold hover:bg-[#00555E] disabled:opacity-50 transition-colors">
+                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-[#BE8B55] text-white font-semibold hover:bg-[#8C6A3F] disabled:opacity-50 transition-colors">
                         <Send size={11} />{replySubmitting ? "送出中…" : "送出回覆"}
                       </button>
                     </div>
@@ -333,7 +333,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
         <div className="flex items-center justify-between">
           <span className="text-xs text-[#AE1914]">{error}</span>
           <button type="button" onClick={handleSubmit} disabled={submitting || composing}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#BE8B55] text-white hover:bg-[#8C6A3F] transition-colors disabled:opacity-50">
             <Send size={13} />{submitting ? "送出中…" : "送出留言"}
           </button>
         </div>
