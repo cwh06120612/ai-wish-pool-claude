@@ -32,9 +32,8 @@ function displayDept(dept: string) {
 function getStaffInfo(): { isStaff: boolean; name: string } {
   try {
     const role = sessionStorage.getItem("ai-wish-admin-auth");
-    // editor 為共用管理者身分、無固定人名，讓對方回覆時自行填寫
-    if (role === "editor") return { isStaff: true, name: "" };
-    if (role === "team") return { isStaff: true, name: sessionStorage.getItem("ai-wish-admin-assignee") || "" };
+    if (role === "editor") return { isStaff: true, name: "管理員" };
+    if (role === "team") return { isStaff: true, name: sessionStorage.getItem("ai-wish-admin-assignee") || "負責人員" };
   } catch {}
   return { isStaff: false, name: "" };
 }
@@ -146,7 +145,6 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
   const [composing, setComposing] = useState(false);
   const [staff] = useState(() => getStaffInfo());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyStaffName, setReplyStaffName] = useState(() => getStaffInfo().name);
   const [replyContent, setReplyContent] = useState("");
   const [replySubmitting, setReplySubmitting] = useState(false);
   const [replyComposing, setReplyComposing] = useState(false);
@@ -184,7 +182,7 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
       content: replyContent,
       parentId,
       isStaff: staff.isStaff,
-      authorName: staff.isStaff ? (replyStaffName.trim() || "數位創新處") : personal.name,
+      authorName: staff.isStaff ? staff.name : personal.name,
       authorDept: staff.isStaff ? "" : personal.dept,
     });
     setReplySubmitting(false);
@@ -256,11 +254,9 @@ function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void }) {
                 {replyingTo === p.id ? (
                   <div className="mt-3 pl-3 border-l-2 border-[#007A87]/30">
                     {staff.isStaff && (
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5 mb-1.5 text-xs text-[#00555E]">
                         <StaffBadge />
-                        <input type="text" value={replyStaffName} onChange={(e) => setReplyStaffName(e.target.value)}
-                          placeholder="回覆人員姓名（選填）"
-                          className="flex-1 min-w-0 text-xs border border-[#E0E0E0] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+                        <span>以 <b>{staff.name}</b> 身分回覆</span>
                       </div>
                     )}
                     <textarea rows={2} value={replyContent} autoFocus

@@ -367,7 +367,9 @@ function AdminContent() {
             { id: "feedback", label: "回饋", icon: MessageSquareHeart },
             { id: "topics", label: "主題", icon: MessagesSquare },
           ] as const
-        ).map(({ id, label, icon: Icon }) => (
+        )
+          .filter((t) => canEdit || (t.id !== "feedback" && t.id !== "topics"))
+          .map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setTab(id)}

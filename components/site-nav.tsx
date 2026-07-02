@@ -9,8 +9,8 @@ const navLinks = [
   { href: "/", label: "首頁" },
   { href: "/wish", label: "我要許願" },
   { href: "/board", label: "公告欄" },
-  { href: "/impact", label: "成果看板" },
   { href: "/topics", label: "主題討論" },
+  { href: "/impact", label: "成果看板" },
   { href: "/admin", label: "管理員專區" },
 ];
 
