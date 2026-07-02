@@ -32,7 +32,7 @@ function getStaffInfo(): { isStaff: boolean; name: string } {
 }
 
 function StaffBadge() {
-  return <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-[#007A87] px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>;
+  return <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#9E9E9E]"><Crown size={11} className="text-[#FFAE00]" />數位創新處</span>;
 }
 
 // 作者顯示：官方回覆顯示「人員 + 數位創新處」，一般同仁顯示「姓名 · 部門」
@@ -135,7 +135,7 @@ export function ThreadView({ topic, onBack }: { topic: Topic; onBack: () => void
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
           <span className="flex items-center gap-1">
             <User size={11} />{topic.authorName}{!topic.isStaff && topic.authorDept ? ` · ${displayDept(topic.authorDept)}` : ""}
-            {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Crown size={10} />數位創新處</span>}
+            {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-[#9E9E9E] font-medium"><Crown size={11} className="text-[#FFAE00]" />數位創新處</span>}
           </span>
           <span className="flex items-center gap-1"><Clock size={11} />{fmtTime(topic.createdAt)} 發起</span>
           <span className="flex items-center gap-1"><MessageSquare size={11} />{posts.length} 則留言</span>
