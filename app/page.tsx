@@ -1,16 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Users, ClipboardList, BarChart2, FileText, Presentation, ArrowRight, Sparkles, Lightbulb } from "lucide-react";
+import { ArrowRight, Sparkles, Lightbulb, Megaphone, MessagesSquare, Rocket } from "lucide-react";
 import { useState } from "react";
 
-const situations = [
-  { icon: Search, label: "找資料翻很久", color: "bg-[#B5E1E5]/50 text-[#007A87]" },
-  { icon: Users, label: "找人要繞一圈", color: "bg-[#E0C8AE]/50 text-[#765530]" },
-  { icon: ClipboardList, label: "會議紀錄很花時間", color: "bg-[#EDE9FE]/70 text-[#5b21b6]" },
-  { icon: BarChart2, label: "Excel 報表一直重做", color: "bg-[#FFF3CD]/70 text-[#92400e]" },
-  { icon: FileText, label: "文件整理很吃力", color: "bg-[#EBCDCC]/50 text-[#8C1915]" },
-  { icon: Presentation, label: "簡報報告很花時間", color: "bg-[#91EFA6]/40 text-[#198754]" },
+// 四大功能入口
+const entries = [
+  {
+    href: "/wish",
+    icon: Sparkles,
+    title: "我要許願",
+    desc: "說出工作中最麻煩的事，讓數位創新處幫你想辦法。",
+    iconBg: "bg-[#B5E1E5]/50 text-[#007A87]",
+    hover: "hover:border-[#007A87]/50",
+  },
+  {
+    href: "/board",
+    icon: Megaphone,
+    title: "公告欄",
+    desc: "看看大家的需求，以及我們的處理進度。",
+    iconBg: "bg-[#F5EDE2] text-[#BE8B55]",
+    hover: "hover:border-[#BE8B55]/50",
+  },
+  {
+    href: "/topics",
+    icon: MessagesSquare,
+    title: "主題討論",
+    desc: "針對各系統開討論串，交流使用上的問題與建議。",
+    iconBg: "bg-[#EDE9FE] text-[#5b21b6]",
+    hover: "hover:border-[#5b21b6]/40",
+  },
+  {
+    href: "/impact",
+    icon: Rocket,
+    title: "成果看板",
+    desc: "看看已經落地的成果，以及同仁的真實回饋。",
+    iconBg: "bg-[#EAF7EE] text-[#198754]",
+    hover: "hover:border-[#198754]/40",
+  },
 ];
 
 function CoinButton({ href, children }: { href: string; children: React.ReactNode }) {
@@ -39,8 +66,8 @@ export default function HomePage() {
   return (
     <div className="max-w-[860px] mx-auto px-6 py-12">
 
-      {/* Hero — wrapped in full-width card to anchor visual width */}
-      <div className="mb-12 text-center">
+      {/* Hero */}
+      <div className="mb-10 text-center">
         <div className="inline-flex items-center gap-2 bg-[#007A87]/10 text-[#007A87] text-xs font-semibold px-4 py-1.5 rounded-full mb-6 border border-[#007A87]/20">
           <Sparkles size={12} />
           數位創新處 · AI 需求收集計畫
@@ -61,21 +88,23 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Situation cards */}
-      <div className="mb-10">
-        <p className="text-xs text-[#9E9E9E] text-center mb-4 uppercase tracking-widest font-semibold">
-          你有沒有這些感受？
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {situations.map(({ icon: Icon, label, color }) => (
-            <div key={label} className="bg-white border border-[#E0E0E0]/80 rounded-xl p-4 flex items-center gap-3 cursor-default">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
-                <Icon size={16} />
+      {/* 功能入口 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+        {entries.map(({ href, icon: Icon, title, desc, iconBg, hover }) => (
+          <Link key={href} href={href}
+            className={`group bg-white border border-[#E0E0E0]/80 rounded-2xl p-6 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 ${hover} flex flex-col`}>
+            <div className="flex items-center gap-4 mb-3">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                <Icon size={26} />
               </div>
-              <span className="text-sm text-[#2D2D2D] font-medium leading-tight">{label}</span>
+              <h2 className="text-xl font-bold text-[#2D2D2D] group-hover:text-[#007A87] transition-colors">{title}</h2>
             </div>
-          ))}
-        </div>
+            <p className="text-sm text-[#616161] leading-relaxed flex-1">{desc}</p>
+            <div className="flex items-center gap-1 text-sm font-semibold text-[#007A87] mt-4">
+              進入<ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+        ))}
       </div>
 
       {/* How it works */}

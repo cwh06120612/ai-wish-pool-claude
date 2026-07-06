@@ -57,12 +57,12 @@ export function IdentityBar({ identity, staff, onChange }: {
 
       {/* 編輯浮層：絕對定位，不推擠其他內容 */}
       {editing && (
-        <div className="absolute right-0 top-full mt-2 z-40 w-[360px] max-w-[90vw] border border-[#E0E0E0] bg-white rounded-xl shadow-lg p-3">
+        <div className="absolute right-0 top-full mt-2 z-40 w-[420px] max-w-[90vw] border border-[#E0E0E0] bg-white rounded-xl shadow-lg p-3">
           <div className="flex flex-wrap items-center gap-2 mb-2.5">
             <input type="text" value={name} onChange={(e) => setName(e.target.value)}
               placeholder="姓名"
-              className="w-32 text-sm border border-[#E0E0E0] rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
-            <div className="flex-1 min-w-[9rem]"><DepartmentSelector value={deptPath} onChange={setDeptPath} hidePath compact /></div>
+              className="w-24 flex-shrink-0 text-sm border border-[#E0E0E0] rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40" />
+            <div className="flex-1 min-w-[10rem]"><DepartmentSelector value={deptPath} onChange={setDeptPath} hidePath compact /></div>
           </div>
           <div className="flex items-center justify-end gap-2">
             {set && (
