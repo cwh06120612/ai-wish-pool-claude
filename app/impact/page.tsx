@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Linkify } from "@/components/ui/linkify";
 import {
   Sparkles, Rocket, ThumbsUp, CheckCircle2, Clock, Quote,
-  TrendingUp, MessageSquareHeart, ArrowRight, MapPin, X, Send, PenLine, Check,
+  TrendingUp, MessageSquareHeart, MapPin, X, Send, PenLine, Check,
 } from "lucide-react";
 
 function getPersonalInfo() {
@@ -349,22 +349,6 @@ export default function ImpactPage() {
                     <FeedbackCard key={fb.id} fb={fb} caseTitle={fb.submissionId ? titleById[fb.submissionId] : undefined} />
                   ))
                 : SAMPLE_FEEDBACKS.map((fb, i) => <FeedbackCard key={i} fb={fb} isSample />)}
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="bg-gradient-to-br from-[#007A87] to-[#00555E] rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-white">
-            <div className="min-w-0">
-              <h3 className="text-base font-bold">還有讓你頭痛的事嗎？</h3>
-              <p className="text-xs text-white/85 mt-0.5">你說出來，就有機會變成下一個落地的成果。</p>
-            </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <Link href="/wish" className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white text-[#007A87] hover:bg-[#F0F4F4] transition-colors">
-                <Sparkles size={14} />許個願
-              </Link>
-              <Link href="/board" className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-white/15 text-white border border-white/30 hover:bg-white/25 transition-colors">
-                看大家的需求<ArrowRight size={14} />
-              </Link>
             </div>
           </div>
         </div>
