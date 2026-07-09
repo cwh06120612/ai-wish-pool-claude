@@ -20,7 +20,7 @@ export function SiteNav() {
 
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-[#E0E0E0]/60 shadow-sm">
-      <div className="max-w-[860px] mx-auto px-6 h-14 flex items-center justify-between">
+      <div className="max-w-[1120px] mx-auto px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#007A87] to-[#00555E] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
             <Sparkles size={14} className="text-white" />

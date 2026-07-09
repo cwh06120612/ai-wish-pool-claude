@@ -183,7 +183,7 @@ export default function TopicsPage() {
   }, [sortedTopics, query]);
 
   return (
-    <div className="max-w-[860px] mx-auto px-6 py-8">
+    <div className="max-w-[1120px] mx-auto px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           <MessagesSquare size={20} className="text-[#007A87]" />
@@ -224,7 +224,7 @@ export default function TopicsPage() {
               找不到符合「{query}」的主題，可以<button type="button" onClick={() => setShowNew(true)} className="text-[#007A87] font-medium hover:text-[#00555E]">開一個新主題</button>。
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {filteredTopics.map((t) => {
                 const st = stats[t.id];
                 return (
