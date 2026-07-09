@@ -460,7 +460,7 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="max-w-[860px] mx-auto px-6 py-8">
+    <div className="max-w-[1120px] mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
@@ -539,7 +539,7 @@ export default function BoardPage() {
                     <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${st.labelBg} ${st.labelText}`}>{items.length} 則</span>
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {items.map(item => (
                     <BoardCard key={item.id} item={item} isLiked={likedIds.has(item.id)} onClick={() => setSelected(item)} />
                   ))}
