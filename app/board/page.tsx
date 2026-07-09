@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSubmissionsAsync, incrementLikeAsync, decrementLikeAsync } from "@/lib/storage";
 import { getFeedbacks, addFeedback, type Feedback } from "@/lib/feedback";
 import { getOrCreateTopicForSubmission } from "@/lib/topics";
 import { Linkify } from "@/components/ui/linkify";
+import { InlineFilterDropdown } from "@/components/ui/inline-filter-dropdown";
 import type { Submission } from "@/types/submission";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StarRating } from "@/components/ui/star-rating";
 import { DepartmentSelector } from "@/components/department-selector";
-import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, ChevronDown, Sparkles, X, SlidersHorizontal, MessageSquareHeart, Quote, Send, MessagesSquare } from "lucide-react";
+import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, Sparkles, X, SlidersHorizontal, MessageSquareHeart, Quote, Send, MessagesSquare } from "lucide-react";
 
 function getPersonalInfo() {
   try {
@@ -82,48 +83,6 @@ function CoinButton({ href }: { href: string }) {
       <Sparkles size={15} />許個願
       <style>{`@keyframes coinThrow{0%{transform:translate(-50%,0) scale(1) rotate(0deg);opacity:1}40%{transform:translate(-50%,-48px) scale(1.3) rotate(180deg);opacity:1}100%{transform:translate(-50%,-24px) scale(0.6) rotate(360deg);opacity:0}}`}</style>
     </a>
-  );
-}
-
-// ─── Inline filter dropdown ───────────────────────────────────────────────────
-function InlineFilterDropdown({ label, value, options, onChange }: {
-  label: string; value: string;
-  options: { value: string; label: string }[];
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const activeLabel = options.find(o => o.value === value)?.label;
-  const isFiltered = !!value && value !== options[0]?.value;
-  useEffect(() => {
-    function h(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
-  return (
-    <div ref={ref} className="relative">
-      <button type="button" onClick={() => setOpen(v => !v)}
-        className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm transition-all ${isFiltered ? "border-[#007A87] bg-[#B5E1E5]/20 text-[#007A87] font-semibold" : open ? "border-[#007A87] bg-white text-[#2D2D2D]" : "border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm"}`}>
-        <span className="whitespace-nowrap">{isFiltered ? activeLabel : label}</span>
-        <ChevronDown size={13} className={`flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-[#E0E0E0]/80 rounded-xl shadow-lg overflow-hidden min-w-[160px]">
-          <div className="px-3 py-2 border-b border-[#F0F4F4]">
-            <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider">{label}</p>
-          </div>
-          <div className="p-1.5 space-y-0.5 max-h-64 overflow-y-auto">
-            {options.map(opt => (
-              <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setOpen(false); }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${value === opt.value ? "bg-[#B5E1E5]/25 text-[#00555E] font-semibold" : "text-[#2D2D2D] hover:bg-[#F0F4F4]"}`}>
-                <span className="whitespace-nowrap">{opt.label}</span>
-                {value === opt.value && <Check size={12} className="text-[#007A87] flex-shrink-0 ml-2" />}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 

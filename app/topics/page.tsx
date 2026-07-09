@@ -9,8 +9,9 @@ import { IdentityBar } from "@/components/topics/identity-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   MessagesSquare, MessageSquare, Plus, Clock, User,
-  X, ChevronRight, Search, Crown, Link2, ArrowDownUp,
+  X, ChevronRight, Search, Crown,
 } from "lucide-react";
+import { InlineFilterDropdown } from "@/components/ui/inline-filter-dropdown";
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -219,25 +220,39 @@ export default function TopicsPage() {
                 className="flex-1 text-sm text-[#2D2D2D] placeholder:text-[#BDBDBD] outline-none bg-transparent" />
               {query && <button onClick={() => setQuery("")}><X size={13} className="text-[#BDBDBD]" /></button>}
             </div>
-            <button type="button" onClick={() => setSortNewest((v) => !v)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm text-sm font-medium transition-all flex-shrink-0">
-              <ArrowDownUp size={14} />{sortNewest ? "由新至舊" : "由舊至新"}
-            </button>
-            {hasNeeds && (
-              <button type="button" onClick={() => setFilterNeeds((v) => !v)}
-                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all flex-shrink-0 ${
-                  filterNeeds
-                    ? "border-[#BE8B55] bg-[#BE8B55]/15 text-[#8C6A3F]"
-                    : "border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm"
-                }`}>
-                <Link2 size={14} />需求討論
-              </button>
-            )}
+            <div className="flex-shrink-0">
+              <InlineFilterDropdown
+                label="排序"
+                value={sortNewest ? "newest" : "oldest"}
+                options={[{ value: "newest", label: "由新至舊" }, { value: "oldest", label: "由舊至新" }]}
+                onChange={(v) => setSortNewest(v === "newest")}
+              />
+            </div>
             <button type="button" onClick={() => setShowNew(true)}
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors flex-shrink-0">
               <Plus size={15} />開新主題
             </button>
           </div>
+          {hasNeeds && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button type="button" onClick={() => setFilterNeeds(false)}
+                className={`px-3.5 py-2 rounded-xl border text-sm font-medium transition-all ${
+                  !filterNeeds
+                    ? "border-[#007A87] bg-[#007A87] text-white shadow-sm"
+                    : "border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm"
+                }`}>
+                全部
+              </button>
+              <button type="button" onClick={() => setFilterNeeds(true)}
+                className={`px-3.5 py-2 rounded-xl border text-sm font-medium transition-all ${
+                  filterNeeds
+                    ? "border-[#BE8B55] bg-[#BE8B55] text-white shadow-sm"
+                    : "border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm"
+                }`}>
+                需求討論
+              </button>
+            </div>
+          )}
           {filteredTopics.length === 0 ? (
             <p className="py-12 text-center text-sm text-[#9E9E9E]">
               {filterNeeds && !query.trim()
@@ -255,7 +270,7 @@ export default function TopicsPage() {
                       <div className="w-8 h-8 rounded-lg bg-[#B5E1E5]/40 flex items-center justify-center">
                         <MessageSquare size={15} className="text-[#007A87]" />
                       </div>
-                      {t.submissionId && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#8C6A3F] bg-[#BE8B55]/15 px-1.5 py-0.5 rounded-full whitespace-nowrap"><Link2 size={9} />需求討論</span>}
+                      {t.submissionId && <span className="inline-flex items-center text-[10px] font-medium text-[#8C6A3F] bg-[#BE8B55]/15 px-1.5 py-0.5 rounded-full whitespace-nowrap">需求討論</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors line-clamp-2">{t.title}</h3>
