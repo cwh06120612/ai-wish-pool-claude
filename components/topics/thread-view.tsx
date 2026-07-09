@@ -140,9 +140,9 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
           <span className="flex items-center gap-1">
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
-            <span className={topic.isStaff ? "font-semibold text-[#007A87]" : ""}>{topic.authorName}</span>
+            {(!topic.isStaff || (topic.authorName && topic.authorName !== "數位創新處")) && <span className={topic.isStaff ? "font-semibold text-[#007A87]" : ""}>{topic.authorName}</span>}
             {!topic.isStaff && topic.authorDept && <span className="text-xs px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161] border border-[#E0E0E0]">{deptLast(topic.authorDept)}</span>}
-            {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>}
+            {topic.isStaff && <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full whitespace-nowrap"><Crown size={10} />數位創新處</span>}
           </span>
           <span className="flex items-center gap-1"><Clock size={11} />{fmtTime(topic.createdAt)} 發起</span>
           <span className="flex items-center gap-1"><MessageSquare size={11} />{posts.length} 則留言</span>

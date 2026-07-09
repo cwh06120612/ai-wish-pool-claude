@@ -240,9 +240,9 @@ export default function TopicsPage() {
                         {t.submissionId && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Link2 size={10} />需求討論</span>}
                         <span className="flex items-center gap-1">
                           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
-                          <span className={t.isStaff ? "font-semibold text-[#007A87]" : ""}>{t.authorName}</span>
+                          {(!t.isStaff || (t.authorName && t.authorName !== "數位創新處")) && <span className={t.isStaff ? "font-semibold text-[#007A87]" : ""}>{t.authorName}</span>}
                           {!t.isStaff && t.authorDept && <span className="text-xs px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161] border border-[#E0E0E0]">{deptLast(t.authorDept)}</span>}
-                          {t.isStaff && <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>}
+                          {t.isStaff && <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full whitespace-nowrap"><Crown size={10} />數位創新處</span>}
                         </span>
                         <span className="flex items-center gap-1"><MessageSquare size={10} />{st?.count ?? 0} 則留言</span>
                         {st?.lastAt && <span className="flex items-center gap-1"><Clock size={10} />最後活動 {fmtTime(st.lastAt)}</span>}
