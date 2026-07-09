@@ -234,7 +234,7 @@ export default function TopicsPage() {
                       <MessageSquare size={16} className="text-[#007A87]" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors">{t.title}</h3>
+                      <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors truncate">{t.title}</h3>
                       {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                       <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-[#9E9E9E] flex-wrap">
                         {t.submissionId && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Link2 size={10} />需求討論</span>}
