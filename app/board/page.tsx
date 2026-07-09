@@ -329,7 +329,7 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-[#2D2D2D]">這則需求還在處理中</p>
                   <p className="text-xs text-[#616161] mt-0.5 leading-relaxed">
-                    想補充想法、回應或跟大家討論嗎？點下面直接進到這則需求的討論串，留言就好。等導入完成後，這裡才會開放評論與評分。
+                    想補充或討論？點下面進到討論串留言即可，導入完成後才開放評論評分。
                   </p>
                   <DiscussNeedButton item={item} />
                 </div>
