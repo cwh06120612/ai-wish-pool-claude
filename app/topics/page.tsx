@@ -267,8 +267,8 @@ export default function TopicsPage() {
                   <button key={t.id} type="button" onClick={() => router.push(`/topics/${t.id}`)}
                     className="w-full text-left bg-white border border-[#E0E0E0]/80 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all group flex items-start gap-2.5">
                     <div className="flex flex-col items-center gap-1 flex-shrink-0 mt-0.5">
-                      <div className="w-8 h-8 rounded-lg bg-[#B5E1E5]/40 flex items-center justify-center">
-                        <MessageSquare size={15} className="text-[#007A87]" />
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${t.submissionId ? "bg-[#BE8B55]/15" : "bg-[#B5E1E5]/40"}`}>
+                        <MessageSquare size={15} className={t.submissionId ? "text-[#BE8B55]" : "text-[#007A87]"} />
                       </div>
                       {t.submissionId && <span className="inline-flex items-center text-[10px] font-medium text-[#8C6A3F] bg-[#BE8B55]/15 px-1.5 py-0.5 rounded-full whitespace-nowrap">需求討論</span>}
                     </div>
