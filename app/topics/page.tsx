@@ -224,14 +224,14 @@ export default function TopicsPage() {
               找不到符合「{query}」的主題，可以<button type="button" onClick={() => setShowNew(true)} className="text-[#007A87] font-medium hover:text-[#00555E]">開一個新主題</button>。
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredTopics.map((t) => {
                 const st = stats[t.id];
                 return (
                   <button key={t.id} type="button" onClick={() => router.push(`/topics/${t.id}`)}
-                    className="w-full text-left bg-white border border-[#E0E0E0]/80 rounded-2xl p-4 hover:shadow-md hover:-translate-y-0.5 transition-all group flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-[#B5E1E5]/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <MessageSquare size={16} className="text-[#007A87]" />
+                    className="w-full text-left bg-white border border-[#E0E0E0]/80 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all group flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#B5E1E5]/40 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <MessageSquare size={15} className="text-[#007A87]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors line-clamp-2">{t.title}</h3>
