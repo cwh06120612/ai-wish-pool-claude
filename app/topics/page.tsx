@@ -9,7 +9,7 @@ import { IdentityBar } from "@/components/topics/identity-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   MessagesSquare, MessageSquare, Plus, Clock, User,
-  X, ChevronRight, Search, Crown, Link2,
+  X, ChevronRight, Search, Crown, Link2, ArrowDownUp,
 } from "lucide-react";
 
 function fmtTime(iso: string) {
@@ -147,6 +147,8 @@ export default function TopicsPage() {
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [query, setQuery] = useState("");
+  const [filterNeeds, setFilterNeeds] = useState(false);
+  const [sortNewest, setSortNewest] = useState(true); // true = 由新至舊、false = 由舊至新（依建立時間）
   const [identity, setIdentity] = useState<Identity>({ name: "", deptPath: [] });
   const [staff, setStaff] = useState<{ isStaff: boolean; name: string }>({ isStaff: false, name: "" });
 
@@ -170,17 +172,20 @@ export default function TopicsPage() {
 
   const sortedTopics = useMemo(() => {
     return [...topics].sort((a, b) => {
-      const la = stats[a.id]?.lastAt ?? a.createdAt;
-      const lb = stats[b.id]?.lastAt ?? b.createdAt;
-      return lb.localeCompare(la);
+      const cmp = b.createdAt.localeCompare(a.createdAt); // 由新至舊
+      return sortNewest ? cmp : -cmp;
     });
-  }, [topics, stats]);
+  }, [topics, sortNewest]);
+
+  const hasNeeds = useMemo(() => topics.some((t) => !!t.submissionId), [topics]);
 
   const filteredTopics = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return sortedTopics;
-    return sortedTopics.filter((t) => `${t.title} ${t.description}`.toLowerCase().includes(q));
-  }, [sortedTopics, query]);
+    let list = sortedTopics;
+    if (filterNeeds) list = list.filter((t) => !!t.submissionId);
+    if (q) list = list.filter((t) => `${t.title} ${t.description}`.toLowerCase().includes(q));
+    return list;
+  }, [sortedTopics, query, filterNeeds]);
 
   return (
     <div className="max-w-[1120px] mx-auto px-6 py-8">
@@ -207,13 +212,27 @@ export default function TopicsPage() {
         />
       ) : (
         <>
-          <div className="flex gap-2 mb-4">
-            <div className="flex-1 flex items-center gap-2 px-3 py-2.5 bg-white border border-[#E0E0E0]/80 rounded-xl shadow-sm">
+          <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex-1 min-w-[180px] flex items-center gap-2 px-3 py-2.5 bg-white border border-[#E0E0E0]/80 rounded-xl shadow-sm">
               <Search size={14} className="text-[#BDBDBD] flex-shrink-0" />
               <input type="text" placeholder="搜尋主題，開新主題前先找找有沒有重複…" value={query} onChange={(e) => setQuery(e.target.value)}
                 className="flex-1 text-sm text-[#2D2D2D] placeholder:text-[#BDBDBD] outline-none bg-transparent" />
               {query && <button onClick={() => setQuery("")}><X size={13} className="text-[#BDBDBD]" /></button>}
             </div>
+            <button type="button" onClick={() => setSortNewest((v) => !v)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm text-sm font-medium transition-all flex-shrink-0">
+              <ArrowDownUp size={14} />{sortNewest ? "由新至舊" : "由舊至新"}
+            </button>
+            {hasNeeds && (
+              <button type="button" onClick={() => setFilterNeeds((v) => !v)}
+                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all flex-shrink-0 ${
+                  filterNeeds
+                    ? "border-[#BE8B55] bg-[#BE8B55]/15 text-[#8C6A3F]"
+                    : "border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm"
+                }`}>
+                <Link2 size={14} />需求討論
+              </button>
+            )}
             <button type="button" onClick={() => setShowNew(true)}
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors flex-shrink-0">
               <Plus size={15} />開新主題
@@ -221,7 +240,9 @@ export default function TopicsPage() {
           </div>
           {filteredTopics.length === 0 ? (
             <p className="py-12 text-center text-sm text-[#9E9E9E]">
-              找不到符合「{query}」的主題，可以<button type="button" onClick={() => setShowNew(true)} className="text-[#007A87] font-medium hover:text-[#00555E]">開一個新主題</button>。
+              {filterNeeds && !query.trim()
+                ? "目前還沒有來自需求的討論串。"
+                : <>找不到符合「{query}」的主題，可以<button type="button" onClick={() => setShowNew(true)} className="text-[#007A87] font-medium hover:text-[#00555E]">開一個新主題</button>。</>}
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
