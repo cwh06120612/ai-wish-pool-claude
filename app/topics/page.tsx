@@ -180,13 +180,19 @@ export default function TopicsPage() {
 
   const hasNeeds = useMemo(() => topics.some((t) => !!t.submissionId), [topics]);
 
-  const filteredTopics = useMemo(() => {
+  // 先套用搜尋（不含分類），供分類數量徽章與最終清單共用
+  const searchedTopics = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = sortedTopics;
-    if (filterNeeds) list = list.filter((t) => !!t.submissionId);
-    if (q) list = list.filter((t) => `${t.title} ${t.description}`.toLowerCase().includes(q));
-    return list;
-  }, [sortedTopics, query, filterNeeds]);
+    if (!q) return sortedTopics;
+    return sortedTopics.filter((t) => `${t.title} ${t.description}`.toLowerCase().includes(q));
+  }, [sortedTopics, query]);
+
+  const needsCount = useMemo(() => searchedTopics.filter((t) => !!t.submissionId).length, [searchedTopics]);
+
+  const filteredTopics = useMemo(
+    () => (filterNeeds ? searchedTopics.filter((t) => !!t.submissionId) : searchedTopics),
+    [searchedTopics, filterNeeds]
+  );
 
   return (
     <div className="max-w-[1120px] mx-auto px-6 py-8">
@@ -236,20 +242,22 @@ export default function TopicsPage() {
           {hasNeeds && (
             <div className="flex flex-wrap gap-2 mb-4">
               <button type="button" onClick={() => setFilterNeeds(false)}
-                className={`px-3.5 py-2 rounded-xl border text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
                   !filterNeeds
-                    ? "border-[#007A87] bg-[#007A87] text-white shadow-sm"
-                    : "border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm"
+                    ? "border-[#007A87] bg-white shadow-sm text-[#007A87]"
+                    : "border-[#E0E0E0]/60 bg-white/60 text-[#9E9E9E] hover:bg-white hover:text-[#2D2D2D]"
                 }`}>
                 全部
+                <span className="inline-flex items-center text-xs font-bold px-1.5 py-0.5 rounded-full bg-[#F0F4F4] text-[#616161]">{searchedTopics.length}</span>
               </button>
               <button type="button" onClick={() => setFilterNeeds(true)}
-                className={`px-3.5 py-2 rounded-xl border text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
                   filterNeeds
-                    ? "border-[#BE8B55] bg-[#BE8B55] text-white shadow-sm"
-                    : "border-[#E0E0E0]/80 bg-white text-[#616161] hover:bg-[#F0F4F4] shadow-sm"
+                    ? "border-[#BE8B55] bg-white shadow-sm text-[#8C6A3F]"
+                    : "border-[#E0E0E0]/60 bg-white/60 text-[#9E9E9E] hover:bg-white hover:text-[#2D2D2D]"
                 }`}>
                 需求討論
+                <span className="inline-flex items-center text-xs font-bold px-1.5 py-0.5 rounded-full bg-[#BE8B55]/15 text-[#8C6A3F]">{needsCount}</span>
               </button>
             </div>
           )}
