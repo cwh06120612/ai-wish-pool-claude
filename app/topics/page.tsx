@@ -230,14 +230,16 @@ export default function TopicsPage() {
                 return (
                   <button key={t.id} type="button" onClick={() => router.push(`/topics/${t.id}`)}
                     className="w-full text-left bg-white border border-[#E0E0E0]/80 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all group flex items-start gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#B5E1E5]/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <MessageSquare size={15} className="text-[#007A87]" />
+                    <div className="flex flex-col items-center gap-1 flex-shrink-0 mt-0.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#B5E1E5]/40 flex items-center justify-center">
+                        <MessageSquare size={15} className="text-[#007A87]" />
+                      </div>
+                      {t.submissionId && <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-[#8C6A3F] bg-[#BE8B55]/15 px-1.5 py-0.5 rounded-full whitespace-nowrap"><Link2 size={9} />需求討論</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors line-clamp-2">{t.title}</h3>
                       {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                       <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-[#9E9E9E] flex-wrap">
-                        {t.submissionId && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Link2 size={10} />需求討論</span>}
                         <span className="flex items-center gap-1">
                           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
                           {(!t.isStaff || (t.authorName && t.authorName !== "數位創新處")) && <span className={t.isStaff ? "font-semibold text-[#007A87]" : ""}>{t.authorName}</span>}
