@@ -322,7 +322,7 @@ function AdminContent() {
     );
 
   return (
-    <div className="max-w-[860px] mx-auto px-6 py-8">
+    <div className="max-w-[1120px] mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
