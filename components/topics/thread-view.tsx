@@ -15,11 +15,10 @@ function StaffBadge() {
 // 作者顯示：官方顯示「人員 + 數位創新處」，一般同仁顯示「姓名．部門」
 function PostAuthor({ p }: { p: TopicPost }) {
   if (p.isStaff) {
-    const showName = p.authorName && p.authorName !== "數位創新處";
     return (
       <span className="inline-flex items-center gap-1">
         <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
-        {showName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}
+        {p.authorName && <span className="font-semibold text-[#007A87]">{p.authorName}</span>}
         <StaffBadge />
       </span>
     );
