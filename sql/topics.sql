@@ -3,6 +3,7 @@
 
 create table if not exists public.topics (
   id           text primary key,
+  submission_id text references public.submissions(id) on delete cascade,  -- 有值 = 由公告欄某則需求衍生的討論串；null = 一般主題
   title        text not null,
   description  text default '',
   author_name  text not null default '匿名同仁',
@@ -13,6 +14,10 @@ create table if not exists public.topics (
 
 -- 若先前已建過 topics，補上欄位（可安全重複執行）：
 alter table public.topics add column if not exists is_staff boolean not null default false;
+alter table public.topics add column if not exists submission_id text references public.submissions(id) on delete cascade;
+
+-- 一則需求最多只綁一個討論串（擋並發重複建立）；null 不受限，一般主題可任意多筆
+create unique index if not exists topics_submission_id_key on public.topics (submission_id) where submission_id is not null;
 
 create table if not exists public.topic_posts (
   id           text primary key,

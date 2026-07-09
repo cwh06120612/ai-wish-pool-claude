@@ -2,6 +2,7 @@ import { supabase } from "./supabase";
 
 export interface Topic {
   id: string;
+  submissionId: string | null; // 有值 = 由公告欄某則需求衍生的討論串
   title: string;
   description: string;
   authorName: string;
@@ -29,6 +30,7 @@ export interface TopicStat {
 function topicFromDb(row: Record<string, unknown>): Topic {
   return {
     id: row.id as string,
+    submissionId: (row.submission_id as string) ?? null,
     title: (row.title as string) ?? "",
     description: (row.description as string) ?? "",
     authorName: (row.author_name as string) ?? "匿名同仁",
@@ -107,6 +109,39 @@ export async function addTopic(params: {
   };
   const { data, error } = await supabase.from("topics").insert(insertData).select().single();
   if (error) { console.error("[topics.addTopic]", error); return null; }
+  return data ? topicFromDb(data) : null;
+}
+
+// 取得或建立「某則需求」對應的討論串：
+// 公告欄未導入需求想討論時呼叫——已存在就回傳、還沒有就用需求標題自動建立。
+// 以 submission_id 去重（DB 端有 partial unique index 擋並發重複）。
+export async function getOrCreateTopicForSubmission(sub: {
+  id: string;
+  title: string;
+  summary?: string;
+}): Promise<Topic | null> {
+  const existing = await supabase.from("topics").select("*").eq("submission_id", sub.id).maybeSingle();
+  if (existing.error) { console.error("[topics.getOrCreateTopicForSubmission] lookup", existing.error); }
+  if (existing.data) return topicFromDb(existing.data);
+
+  const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  const insertData = {
+    id,
+    submission_id: sub.id,
+    title: sub.title.trim() || "需求討論",
+    description: sub.summary?.trim() || "這則需求還在處理中，一起討論、補充想法吧。",
+    author_name: "數位創新處",
+    author_dept: "",
+    is_staff: true,
+  };
+  const { data, error } = await supabase.from("topics").insert(insertData).select().single();
+  if (error) {
+    // 並發下可能已被別人建立（撞 unique）→ 再查一次拿回既有的
+    const retry = await supabase.from("topics").select("*").eq("submission_id", sub.id).maybeSingle();
+    if (retry.data) return topicFromDb(retry.data);
+    console.error("[topics.getOrCreateTopicForSubmission] insert", error);
+    return null;
+  }
   return data ? topicFromDb(data) : null;
 }
 

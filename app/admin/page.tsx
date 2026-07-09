@@ -364,7 +364,7 @@ function AdminContent() {
           [
             { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
             { id: "list", label: "所有困擾", icon: ListFilter },
-            { id: "feedback", label: "回饋", icon: MessageSquareHeart },
+            { id: "feedback", label: "評論", icon: MessageSquareHeart },
             { id: "topics", label: "主題", icon: MessagesSquare },
           ] as const
         )

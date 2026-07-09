@@ -9,7 +9,7 @@ import { IdentityBar } from "@/components/topics/identity-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   MessagesSquare, MessageSquare, Plus, Clock, User,
-  X, ChevronRight, Search, Crown,
+  X, ChevronRight, Search, Crown, Link2,
 } from "lucide-react";
 
 function fmtTime(iso: string) {
@@ -237,6 +237,7 @@ export default function TopicsPage() {
                       <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors">{t.title}</h3>
                       {t.description && <p className="text-xs text-[#616161] mt-0.5 line-clamp-1">{t.description}</p>}
                       <div className="flex items-center gap-x-3 gap-y-1 mt-1.5 text-[11px] text-[#9E9E9E] flex-wrap">
+                        {t.submissionId && <span className="inline-flex items-center gap-0.5 text-[#007A87] font-medium"><Link2 size={10} />需求討論</span>}
                         <span className="flex items-center gap-1">
                           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
                           <span className={t.isStaff ? "font-semibold text-[#007A87]" : ""}>{t.authorName}</span>

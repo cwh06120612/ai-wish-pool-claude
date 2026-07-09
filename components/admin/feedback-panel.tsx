@@ -5,6 +5,7 @@ import { getAllFeedbacks, setFeedbackVisibility, deleteFeedback, type Feedback }
 import type { Submission } from "@/types/submission";
 import { StarRating } from "@/components/ui/star-rating";
 import { Eye, EyeOff, Trash2, Quote, MessageSquareHeart } from "lucide-react";
+import { Linkify } from "@/components/ui/linkify";
 
 // 自訂 hover 提示（取代瀏覽器預設 title 灰框）
 function IconTip({ label, children }: { label: string; children: React.ReactNode }) {
@@ -63,8 +64,8 @@ export function FeedbackPanel({ submissions, canEdit }: { submissions: Submissio
         <div className="w-12 h-12 rounded-full bg-[#F5F5F5] flex items-center justify-center mb-4">
           <MessageSquareHeart size={20} className="text-[#9E9E9E]" />
         </div>
-        <h3 className="text-sm font-medium text-[#424242]">還沒有任何回饋</h3>
-        <p className="mt-1 text-sm text-[#9E9E9E] whitespace-nowrap">同仁在公告欄或成果看板留下回饋後，會顯示在這裡。</p>
+        <h3 className="text-sm font-medium text-[#424242]">還沒有任何評論</h3>
+        <p className="mt-1 text-sm text-[#9E9E9E] whitespace-nowrap">同仁在公告欄或成果看板留下評論後，會顯示在這裡。</p>
       </div>
     );
   }
@@ -73,7 +74,7 @@ export function FeedbackPanel({ submissions, canEdit }: { submissions: Submissio
     <div>
       <div className="flex items-center gap-2 mb-4 text-sm text-[#9E9E9E]">
         <MessageSquareHeart size={15} className="text-[#AE1914]" />
-        共 <span className="font-bold text-[#2D2D2D]">{feedbacks.length}</span> 則回饋，公開中 <span className="font-bold text-[#007A87]">{visibleCount}</span> 則
+        共 <span className="font-bold text-[#2D2D2D]">{feedbacks.length}</span> 則評論，公開中 <span className="font-bold text-[#007A87]">{visibleCount}</span> 則
       </div>
 
       <div className="space-y-3">
@@ -88,15 +89,15 @@ export function FeedbackPanel({ submissions, canEdit }: { submissions: Submissio
                 </div>
                 {fb.content && (
                   <p className="text-sm text-[#2D2D2D] leading-relaxed flex items-start gap-1.5">
-                    <Quote size={13} className="text-[#BE8B55] flex-shrink-0 mt-1" />{fb.content}
+                    <Quote size={13} className="text-[#BE8B55] flex-shrink-0 mt-1" /><span className="whitespace-pre-wrap"><Linkify text={fb.content} /></span>
                   </p>
                 )}
                 <p className="text-[11px] text-[#9E9E9E] mt-1.5">
                   — {fb.authorName}{fb.authorDept ? ` · ${fb.authorDept.split(" > ").slice(-1)[0]}` : ""}
                   {fb.submissionId && titleById[fb.submissionId] && (
-                    <span className="ml-1">・回饋於「{titleById[fb.submissionId]}」</span>
+                    <span className="ml-1">・評論於「{titleById[fb.submissionId]}」</span>
                   )}
-                  {!fb.submissionId && <span className="ml-1">・整體回饋</span>}
+                  {!fb.submissionId && <span className="ml-1">・整體評論</span>}
                 </p>
               </div>
 

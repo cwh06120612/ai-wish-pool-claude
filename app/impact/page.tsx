@@ -8,6 +8,7 @@ import type { Submission } from "@/types/submission";
 import { StarRating } from "@/components/ui/star-rating";
 import { DepartmentSelector } from "@/components/department-selector";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Linkify } from "@/components/ui/linkify";
 import {
   Sparkles, Rocket, ThumbsUp, CheckCircle2, Clock, Quote,
   TrendingUp, MessageSquareHeart, ArrowRight, MapPin, X, Send, PenLine, Check,
@@ -102,7 +103,7 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
     setError("");
     const created = await addFeedback({ submissionId: preselectedId ?? null, authorName: name, authorDept: deptPath.join(" > "), rating, content });
     setSubmitting(false);
-    if (!created) { setError("送出失敗，請稍後再試（可能是回饋資料表尚未建立）"); return; }
+    if (!created) { setError("送出失敗，請稍後再試（可能是評論資料表尚未建立）"); return; }
     setDone(true);
     onSubmitted();
   }
@@ -115,7 +116,7 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
         <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-3 flex-shrink-0">
           <div className="flex items-center gap-1.5">
             <MessageSquareHeart size={16} className="text-[#AE1914]" />
-            <h2 className="text-base font-bold text-[#2D2D2D]">分享你的回饋</h2>
+            <h2 className="text-base font-bold text-[#2D2D2D]">寫下你的評論</h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#F0F4F4]"><X size={16} className="text-[#9E9E9E]" /></button>
         </div>
@@ -126,8 +127,8 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
             <div className="w-12 h-12 rounded-full bg-[#EAF7EE] flex items-center justify-center">
               <Check size={22} className="text-[#198754]" />
             </div>
-            <p className="text-sm text-[#2D2D2D] font-semibold">謝謝你的回饋！</p>
-            <p className="text-xs text-[#9E9E9E] leading-relaxed">你的回饋已顯示在下方的「同仁怎麼說」，鼓勵我們繼續做下去。</p>
+            <p className="text-sm text-[#2D2D2D] font-semibold">謝謝你的評論！</p>
+            <p className="text-xs text-[#9E9E9E] leading-relaxed">你的評論已顯示在下方的「同仁怎麼說」，鼓勵我們繼續做下去。</p>
             <button onClick={onClose} className="mt-2 px-5 py-2 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors">關閉</button>
           </div>
         ) : (
@@ -135,7 +136,7 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
             {/* 案例情境（從成功案例卡進來時顯示）*/}
             {target && (
               <div className="text-xs text-[#7A5A30] bg-[#F5EDE2]/60 border border-[#E0C8AE] rounded-lg px-3 py-2">
-                回饋對象：<span className="font-semibold">{target.problemTitle}</span>
+                評論對象：<span className="font-semibold">{target.problemTitle}</span>
               </div>
             )}
             {/* 部門 */}
@@ -168,7 +169,7 @@ function FeedbackModal({ submissions, preselectedId, onClose, onSubmitted }: {
             {error && <p className="text-xs text-[#AE1914]">{error}</p>}
             <button type="button" onClick={handleSubmit} disabled={submitting || composing}
               className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
-              <Send size={13} />{submitting ? "送出中…" : "送出回饋"}
+              <Send size={13} />{submitting ? "送出中…" : "送出評論"}
             </button>
           </div>
         )}
@@ -187,12 +188,12 @@ function FeedbackCard({ fb, caseTitle, isSample }: { fb: { authorName: string; a
       </div>
       <div className="flex-1">
         <Quote size={14} className="text-[#BE8B55] mb-1" />
-        <p className="text-sm text-[#2D2D2D] leading-relaxed">{fb.content}</p>
+        <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap"><Linkify text={fb.content} /></p>
       </div>
       <div className="mt-3 pt-2 border-t border-[#F0F4F4] text-[11px] text-[#9E9E9E]">
         <span className="font-semibold text-[#616161]">{fb.authorName}</span>
         {fb.authorDept && <span> · {displayDept(fb.authorDept)}</span>}
-        {caseTitle && <p className="mt-0.5 truncate">回饋於「{caseTitle}」</p>}
+        {caseTitle && <p className="mt-0.5 truncate">評論於「{caseTitle}」</p>}
       </div>
     </div>
   );
@@ -312,7 +313,7 @@ export default function ImpactPage() {
                       </div>
                       <button type="button" onClick={() => setFeedbackFor({ id: item.id })}
                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-[#007A87] bg-[#007A87]/[0.08] hover:bg-[#007A87]/15 transition-colors flex-shrink-0">
-                        <PenLine size={11} />留回饋
+                        <PenLine size={11} />評論
                       </button>
                     </div>
                   );
@@ -327,18 +328,18 @@ export default function ImpactPage() {
               <div className="flex items-center gap-2 min-w-0">
                 <MessageSquareHeart size={15} className="text-[#AE1914] flex-shrink-0" />
                 <h2 className="text-sm font-bold text-[#2D2D2D] flex-shrink-0">同仁怎麼說</h2>
-                <span className="text-xs text-[#9E9E9E] truncate">{hasRealFeedback ? `${feedbacks.length} 則同仁回饋` : "尚無真實回饋"}</span>
+                <span className="text-xs text-[#9E9E9E] truncate">{hasRealFeedback ? `${feedbacks.length} 則同仁評論` : "尚無真實評論"}</span>
               </div>
               <button type="button" onClick={() => setFeedbackFor({ id: null })}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors flex-shrink-0">
-                <PenLine size={13} />我要留回饋
+                <PenLine size={13} />我要評論
               </button>
             </div>
             {!hasRealFeedback && (
               <div className="mb-3 flex items-start gap-2 bg-[#FFF8E6] border border-[#FFE7A3] rounded-xl px-4 py-2.5">
                 <Quote size={14} className="text-[#BE8B55] flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-[#7A5A30] leading-relaxed">
-                  以下為<b>示意範例</b>，用來預覽版面。等同仁在「已導入」的需求下留下真實回饋後，這裡就會自動換成真實內容。
+                  以下為<b>示意範例</b>，用來預覽版面。等同仁在「已導入」的需求下留下真實評論後，這裡就會自動換成真實內容。
                 </p>
               </div>
             )}

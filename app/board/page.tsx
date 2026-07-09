@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { getSubmissionsAsync, incrementLikeAsync, decrementLikeAsync } from "@/lib/storage";
 import { getFeedbacks, addFeedback, type Feedback } from "@/lib/feedback";
+import { getOrCreateTopicForSubmission } from "@/lib/topics";
+import { Linkify } from "@/components/ui/linkify";
 import type { Submission } from "@/types/submission";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StarRating } from "@/components/ui/star-rating";
 import { DepartmentSelector } from "@/components/department-selector";
-import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, ChevronDown, Sparkles, X, SlidersHorizontal, MessageSquareHeart, Quote, Send } from "lucide-react";
-import Link from "next/link";
+import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, ChevronDown, Sparkles, X, SlidersHorizontal, MessageSquareHeart, Quote, Send, MessagesSquare } from "lucide-react";
 
 function getPersonalInfo() {
   try {
@@ -126,7 +128,7 @@ function InlineFilterDropdown({ label, value, options, onChange }: {
 }
 
 // ─── Feedback section（僅「已導入」需求顯示）──────────────────────────────────
-function FeedbackSection({ submissionId, delivered }: { submissionId: string; delivered: boolean }) {
+function FeedbackSection({ submissionId }: { submissionId: string }) {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [rating, setRating] = useState(0);
   const [content, setContent] = useState("");
@@ -162,12 +164,12 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
     <div className="border-t border-[#F0F4F4] px-5 py-4 bg-[#FBFBFA]">
       <div className="flex items-center gap-1.5 mb-3">
         <MessageSquareHeart size={14} className="text-[#AE1914]" />
-        <p className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">{delivered ? "這個解法有幫到你嗎？" : "給這則需求一點回饋"}</p>
+        <p className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">這個解法有幫到你嗎？</p>
       </div>
 
       {done ? (
         <div className="flex items-center gap-2 text-sm text-[#198754] bg-[#EAF7EE] border border-[#B7E1C4] rounded-xl px-4 py-3 mb-3">
-          <Check size={15} />謝謝你的回饋！這會出現在成果看板上，鼓勵我們繼續做下去。
+          <Check size={15} />謝謝你的評論！這會出現在成果看板上，鼓勵我們繼續做下去。
         </div>
       ) : (
         <div className="bg-white border border-[#E0E0E0]/80 rounded-xl p-3 mb-3">
@@ -191,14 +193,14 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
             onChange={(e) => setContent(e.target.value)}
             onCompositionStart={() => setComposing(true)}
             onCompositionEnd={(e) => { setComposing(false); setContent(e.currentTarget.value); }}
-            placeholder={delivered ? "說說哪裡幫到你、省了多少時間…（選填）" : "說說你的想法、期待或補充…（選填）"}
+            placeholder="說說哪裡幫到你、省了多少時間…（選填）"
             className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/40 resize-none"
           />
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-[#AE1914]">{error}</span>
             <button type="button" onClick={handleSubmit} disabled={submitting || composing}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
-              <Send size={12} />{submitting ? "送出中…" : "送出回饋"}
+              <Send size={12} />{submitting ? "送出中…" : "送出評論"}
             </button>
           </div>
         </div>
@@ -214,7 +216,7 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
               </div>
               {fb.content && (
                 <p className="text-sm text-[#2D2D2D] leading-relaxed flex items-start gap-1.5">
-                  <Quote size={12} className="text-[#BE8B55] flex-shrink-0 mt-1" />{fb.content}
+                  <Quote size={12} className="text-[#BE8B55] flex-shrink-0 mt-1" /><span className="whitespace-pre-wrap"><Linkify text={fb.content} /></span>
                 </p>
               )}
               <p className="text-[11px] text-[#9E9E9E] mt-1">
@@ -225,6 +227,30 @@ function FeedbackSection({ submissionId, delivered }: { submissionId: string; de
         </div>
       )}
     </div>
+  );
+}
+
+// ─── 討論這則需求（未導入需求用）──────────────────────────────────────────────
+// 取得或自動建立這則需求對應的討論串，然後導到主題討論，讓使用者直接留言。
+function DiscussNeedButton({ item }: { item: Submission }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  async function go() {
+    if (busy) return;
+    setBusy(true);
+    const topic = await getOrCreateTopicForSubmission({
+      id: item.id,
+      title: item.problemTitle,
+      summary: item.publicSummary,
+    });
+    if (topic) router.push(`/topics/${topic.id}`);
+    else setBusy(false);
+  }
+  return (
+    <button type="button" onClick={go} disabled={busy}
+      className="inline-flex items-center gap-1.5 mt-2.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
+      <MessagesSquare size={13} />{busy ? "開啟討論中…" : "討論這則需求"}
+    </button>
   );
 }
 
@@ -267,7 +293,7 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           {item.publicSummary && item.publicSummary !== item.problemTitle && (
             <div>
               <p className="text-xs font-bold text-[#BE8B55] uppercase tracking-wider mb-2">數位創新處回覆</p>
-              <p className="text-sm text-[#2D2D2D] leading-relaxed bg-[#F5EDE2]/60 border border-[#E0C8AE] rounded-lg px-4 py-3">{item.publicSummary}</p>
+              <p className="text-sm text-[#2D2D2D] leading-relaxed bg-[#F5EDE2]/60 border border-[#E0C8AE] rounded-lg px-4 py-3 whitespace-pre-wrap"><Linkify text={item.publicSummary} /></p>
             </div>
           )}
           {item.painPoints.length > 0 && (
@@ -291,10 +317,25 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           {item.freeText && (
             <div>
               <p className="text-xs font-bold text-[#9E9E9E] uppercase tracking-wider mb-2">其他補充</p>
-              <p className="text-sm text-[#2D2D2D] leading-relaxed bg-[#F7F7F5] rounded-lg px-4 py-3">{item.freeText}</p>
+              <p className="text-sm text-[#2D2D2D] leading-relaxed bg-[#F7F7F5] rounded-lg px-4 py-3 whitespace-pre-wrap"><Linkify text={item.freeText} /></p>
             </div>
           )}
-          <div className="-mx-5 -mb-4"><FeedbackSection submissionId={item.id} delivered={item.status === "已導入"} /></div>
+          {item.status === "已導入" ? (
+            <div className="-mx-5 -mb-4"><FeedbackSection submissionId={item.id} /></div>
+          ) : (
+            <div className="-mx-5 -mb-4 border-t border-[#F0F4F4] px-5 py-4 bg-[#FBFBFA]">
+              <div className="flex items-start gap-2.5">
+                <MessagesSquare size={16} className="text-[#007A87] flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[#2D2D2D]">這則需求還在處理中</p>
+                  <p className="text-xs text-[#616161] mt-0.5 leading-relaxed">
+                    想補充想法、回應或跟大家討論嗎？點下面直接進到這則需求的討論串，留言就好。等導入完成後，這裡才會開放評論與評分。
+                  </p>
+                  <DiscussNeedButton item={item} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         <div className="border-t border-[#F0F4F4] px-5 py-3 flex-shrink-0">
           <button onClick={onLike}

@@ -5,7 +5,8 @@ import { getTopicPosts, addTopicPost, type Topic, type TopicPost } from "@/lib/t
 import { supabase } from "@/lib/supabase";
 import { deptLast, identityIsSet, type Identity } from "@/lib/identity";
 import { IdentityBar } from "@/components/topics/identity-bar";
-import { MessageSquare, ArrowLeft, Clock, User, Send, Crown } from "lucide-react";
+import { MessageSquare, ArrowLeft, Clock, User, Send, Crown, Link2 } from "lucide-react";
+import { Linkify } from "@/components/ui/linkify";
 
 function StaffBadge() {
   return <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>;
@@ -129,8 +130,13 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
 
       {/* 主題標頭 — 主色框（主題不可修改） */}
       <div className="bg-[#EFF7F8] border border-[#007A87]/40 rounded-2xl p-5 mb-4">
+        {topic.submissionId && (
+          <div className="mb-2">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#00555E] bg-[#B5E1E5]/50 px-2 py-0.5 rounded-full"><Link2 size={11} />來自公告欄需求</span>
+          </div>
+        )}
         <h1 className="text-lg font-bold text-[#007A87] leading-snug">{topic.title}</h1>
-        {topic.description && <p className="text-sm text-[#616161] mt-1.5 leading-relaxed whitespace-pre-wrap">{topic.description}</p>}
+        {topic.description && <p className="text-sm text-[#616161] mt-1.5 leading-relaxed whitespace-pre-wrap"><Linkify text={topic.description} /></p>}
         <div className="flex items-center gap-x-3 gap-y-1 mt-3 text-xs text-[#9E9E9E] flex-wrap">
           <span className="flex items-center gap-1">
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-[#BDBDBD] flex-shrink-0"><User size={9} className="text-[#9E9E9E]" /></span>
@@ -160,7 +166,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
                   <PostAuthor p={p} />
                   <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}</span>
                 </div>
-                <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>
+                <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap"><Linkify text={p.content} /></p>
 
                 {/* 回覆串 */}
                 {replies.length > 0 && (
@@ -171,7 +177,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
                           <PostAuthor p={r} />
                           <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(r.createdAt)}</span>
                         </div>
-                        <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{r.content}</p>
+                        <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap"><Linkify text={r.content} /></p>
                       </div>
                     ))}
                   </div>
