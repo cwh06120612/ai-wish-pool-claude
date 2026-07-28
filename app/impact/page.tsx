@@ -12,7 +12,7 @@ import { Linkify } from "@/components/ui/linkify";
 import {
   Sparkles, Rocket, ThumbsUp, CheckCircle2, Clock, Quote,
   TrendingUp, MessageSquareHeart, MapPin, X, Send, PenLine, Check,
-  Archive, CircleSlash,
+  Archive, CircleSlash, ChevronRight,
 } from "lucide-react";
 
 function getPersonalInfo() {
@@ -310,10 +310,13 @@ export default function ImpactPage() {
                   const isPublic = item.shareMode === "願意分享（公開內容、部門、姓名）";
                   const dept = isPublic ? displayDept(item.departmentFullPath) : null;
                   return (
-                    <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+                    <div key={item.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#F0F4F4]/50 transition-colors">
                       <CheckCircle2 size={15} className="text-[#198754] flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#2D2D2D] leading-snug">{item.problemTitle}</p>
+                        <Link href={`/board?id=${item.id}`} className="group inline-flex items-start gap-1 max-w-full">
+                          <span className="text-sm font-medium text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors">{item.problemTitle}</span>
+                          <ChevronRight size={13} className="text-[#BDBDBD] group-hover:text-[#007A87] transition-colors flex-shrink-0 mt-0.5" />
+                        </Link>
                         {item.publicSummary && <p className="text-xs text-[#7A5A30] mt-0.5 line-clamp-1">{item.publicSummary}</p>}
                         <div className="flex items-center gap-3 mt-1 text-[11px] text-[#9E9E9E]">
                           <span className="flex items-center gap-1">{dept ? <><MapPin size={10} />{dept}</> : "跨部門需求"}</span>
@@ -350,10 +353,13 @@ export default function ImpactPage() {
                     const isPublic = item.shareMode === "願意分享（公開內容、部門、姓名）";
                     const dept = isPublic ? displayDept(item.departmentFullPath) : null;
                     return (
-                      <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+                      <div key={item.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#F0F4F4]/50 transition-colors">
                         <CircleSlash size={15} className="text-[#9E9E9E] flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[#616161] leading-snug">{item.problemTitle}</p>
+                          <Link href={`/board?id=${item.id}`} className="group inline-flex items-start gap-1 max-w-full">
+                            <span className="text-sm font-medium text-[#616161] leading-snug group-hover:text-[#007A87] transition-colors">{item.problemTitle}</span>
+                            <ChevronRight size={13} className="text-[#BDBDBD] group-hover:text-[#007A87] transition-colors flex-shrink-0 mt-0.5" />
+                          </Link>
                           <p className="text-xs mt-0.5 leading-relaxed whitespace-pre-wrap">
                             {item.publicSummary
                               ? <span className="text-[#7A5A30]"><Linkify text={item.publicSummary} /></span>

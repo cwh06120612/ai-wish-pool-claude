@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSubmissionsAsync, incrementLikeAsync, decrementLikeAsync } from "@/lib/storage";
 import { getFeedbacks, addFeedback, type Feedback } from "@/lib/feedback";
 import { getOrCreateTopicForSubmission } from "@/lib/topics";
@@ -362,14 +362,19 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
 
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function BoardPage() {
+// /board?id=<需求 id> 會直接打開該需求的詳情（成果看板的清單就是這樣跳進來的）
+function BoardContent() {
+  const searchParams = useSearchParams();
+  const focusId = searchParams.get("id");
   const [allItems, setAllItems] = useState<Submission[]>([]);
   const [query, setQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
-  const [selected, setSelected] = useState<Submission | null>(null);
+  // 只存 id，內容一律從 allItems 取，認同數更新才不用同步兩份資料
+  const [selectedId, setSelectedId] = useState<string | null>(() => focusId);
+  const selected = allItems.find(s => s.id === selectedId) ?? null;
   // Default: open the top 2 most serious sections
   const [activeLevel, setActiveLevel] = useState<string>("");
 
@@ -420,7 +425,6 @@ export default function BoardPage() {
       setLikedIds(next);
       localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));
       setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: Math.max(0, s.likeCount - 1) } : s));
-      if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: Math.max(0, prev.likeCount - 1) } : null);
     } else {
       const { name, dept } = getPersonalInfo();
       const liker = name ? { name, dept } : undefined;
@@ -429,8 +433,13 @@ export default function BoardPage() {
       setLikedIds(next);
       localStorage.setItem("ai-wish-liked", JSON.stringify([...next]));
       setAllItems(prev => prev.map(s => s.id === id ? { ...s, likeCount: s.likeCount + 1 } : s));
-      if (selected?.id === id) setSelected(prev => prev ? { ...prev, likeCount: prev.likeCount + 1 } : null);
     }
+  }
+
+  // 關掉詳情時把 ?id= 清掉，重新整理才不會又跳出同一則
+  function closeDetail() {
+    setSelectedId(null);
+    if (focusId) window.history.replaceState(null, "", "/board");
   }
 
   return (
@@ -515,7 +524,7 @@ export default function BoardPage() {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {items.map(item => (
-                    <BoardCard key={item.id} item={item} isLiked={likedIds.has(item.id)} onClick={() => setSelected(item)} />
+                    <BoardCard key={item.id} item={item} isLiked={likedIds.has(item.id)} onClick={() => setSelectedId(item.id)} />
                   ))}
                 </div>
               </div>
@@ -526,9 +535,18 @@ export default function BoardPage() {
 
       {selected && (
         <DetailModal item={selected} isLiked={likedIds.has(selected.id)}
-          onLike={() => handleLike(selected.id)} onClose={() => setSelected(null)} />
+          onLike={() => handleLike(selected.id)} onClose={closeDetail} />
       )}
 
     </div>
+  );
+}
+
+// useSearchParams 需要 Suspense 邊界（靜態預渲染的頁面沒包會 build 失敗）
+export default function BoardPage() {
+  return (
+    <Suspense fallback={<div className="max-w-[1120px] mx-auto px-6 py-16 text-center text-sm text-[#9E9E9E]">載入中…</div>}>
+      <BoardContent />
+    </Suspense>
   );
 }
