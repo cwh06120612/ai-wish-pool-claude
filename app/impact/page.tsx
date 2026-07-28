@@ -231,7 +231,9 @@ export default function ImpactPage() {
     const implemented = submissions.filter((s) => s.status === "已導入").length;
     const inProgress = submissions.filter((s) => IN_PROGRESS_STATUSES.includes(s.status)).length;
     const deferred = submissions.filter((s) => s.status === "暫不處理").length;
-    return { total, implemented, inProgress, deferred, closed: implemented + deferred };
+    const closed = implemented + deferred;
+    const closedRate = total > 0 ? Math.round((closed / total) * 100) : 0;
+    return { total, implemented, inProgress, deferred, closed, closedRate };
   }, [submissions]);
 
   // 對外顯示（清單、回饋牆標題、回饋 Modal）只用可公開的需求，避免外洩不公開內容
@@ -284,8 +286,8 @@ export default function ImpactPage() {
             <Kpi icon={<TrendingUp size={16} />} label="收到的需求" value={stats.total} sub="累計" color="#007A87" />
             <Kpi icon={<CheckCircle2 size={16} />} label="已導入落地" value={stats.implemented} sub="完成處理" color="#198754" />
             <Kpi icon={<Clock size={16} />} label="積極處理中" value={stats.inProgress} sub="評估到測試" color="#FFAE00" />
-            <Kpi icon={<Archive size={16} />} label="已結案" value={stats.closed}
-              sub={`已導入 ${stats.implemented}・暫不處理 ${stats.deferred}`} color="#BE8B55" />
+            <Kpi icon={<Archive size={16} />} label="已結案率" value={`${stats.closedRate}%`}
+              sub={`已結案 ${stats.closed}・暫不處理 ${stats.deferred}`} color="#BE8B55" />
           </div>
 
           {/* 已導入需求清單 */}
