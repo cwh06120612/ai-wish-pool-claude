@@ -12,6 +12,14 @@ export type Status =
   | "已導入"
   | "暫不處理";
 
+// 結案（終態）：「已導入」＝有解法落地；「暫不處理」＝評估後決定先不做。
+// 兩者都算結案，不再列入處理中。
+export const CLOSED_STATUSES: Status[] = ["已導入", "暫不處理"];
+
+export function isClosedStatus(status: Status) {
+  return CLOSED_STATUSES.includes(status);
+}
+
 export type Priority = "高優先" | "中優先" | "低優先" | "待評估";
 
 export type Category =

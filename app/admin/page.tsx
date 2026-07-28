@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getSubmissionsAsync, updateSubmissionAsync } from "@/lib/storage";
 import { exportToCsv } from "@/lib/csv";
-import type { Submission, Status, Priority, Category } from "@/types/submission";
+import { isClosedStatus, type Submission, type Status, type Priority, type Category } from "@/types/submission";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -305,7 +305,10 @@ function AdminContent() {
           s.departmentFullPath.toLowerCase().includes(q);
         if (!match) return false;
       }
-      if (adminFilterStatus && s.status !== adminFilterStatus) return false;
+      // 狀態篩選另外提供「已結案（已導入＋暫不處理）／未結案」兩個群組選項
+      if (adminFilterStatus === "__closed__") { if (!isClosedStatus(s.status)) return false; }
+      else if (adminFilterStatus === "__open__") { if (isClosedStatus(s.status)) return false; }
+      else if (adminFilterStatus && s.status !== adminFilterStatus) return false;
       if (adminFilterPriority && s.priority !== adminFilterPriority) return false;
       if (adminFilterVisible === "shown" && !s.isVisible) return false;
       if (adminFilterVisible === "hidden" && s.isVisible) return false;
@@ -450,7 +453,12 @@ function AdminContent() {
                 <AdminInlineDropdown
                   label="狀態"
                   value={adminFilterStatus}
-                  options={[{ value: "", label: "全部狀態" }, ...STATUS_OPTIONS.map(o => ({ value: o, label: o }))]}
+                  options={[
+                    { value: "", label: "全部狀態" },
+                    { value: "__open__", label: "未結案" },
+                    { value: "__closed__", label: "已結案（已導入＋暫不處理）" },
+                    ...STATUS_OPTIONS.map(o => ({ value: o, label: o })),
+                  ]}
                   onChange={setAdminFilterStatus}
                 />
                 <AdminInlineDropdown

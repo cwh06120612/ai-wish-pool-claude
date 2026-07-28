@@ -12,6 +12,7 @@ import { Linkify } from "@/components/ui/linkify";
 import {
   Sparkles, Rocket, ThumbsUp, CheckCircle2, Clock, Quote,
   TrendingUp, MessageSquareHeart, MapPin, X, Send, PenLine, Check,
+  Archive, CircleSlash,
 } from "lucide-react";
 
 function getPersonalInfo() {
@@ -224,13 +225,13 @@ export default function ImpactPage() {
   }
 
   // 統計：涵蓋全部需求（公開＋不公開）
+  // 「已導入」與「暫不處理」都算結案，只是結果不同
   const stats = useMemo(() => {
     const total = submissions.length;
     const implemented = submissions.filter((s) => s.status === "已導入").length;
     const inProgress = submissions.filter((s) => IN_PROGRESS_STATUSES.includes(s.status)).length;
-    const actionable = submissions.filter((s) => s.status !== "暫不處理").length;
-    const completionRate = actionable > 0 ? Math.round((implemented / actionable) * 100) : 0;
-    return { total, implemented, inProgress, completionRate };
+    const deferred = submissions.filter((s) => s.status === "暫不處理").length;
+    return { total, implemented, inProgress, deferred, closed: implemented + deferred };
   }, [submissions]);
 
   // 對外顯示（清單、回饋牆標題、回饋 Modal）只用可公開的需求，避免外洩不公開內容
@@ -238,6 +239,11 @@ export default function ImpactPage() {
 
   const deliveredCases = useMemo(
     () => visibleSubmissions.filter((s) => s.status === "已導入").sort((a, b) => b.likeCount - a.likeCount),
+    [visibleSubmissions]
+  );
+
+  const deferredCases = useMemo(
+    () => visibleSubmissions.filter((s) => s.status === "暫不處理").sort((a, b) => b.likeCount - a.likeCount),
     [visibleSubmissions]
   );
 
@@ -278,7 +284,8 @@ export default function ImpactPage() {
             <Kpi icon={<TrendingUp size={16} />} label="收到的需求" value={stats.total} sub="累計" color="#007A87" />
             <Kpi icon={<CheckCircle2 size={16} />} label="已導入落地" value={stats.implemented} sub="完成處理" color="#198754" />
             <Kpi icon={<Clock size={16} />} label="積極處理中" value={stats.inProgress} sub="評估到測試" color="#FFAE00" />
-            <Kpi icon={<Rocket size={16} />} label="導入完成率" value={`${stats.completionRate}%`} sub="已導入" color="#BE8B55" />
+            <Kpi icon={<Archive size={16} />} label="已結案" value={stats.closed}
+              sub={`已導入 ${stats.implemented}・暫不處理 ${stats.deferred}`} color="#BE8B55" />
           </div>
 
           {/* 已導入需求清單 */}
@@ -321,6 +328,50 @@ export default function ImpactPage() {
               </div>
             )}
           </div>
+
+          {/* 評估後暫不處理（同樣是結案，只是結果不同）*/}
+          {stats.deferred > 0 && (
+            <div>
+              <SectionTitle
+                icon={<CircleSlash size={15} className="text-[#9E9E9E]" />}
+                hint={stats.deferred > deferredCases.length
+                  ? `共 ${stats.deferred} 個暫不處理，此處僅顯示 ${deferredCases.length} 個公開項目`
+                  : `${deferredCases.length} 個暫不處理・僅顯示公開項目`}
+              >評估後暫不處理</SectionTitle>
+              {deferredCases.length === 0 ? (
+                <div className="border border-[#E0E0E0]/80 rounded-2xl bg-white px-4 py-8 text-center text-sm text-[#9E9E9E]">
+                  目前有 {stats.deferred} 個需求評估後暫不處理，但都尚未設為公開，所以這裡暫時不顯示內容。
+                </div>
+              ) : (
+                <div className="border border-[#E0E0E0]/80 rounded-2xl bg-white divide-y divide-[#F0F4F4] overflow-hidden">
+                  {deferredCases.map((item) => {
+                    const isPublic = item.shareMode === "願意分享（公開內容、部門、姓名）";
+                    const dept = isPublic ? displayDept(item.departmentFullPath) : null;
+                    return (
+                      <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+                        <CircleSlash size={15} className="text-[#9E9E9E] flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[#616161] leading-snug">{item.problemTitle}</p>
+                          <p className="text-xs mt-0.5 leading-relaxed whitespace-pre-wrap">
+                            {item.publicSummary
+                              ? <span className="text-[#7A5A30]"><Linkify text={item.publicSummary} /></span>
+                              : <span className="text-[#9E9E9E]">處理說明整理中，若你有新的資訊，歡迎到討論串補充，我們會重新評估。</span>}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1 text-[11px] text-[#9E9E9E]">
+                            <span className="flex items-center gap-1">{dept ? <><MapPin size={10} />{dept}</> : "跨部門需求"}</span>
+                            <span className="flex items-center gap-1 text-[#007A87] font-semibold"><ThumbsUp size={10} />{item.likeCount}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-[11px] text-[#9E9E9E] mt-2 leading-relaxed">
+                暫不處理＝評估後先結案，不代表不重要。情況有變或有更好的做法時，我們會重新開案。
+              </p>
+            </div>
+          )}
 
           {/* 真實回饋牆 */}
           <div>

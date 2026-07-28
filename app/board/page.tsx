@@ -11,7 +11,7 @@ import type { Submission } from "@/types/submission";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StarRating } from "@/components/ui/star-rating";
 import { DepartmentSelector } from "@/components/department-selector";
-import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, Sparkles, X, SlidersHorizontal, MessageSquareHeart, Quote, Send, MessagesSquare } from "lucide-react";
+import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, Sparkles, X, SlidersHorizontal, MessageSquareHeart, Quote, Send, MessagesSquare, CircleSlash } from "lucide-react";
 
 function getPersonalInfo() {
   try {
@@ -201,6 +201,7 @@ function DiscussNeedButton({ item }: { item: Submission }) {
       id: item.id,
       title: item.problemTitle,
       summary: item.publicSummary,
+      status: item.status,
     });
     if (topic) router.push(`/topics/${topic.id}`);
     else setBusy(false);
@@ -281,6 +282,20 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           )}
           {item.status === "已導入" ? (
             <div className="-mx-5 -mb-4"><FeedbackSection submissionId={item.id} /></div>
+          ) : item.status === "暫不處理" ? (
+            // 暫不處理也是結案的一種：不算「處理中」，但仍可繼續討論，有新資訊就重新評估
+            <div className="-mx-5 -mb-4 border-t border-[#F0F4F4] px-5 py-4 bg-[#FBFBFA]">
+              <div className="flex items-start gap-2.5">
+                <CircleSlash size={16} className="text-[#9E9E9E] flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[#2D2D2D]">這則需求評估後暫不處理，已先結案</p>
+                  <p className="text-xs text-[#616161] mt-0.5 leading-relaxed">
+                    暫不處理不代表不重要。若情況有變或你有新的資訊，歡迎到討論串補充，我們會重新評估、必要時重新開案。
+                  </p>
+                  <DiscussNeedButton item={item} />
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="-mx-5 -mb-4 border-t border-[#F0F4F4] px-5 py-4 bg-[#FBFBFA]">
               <div className="flex items-start gap-2.5">
