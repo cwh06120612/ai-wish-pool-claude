@@ -287,7 +287,7 @@ export default function ImpactPage() {
             <Kpi icon={<CheckCircle2 size={16} />} label="已導入落地" value={stats.implemented} sub="完成處理" color="#198754" />
             <Kpi icon={<Clock size={16} />} label="積極處理中" value={stats.inProgress} sub="評估到測試" color="#FFAE00" />
             <Kpi icon={<Archive size={16} />} label="已結案率" value={`${stats.closedRate}%`}
-              sub={`已結案 ${stats.closed}・暫不處理 ${stats.deferred}`} color="#BE8B55" />
+              sub={`已導入 ${stats.implemented}・暫不處理 ${stats.deferred}`} color="#BE8B55" />
           </div>
 
           {/* 已導入需求清單 */}
