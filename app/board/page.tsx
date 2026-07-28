@@ -338,12 +338,7 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
         <div className="flex flex-wrap gap-1.5 mb-3">
           <BoardStatusTag status={item.status} />
         </div>
-        {item.painPoints.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {item.painPoints.slice(0, 3).map(p => <span key={p} className="text-[11px] px-2 py-0.5 rounded-full bg-[#B5E1E5]/30 text-[#00555E] font-medium">{p}</span>)}
-            {item.painPoints.length > 3 && <span className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full bg-[#F0F4F4] text-[#9E9E9E]">+{item.painPoints.length - 3}</span>}
-          </div>
-        )}
+        {/* 痛點不在卡片上顯示，點開詳情視窗才列出（卡片保持精簡）*/}
         <div className="flex items-center justify-between pt-2 border-t border-[#F0F4F4] mt-auto">
           <div className="flex items-center gap-2 text-[11px] text-[#BDBDBD]">
             <span className="flex items-center gap-1"><User size={10} />{displayName}</span>
