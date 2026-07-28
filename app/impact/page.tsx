@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getSubmissionsAsync } from "@/lib/storage";
 import { getAllFeedbacks, addFeedback, type Feedback } from "@/lib/feedback";
 import type { Submission } from "@/types/submission";
@@ -202,10 +203,17 @@ function FeedbackCard({ fb, caseTitle, isSample }: { fb: { authorName: string; a
 
 // ─── 主頁 ─────────────────────────────────────────────────────────────────────
 export default function ImpactPage() {
+  const router = useRouter();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [feedbackFor, setFeedbackFor] = useState<{ id: string | null } | null>(null);
+
+  // 整列都可點擊跳到公告欄該則需求；列內的連結／按鈕（評論、處理說明裡的網址）自己處理
+  function goToSubmission(e: React.MouseEvent, id: string) {
+    if ((e.target as HTMLElement).closest("a,button")) return;
+    router.push(`/board?id=${id}`);
+  }
 
   useEffect(() => {
     async function load() {
@@ -310,10 +318,11 @@ export default function ImpactPage() {
                   const isPublic = item.shareMode === "願意分享（公開內容、部門、姓名）";
                   const dept = isPublic ? displayDept(item.departmentFullPath) : null;
                   return (
-                    <div key={item.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#F0F4F4]/50 transition-colors">
+                    <div key={item.id} onClick={(e) => goToSubmission(e, item.id)}
+                      className="group flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-[#F0F4F4]/50 transition-colors">
                       <CheckCircle2 size={15} className="text-[#198754] flex-shrink-0 mt-0.5" />
                       <div className="flex-1 min-w-0">
-                        <Link href={`/board?id=${item.id}`} className="group inline-flex items-start gap-1 max-w-full">
+                        <Link href={`/board?id=${item.id}`} className="inline-flex items-start gap-1 max-w-full">
                           <span className="text-sm font-medium text-[#2D2D2D] leading-snug group-hover:text-[#007A87] transition-colors">{item.problemTitle}</span>
                           <ChevronRight size={13} className="text-[#BDBDBD] group-hover:text-[#007A87] transition-colors flex-shrink-0 mt-0.5" />
                         </Link>
@@ -353,10 +362,11 @@ export default function ImpactPage() {
                     const isPublic = item.shareMode === "願意分享（公開內容、部門、姓名）";
                     const dept = isPublic ? displayDept(item.departmentFullPath) : null;
                     return (
-                      <div key={item.id} className="flex items-start gap-3 px-4 py-3 hover:bg-[#F0F4F4]/50 transition-colors">
+                      <div key={item.id} onClick={(e) => goToSubmission(e, item.id)}
+                        className="group flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-[#F0F4F4]/50 transition-colors">
                         <CircleSlash size={15} className="text-[#9E9E9E] flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
-                          <Link href={`/board?id=${item.id}`} className="group inline-flex items-start gap-1 max-w-full">
+                          <Link href={`/board?id=${item.id}`} className="inline-flex items-start gap-1 max-w-full">
                             <span className="text-sm font-medium text-[#616161] leading-snug group-hover:text-[#007A87] transition-colors">{item.problemTitle}</span>
                             <ChevronRight size={13} className="text-[#BDBDBD] group-hover:text-[#007A87] transition-colors flex-shrink-0 mt-0.5" />
                           </Link>
