@@ -38,11 +38,12 @@ const ANNOYANCE_ORDER = [
   "還好，但可以優化",
 ];
 
-const ANNOYANCE_STYLE: Record<string, { bar: string; badge: string; text: string; border: string; labelBg: string; labelText: string; icon: string; sectionBg: string }> = {
-  "已經麻痺，每天都這樣": { bar: "bg-[#AE1914]", badge: "bg-[#EBCDCC]", text: "text-[#8C1915]", border: "border-[#AE1914]/25", labelBg: "bg-[#EBCDCC]", labelText: "text-[#8C1915]", icon: "🔥", sectionBg: "bg-[#FDF4F4]" },
-  "很煩，希望優先處理":   { bar: "bg-[#FFAE00]", badge: "bg-[#FFF3CD]", text: "text-[#92400e]", border: "border-[#FFAE00]/35", labelBg: "bg-[#FFF3CD]", labelText: "text-[#92400e]", icon: "😤", sectionBg: "bg-[#FDFAF0]" },
-  "有點煩，改善會很有感": { bar: "bg-[#007A87]", badge: "bg-[#B5E1E5]/40", text: "text-[#00555E]", border: "border-[#007A87]/20", labelBg: "bg-[#B5E1E5]/40", labelText: "text-[#00555E]", icon: "😑", sectionBg: "bg-[#EFF7F8]" },
-  "還好，但可以優化":     { bar: "bg-[#BDBDBD]", badge: "bg-[#F0F4F4]", text: "text-[#616161]", border: "border-[#BDBDBD]/30", labelBg: "bg-[#F0F4F4]", labelText: "text-[#616161]", icon: "🤔", sectionBg: "bg-[#F8F8F8]" },
+// dot＝卡片標題前的色點，取徽章底色與主色之間的中間調（太淺看不到、太深太搶眼）
+const ANNOYANCE_STYLE: Record<string, { bar: string; badge: string; text: string; border: string; labelBg: string; labelText: string; dot: string; icon: string; sectionBg: string }> = {
+  "已經麻痺，每天都這樣": { bar: "bg-[#AE1914]", badge: "bg-[#EBCDCC]", text: "text-[#8C1915]", border: "border-[#AE1914]/25", labelBg: "bg-[#EBCDCC]", labelText: "text-[#8C1915]", dot: "bg-[#D2716C]", icon: "🔥", sectionBg: "bg-[#FDF4F4]" },
+  "很煩，希望優先處理":   { bar: "bg-[#FFAE00]", badge: "bg-[#FFF3CD]", text: "text-[#92400e]", border: "border-[#FFAE00]/35", labelBg: "bg-[#FFF3CD]", labelText: "text-[#92400e]", dot: "bg-[#F5C24D]", icon: "😤", sectionBg: "bg-[#FDFAF0]" },
+  "有點煩，改善會很有感": { bar: "bg-[#007A87]", badge: "bg-[#B5E1E5]/40", text: "text-[#00555E]", border: "border-[#007A87]/20", labelBg: "bg-[#B5E1E5]/40", labelText: "text-[#00555E]", dot: "bg-[#5FB0B8]", icon: "😑", sectionBg: "bg-[#EFF7F8]" },
+  "還好，但可以優化":     { bar: "bg-[#BDBDBD]", badge: "bg-[#F0F4F4]", text: "text-[#616161]", border: "border-[#BDBDBD]/30", labelBg: "bg-[#F0F4F4]", labelText: "text-[#616161]", dot: "bg-[#D2D6D6]", icon: "🤔", sectionBg: "bg-[#F8F8F8]" },
 };
 
 const BOARD_STATUS_STYLE: Record<string, { bg: string; text: string }> = {
@@ -334,8 +335,8 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
       <div className="p-4 flex flex-col flex-1">
         <div className="mb-2.5 min-h-[40px]">
           <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors">
-            {/* 煩人程度用色點標記，顏色＝上方分類標籤數量徽章的底色；滑過看說明 */}
-            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 align-middle ${st.labelBg}`} title={item.annoyanceLevel} />
+            {/* 煩人程度用色點標記（中間調，滑過看說明）*/}
+            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 align-middle ${st.dot}`} title={item.annoyanceLevel} />
             {item.problemTitle}
           </h3>
         </div>
