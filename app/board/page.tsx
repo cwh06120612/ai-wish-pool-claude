@@ -334,8 +334,8 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
       <div className="p-4 flex flex-col flex-1">
         <div className="mb-2.5 min-h-[40px]">
           <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors">
-            {/* 煩人程度用色點標記，滑過看說明 */}
-            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 align-middle ${st.bar}`} title={item.annoyanceLevel} />
+            {/* 煩人程度用色點標記，顏色＝上方分類標籤數量徽章的底色；滑過看說明 */}
+            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 align-middle ${st.labelBg}`} title={item.annoyanceLevel} />
             {item.problemTitle}
           </h3>
         </div>
@@ -361,29 +361,27 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
 
 
 // ─── 「全部」模式的分組 ────────────────────────────────────────────────────────
-// 依時間排序時用「年 / 月」分組；依認同數排序時每 10 則一組（名次區間）。
+// 依時間排序時用「年 / 月」分組；依認同數排序時用「每 10 個認同」為一級（0–9、10–19…）。
 // items 已經排序過，用 Map 保留出現順序即可。
 function groupItems(items: Submission[], sortBy: SortOption): { key: string; label: string; items: Submission[] }[] {
-  if (sortBy === "likes") {
-    const groups: { key: string; label: string; items: Submission[] }[] = [];
-    for (let i = 0; i < items.length; i += 10) {
-      const chunk = items.slice(i, i + 10);
-      groups.push({ key: `rank-${i}`, label: `認同數第 ${i + 1}–${i + chunk.length} 名`, items: chunk });
-    }
-    return groups;
-  }
-  const byMonth = new Map<string, Submission[]>();
+  const groups = new Map<string, { label: string; items: Submission[] }>();
   for (const s of items) {
-    const d = new Date(s.createdAt);
-    const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
-    const list = byMonth.get(key);
-    if (list) list.push(s);
-    else byMonth.set(key, [s]);
+    let key: string;
+    let label: string;
+    if (sortBy === "likes") {
+      const floor = Math.floor(s.likeCount / 10) * 10;
+      key = `likes-${floor}`;
+      label = `${floor}–${floor + 9} 個認同`;
+    } else {
+      const d = new Date(s.createdAt);
+      key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+      label = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月`;
+    }
+    const group = groups.get(key);
+    if (group) group.items.push(s);
+    else groups.set(key, { label, items: [s] });
   }
-  return [...byMonth.entries()].map(([key, list]) => {
-    const [year, month] = key.split("-");
-    return { key, label: `${year} 年 ${month} 月`, items: list };
-  });
+  return [...groups.entries()].map(([key, g]) => ({ key, ...g }));
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -533,17 +531,6 @@ function BoardContent() {
               })}
             </div>
           )}
-
-          {/* 色點圖例（淺色、不搶版面）*/}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4 text-[11px] text-[#BDBDBD]">
-            <span>標題前色點＝煩人程度</span>
-            {ANNOYANCE_ORDER.map(level => (
-              <span key={level} className="inline-flex items-center gap-1">
-                <span className={`w-2 h-2 rounded-full ${ANNOYANCE_STYLE[level].bar} opacity-60`} />
-                {level.split("，")[0]}
-              </span>
-            ))}
-          </div>
 
           {/* Content — 「全部」不分煩人程度，改依年月（時間排序）或認同名次每 10 則分組；選特定程度才用該色系區塊 */}
           {activeLevel === "" ? (
