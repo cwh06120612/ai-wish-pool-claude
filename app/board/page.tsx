@@ -369,9 +369,10 @@ function groupItems(items: Submission[], sortBy: SortOption): { key: string; lab
     let key: string;
     let label: string;
     if (sortBy === "likes") {
-      const floor = Math.floor(s.likeCount / 10) * 10;
-      key = `likes-${floor}`;
-      label = `${floor}–${floor + 9} 個認同`;
+      // 1–10、11–20、21–30…；還沒有人認同的自成一組
+      const top = Math.ceil(s.likeCount / 10) * 10;
+      key = `likes-${top}`;
+      label = s.likeCount === 0 ? "還沒有認同" : `${top - 9}–${top} 個認同`;
     } else {
       const d = new Date(s.createdAt);
       key = `${d.getFullYear()}-${d.getMonth() + 1}`;
