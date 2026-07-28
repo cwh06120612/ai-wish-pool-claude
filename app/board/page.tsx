@@ -333,14 +333,14 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
       className="bg-white border border-[#E0E0E0]/80 rounded-xl overflow-hidden text-left hover:shadow-md hover:-translate-y-0.5 transition-all w-full group flex flex-col">
       <div className="p-4 flex flex-col flex-1">
         <div className="mb-2.5 min-h-[40px]">
-          <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors">{item.problemTitle}</h3>
+          <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors">
+            {/* 煩人程度用色點標記，滑過看說明 */}
+            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 align-middle ${st.bar}`} title={item.annoyanceLevel} />
+            {item.problemTitle}
+          </h3>
         </div>
         <div className="flex flex-wrap gap-1.5 mb-3">
           <BoardStatusTag status={item.status} />
-          {/* 煩人程度：全部模式不再分區塊，改用標籤讓卡片自己說明 */}
-          <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold ${st.labelBg} ${st.labelText}`}>
-            <span className="leading-none">{st.icon}</span>{item.annoyanceLevel.split("，")[0]}
-          </span>
         </div>
         {/* 痛點不在卡片上顯示，點開詳情視窗才列出（卡片保持精簡）*/}
         <div className="flex items-center justify-between pt-2 border-t border-[#F0F4F4] mt-auto">
