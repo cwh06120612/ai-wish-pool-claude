@@ -504,27 +504,22 @@ function BoardContent() {
             </div>
           )}
 
-          {/* Content — show selected tab or all */}
-          {(activeLevel === "" ? visibleLevels : [activeLevel]).map(level => {
-            const items = filtered.filter(s => s.annoyanceLevel === level);
-            if (items.length === 0) return null;
-            const st = ANNOYANCE_STYLE[level] ?? ANNOYANCE_STYLE["還好，但可以優化"];
-            return (
-              <div key={level} className={`mb-8 rounded-2xl p-4 ${st.sectionBg}`}>
-                {activeLevel === "" && (
-                  <div className={`flex items-center gap-3 mb-4 pb-3 border-b-2 ${st.border}`}>
-                    <h2 className={`text-sm font-bold flex-1 ${st.text}`}>{level}</h2>
-                    <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full ${st.labelBg} ${st.labelText}`}>{items.length} 則</span>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                  {items.map(item => (
-                    <BoardCard key={item.id} item={item} isLiked={likedIds.has(item.id)} onClick={() => setSelectedId(item.id)} />
-                  ))}
-                </div>
+          {/* Content — 「全部」不分煩人程度區塊，直接依排序一次列出；選特定程度才用該色系區塊 */}
+          {activeLevel === "" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filtered.map(item => (
+                <BoardCard key={item.id} item={item} isLiked={likedIds.has(item.id)} onClick={() => setSelectedId(item.id)} />
+              ))}
+            </div>
+          ) : (
+            <div className={`mb-8 rounded-2xl p-4 ${(ANNOYANCE_STYLE[activeLevel] ?? ANNOYANCE_STYLE["還好，但可以優化"]).sectionBg}`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {filtered.filter(s => s.annoyanceLevel === activeLevel).map(item => (
+                  <BoardCard key={item.id} item={item} isLiked={likedIds.has(item.id)} onClick={() => setSelectedId(item.id)} />
+                ))}
               </div>
-            );
-          })}
+            </div>
+          )}
       </div>
       )}
 
