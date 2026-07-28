@@ -360,6 +360,32 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
 
 
 
+// ─── 「全部」模式的分組 ────────────────────────────────────────────────────────
+// 依時間排序時用「年 / 月」分組；依認同數排序時每 10 則一組（名次區間）。
+// items 已經排序過，用 Map 保留出現順序即可。
+function groupItems(items: Submission[], sortBy: SortOption): { key: string; label: string; items: Submission[] }[] {
+  if (sortBy === "likes") {
+    const groups: { key: string; label: string; items: Submission[] }[] = [];
+    for (let i = 0; i < items.length; i += 10) {
+      const chunk = items.slice(i, i + 10);
+      groups.push({ key: `rank-${i}`, label: `認同數第 ${i + 1}–${i + chunk.length} 名`, items: chunk });
+    }
+    return groups;
+  }
+  const byMonth = new Map<string, Submission[]>();
+  for (const s of items) {
+    const d = new Date(s.createdAt);
+    const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+    const list = byMonth.get(key);
+    if (list) list.push(s);
+    else byMonth.set(key, [s]);
+  }
+  return [...byMonth.entries()].map(([key, list]) => {
+    const [year, month] = key.split("-");
+    return { key, label: `${year} 年 ${month} 月`, items: list };
+  });
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 // /board?id=<需求 id> 會直接打開該需求的詳情（成果看板的清單就是這樣跳進來的）
 function BoardContent() {
@@ -508,13 +534,32 @@ function BoardContent() {
             </div>
           )}
 
-          {/* Content — 「全部」不分煩人程度區塊，直接依排序一次列出；選特定程度才用該色系區塊 */}
+          {/* 色點圖例（淺色、不搶版面）*/}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-4 text-[11px] text-[#BDBDBD]">
+            <span>標題前色點＝煩人程度</span>
+            {ANNOYANCE_ORDER.map(level => (
+              <span key={level} className="inline-flex items-center gap-1">
+                <span className={`w-2 h-2 rounded-full ${ANNOYANCE_STYLE[level].bar} opacity-60`} />
+                {level.split("，")[0]}
+              </span>
+            ))}
+          </div>
+
+          {/* Content — 「全部」不分煩人程度，改依年月（時間排序）或認同名次每 10 則分組；選特定程度才用該色系區塊 */}
           {activeLevel === "" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filtered.map(item => (
-                <BoardCard key={item.id} item={item} isLiked={likedIds.has(item.id)} onClick={() => setSelectedId(item.id)} />
-              ))}
-            </div>
+            groupItems(filtered, sortBy).map(group => (
+              <div key={group.key} className="mb-7">
+                <div className="flex items-center gap-3 mb-3 pb-2 border-b border-[#E0E0E0]/70">
+                  <h2 className="text-sm font-bold text-[#616161] flex-1">{group.label}</h2>
+                  <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-[#F0F4F4] text-[#616161]">{group.items.length} 則</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {group.items.map(item => (
+                    <BoardCard key={item.id} item={item} isLiked={likedIds.has(item.id)} onClick={() => setSelectedId(item.id)} />
+                  ))}
+                </div>
+              </div>
+            ))
           ) : (
             <div className={`mb-8 rounded-2xl p-4 ${(ANNOYANCE_STYLE[activeLevel] ?? ANNOYANCE_STYLE["還好，但可以優化"]).sectionBg}`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
