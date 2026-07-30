@@ -127,9 +127,9 @@ export async function getOrCreateTopicForSubmission(sub: {
   if (existing.data) return topicFromDb(existing.data);
 
   const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  // 暫不處理已經結案，別再說「還在處理中」
-  const fallbackDescription = sub.status === "暫不處理"
-    ? "這則需求評估後暫不處理、已先結案。若情況有變或有新的想法，歡迎在這裡補充。"
+  // 不予處理已經結案，別再說「還在處理中」
+  const fallbackDescription = sub.status === "不予處理"
+    ? "這則需求評估後不予處理、已結案。若情況有變或有新的想法，歡迎在這裡補充。"
     : "這則需求還在處理中，一起討論、補充想法吧。";
   const insertData = {
     id,

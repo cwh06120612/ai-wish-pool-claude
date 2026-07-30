@@ -25,7 +25,7 @@ export function Badge({ children, variant = "default", className = "" }: BadgePr
 }
 
 // 狀態標籤：副色系（棕金）漸層，淺→深，最後一個灰色
-// 已收到(最淺) → 整理中 → 評估中 → 尋找工具中 → 測試中 → 已導入(最深) → 暫不處理(灰)
+// 已收到(最淺) → 整理中 → 評估中 → 尋找工具中 → 測試中 → 已導入(最深) → 不予處理(灰)
 const statusConfig: Record<Status, { bg: string; text: string }> = {
   已收到:     { bg: "#F5EDE3", text: "#A0724A" },
   整理中:     { bg: "#EAD9C4", text: "#8C5E35" },
@@ -33,7 +33,7 @@ const statusConfig: Record<Status, { bg: string; text: string }> = {
   尋找工具中: { bg: "#CFB080", text: "#ffffff" },
   測試中:     { bg: "#BE9A60", text: "#ffffff" },
   已導入:     { bg: "#9A7340", text: "#ffffff" },
-  暫不處理:   { bg: "#E0E0E0", text: "#9E9E9E" },
+  不予處理:   { bg: "#E0E0E0", text: "#9E9E9E" },
 };
 
 interface StatusBadgeProps {

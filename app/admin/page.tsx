@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 const STATUS_OPTIONS: Status[] = [
-  "已收到","整理中","評估中","尋找工具中","測試中","已導入","暫不處理",
+  "已收到","整理中","評估中","尋找工具中","測試中","已導入","不予處理",
 ];
 const PRIORITY_OPTIONS: Priority[] = ["高優先","中優先","低優先","待評估"];
 const CATEGORY_OPTIONS: Category[] = [
@@ -305,7 +305,7 @@ function AdminContent() {
           s.departmentFullPath.toLowerCase().includes(q);
         if (!match) return false;
       }
-      // 狀態篩選另外提供「已結案（已導入＋暫不處理）／未結案」兩個群組選項
+      // 狀態篩選另外提供「已結案（已導入＋不予處理）／未結案」兩個群組選項
       if (adminFilterStatus === "__closed__") { if (!isClosedStatus(s.status)) return false; }
       else if (adminFilterStatus === "__open__") { if (isClosedStatus(s.status)) return false; }
       else if (adminFilterStatus && s.status !== adminFilterStatus) return false;
@@ -456,7 +456,7 @@ function AdminContent() {
                   options={[
                     { value: "", label: "全部狀態" },
                     { value: "__open__", label: "未結案" },
-                    { value: "__closed__", label: "已結案（已導入＋暫不處理）" },
+                    { value: "__closed__", label: "已結案（已導入＋不予處理）" },
                     ...STATUS_OPTIONS.map(o => ({ value: o, label: o })),
                   ]}
                   onChange={setAdminFilterStatus}

@@ -53,7 +53,7 @@ const BOARD_STATUS_STYLE: Record<string, { bg: string; text: string }> = {
   "尋找工具中": { bg: "#D6B892", text: "#5A3A10" },
   "測試中":     { bg: "#C8A070", text: "#ffffff" },
   "已導入":     { bg: "#BE8B55", text: "#ffffff" },
-  "暫不處理":   { bg: "#E0E0E0", text: "#9E9E9E" },
+  "不予處理":   { bg: "#E0E0E0", text: "#9E9E9E" },
 };
 
 function BoardStatusTag({ status }: { status: string }) {
@@ -283,15 +283,15 @@ function DetailModal({ item, isLiked, onLike, onClose }: { item: Submission; isL
           )}
           {item.status === "已導入" ? (
             <div className="-mx-5 -mb-4"><FeedbackSection submissionId={item.id} /></div>
-          ) : item.status === "暫不處理" ? (
-            // 暫不處理也是結案的一種：不算「處理中」，但仍可繼續討論，有新資訊就重新評估
+          ) : item.status === "不予處理" ? (
+            // 不予處理也是結案的一種：不算「處理中」，但仍可繼續討論，有新資訊就重新評估
             <div className="-mx-5 -mb-4 border-t border-[#F0F4F4] px-5 py-4 bg-[#FBFBFA]">
               <div className="flex items-start gap-2.5">
                 <CircleSlash size={16} className="text-[#9E9E9E] flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#2D2D2D]">這則需求評估後暫不處理，已先結案</p>
+                  <p className="text-sm font-semibold text-[#2D2D2D]">這則需求評估後不予處理，已結案</p>
                   <p className="text-xs text-[#616161] mt-0.5 leading-relaxed">
-                    暫不處理不代表不重要。若情況有變或你有新的資訊，歡迎到討論串補充，我們會重新評估、必要時重新開案。
+                    不予處理不代表需求不重要，可能是重複、目前不適合用 AI 解，或已有其他做法。若情況有變或你有新的資訊，歡迎到討論串補充，我們會重新評估、必要時重新開案。
                   </p>
                   <DiscussNeedButton item={item} />
                 </div>

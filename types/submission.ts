@@ -10,11 +10,11 @@ export type Status =
   | "尋找工具中"
   | "測試中"
   | "已導入"
-  | "暫不處理";
+  | "不予處理";
 
-// 結案（終態）：「已導入」＝有解法落地；「暫不處理」＝評估後決定先不做。
-// 兩者都算結案，不再列入處理中。
-export const CLOSED_STATUSES: Status[] = ["已導入", "暫不處理"];
+// 結案（終態）：「已導入」＝有解法落地；「不予處理」＝評估後決定不做。
+// 兩者都算結案，不再列入處理中。（原名「暫不處理」，「暫」字會被誤讀成一定會回來處理）
+export const CLOSED_STATUSES: Status[] = ["已導入", "不予處理"];
 
 export function isClosedStatus(status: Status) {
   return CLOSED_STATUSES.includes(status);

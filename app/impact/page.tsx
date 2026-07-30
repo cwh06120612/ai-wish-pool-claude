@@ -233,12 +233,12 @@ export default function ImpactPage() {
   }
 
   // 統計：涵蓋全部需求（公開＋不公開）
-  // 「已導入」與「暫不處理」都算結案，只是結果不同
+  // 「已導入」與「不予處理」都算結案，只是結果不同
   const stats = useMemo(() => {
     const total = submissions.length;
     const implemented = submissions.filter((s) => s.status === "已導入").length;
     const inProgress = submissions.filter((s) => IN_PROGRESS_STATUSES.includes(s.status)).length;
-    const deferred = submissions.filter((s) => s.status === "暫不處理").length;
+    const deferred = submissions.filter((s) => s.status === "不予處理").length;
     const closed = implemented + deferred;
     const closedRate = total > 0 ? Math.round((closed / total) * 100) : 0;
     return { total, implemented, inProgress, deferred, closed, closedRate };
@@ -253,7 +253,7 @@ export default function ImpactPage() {
   );
 
   const deferredCases = useMemo(
-    () => visibleSubmissions.filter((s) => s.status === "暫不處理").sort((a, b) => b.likeCount - a.likeCount),
+    () => visibleSubmissions.filter((s) => s.status === "不予處理").sort((a, b) => b.likeCount - a.likeCount),
     [visibleSubmissions]
   );
 
@@ -295,7 +295,7 @@ export default function ImpactPage() {
             <Kpi icon={<CheckCircle2 size={16} />} label="已導入落地" value={stats.implemented} sub="完成處理" color="#198754" />
             <Kpi icon={<Clock size={16} />} label="積極處理中" value={stats.inProgress} sub="評估到測試" color="#FFAE00" />
             <Kpi icon={<Archive size={16} />} label="已結案率" value={`${stats.closedRate}%`}
-              sub={`已導入 ${stats.implemented}・暫不處理 ${stats.deferred}`} color="#BE8B55" />
+              sub={`已導入 ${stats.implemented}・不予處理 ${stats.deferred}`} color="#BE8B55" />
           </div>
 
           {/* 已導入需求清單 */}
@@ -343,18 +343,18 @@ export default function ImpactPage() {
             )}
           </div>
 
-          {/* 評估後暫不處理（同樣是結案，只是結果不同）*/}
+          {/* 評估後不予處理（同樣是結案，只是結果不同）*/}
           {stats.deferred > 0 && (
             <div>
               <SectionTitle
                 icon={<CircleSlash size={15} className="text-[#9E9E9E]" />}
                 hint={stats.deferred > deferredCases.length
-                  ? `共 ${stats.deferred} 個暫不處理，此處僅顯示 ${deferredCases.length} 個公開項目`
-                  : `${deferredCases.length} 個暫不處理・僅顯示公開項目`}
-              >評估後暫不處理</SectionTitle>
+                  ? `共 ${stats.deferred} 個不予處理，此處僅顯示 ${deferredCases.length} 個公開項目`
+                  : `${deferredCases.length} 個不予處理・僅顯示公開項目`}
+              >評估後不予處理</SectionTitle>
               {deferredCases.length === 0 ? (
                 <div className="border border-[#E0E0E0]/80 rounded-2xl bg-white px-4 py-8 text-center text-sm text-[#9E9E9E]">
-                  目前有 {stats.deferred} 個需求評估後暫不處理，但都尚未設為公開，所以這裡暫時不顯示內容。
+                  目前有 {stats.deferred} 個需求評估後不予處理，但都尚未設為公開，所以這裡暫時不顯示內容。
                 </div>
               ) : (
                 <div className="border border-[#E0E0E0]/80 rounded-2xl bg-white divide-y divide-[#F0F4F4] overflow-hidden">
@@ -386,7 +386,7 @@ export default function ImpactPage() {
                 </div>
               )}
               <p className="text-[11px] text-[#9E9E9E] mt-2 leading-relaxed">
-                暫不處理＝評估後先結案，不代表不重要。情況有變或有更好的做法時，我們會重新開案。
+                不予處理＝評估後結案，不代表需求不重要（可能是重複、目前不適合用 AI 解，或已有其他做法）。情況有變或有更好的做法時，我們會重新開案。
               </p>
             </div>
           )}

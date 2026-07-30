@@ -121,8 +121,8 @@ function AnnoyanceBars({ data }: { data: { label: string; count: number }[] }) {
 }
 
 // ─── Status Pipeline ─────────────────────────────────────────────
-const STATUS_ORDER = ["已收到","整理中","評估中","尋找工具中","測試中","已導入","暫不處理"];
-// 漸層色：從主色 Primary Light → Primary Dark，最後一個用灰色表示「暫不處理」
+const STATUS_ORDER = ["已收到","整理中","評估中","尋找工具中","測試中","已導入","不予處理"];
+// 漸層色：從主色 Primary Light → Primary Dark，最後一個用灰色表示「不予處理」
 const STATUS_COLORS = [
   "#D4EEF1", // 已收到 — primary lightest
   "#ADE0E6", // 整理中
@@ -130,7 +130,7 @@ const STATUS_COLORS = [
   "#4EBAC4", // 尋找工具中
   "#2AA3AF", // 測試中
   "#007A87", // 已導入 — primary
-  "#E0E0E0", // 暫不處理 — grey
+  "#E0E0E0", // 不予處理 — grey
 ];
 const STATUS_TEXT = [
   "#00555E","#00555E","#00555E","#00555E","#ffffff","#ffffff","#9E9E9E",
@@ -159,7 +159,7 @@ function StatusPipeline({ submissions }: { submissions: Submission[] }) {
             {!isLast && (
               <div className="flex-shrink-0 flex items-start pt-3.5 px-0.5">
                 {i === STATUS_ORDER.length - 2 ? (
-                  // 「已導入」與「暫不處理」都是結案的終點，彼此不是前後步驟
+                  // 「已導入」與「不予處理」都是結案的終點，彼此不是前後步驟
                   <span className="text-[11px] font-bold text-[#BDBDBD] leading-none pt-1">或</span>
                 ) : (
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -255,7 +255,7 @@ export function Dashboard({ submissions: allSubmissions }: { submissions: Submis
   const thisWeek = getThisWeekCount(submissions);
   const highAnnoyance = getHighAnnoyanceCount(submissions);
   const implemented = submissions.filter(s => s.status === "已導入").length;
-  // 已導入＋暫不處理＝結案
+  // 已導入＋不予處理＝結案
   const closed = submissions.filter(s => isClosedStatus(s.status)).length;
   const pending = submissions.filter(s => s.priority === "待評估").length;
   const topLiked = [...submissions].sort((a, b) => b.likeCount - a.likeCount).slice(0, 3);
@@ -301,7 +301,7 @@ export function Dashboard({ submissions: allSubmissions }: { submissions: Submis
         <div className="bg-white border border-[#E0E0E0]/80 rounded-2xl p-5 shadow-sm">
           <StatusPipeline submissions={submissions} />
           <p className="text-[11px] text-[#9E9E9E] mt-3 text-center">
-            「已導入」與「暫不處理」都算<b>結案</b>，只是結果不同；已結案 {closed} 件。
+            「已導入」與「不予處理」都算<b>結案</b>，只是結果不同；已結案 {closed} 件。
           </p>
         </div>
       </div>
