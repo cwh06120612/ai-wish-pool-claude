@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { getTopicPosts, addTopicPost, type Topic, type TopicPost } from "@/lib/topics";
+import { getTopicPosts, addTopicPost, updateTopicPost, getMyPostIds, type Topic, type TopicPost } from "@/lib/topics";
 import { supabase } from "@/lib/supabase";
 import { deptLast, identityIsSet, type Identity } from "@/lib/identity";
 import { IdentityBar } from "@/components/topics/identity-bar";
-import { MessageSquare, ArrowLeft, Clock, User, Send, Crown, Link2 } from "lucide-react";
+import { MessageSquare, ArrowLeft, Clock, User, Send, Crown, Link2, Pencil } from "lucide-react";
 import { Linkify } from "@/components/ui/linkify";
 
 function StaffBadge() {
@@ -52,6 +52,12 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [replyBusy, setReplyBusy] = useState<string | null>(null);
   const [composingReplyId, setComposingReplyId] = useState<string | null>(null);
+  // localStorage 只能在瀏覽器端讀；留言是載入後才顯示，伺服器端先給空集合不會造成畫面不一致
+  const [myPostIds, setMyPostIds] = useState<Set<string>>(() => (typeof window === "undefined" ? new Set() : getMyPostIds()));
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
+  const [editError, setEditError] = useState("");
 
   const canPost = staff.isStaff || identityIsSet(identity);
 
@@ -64,10 +70,10 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
     reload();
     // 後援輪詢（若未開啟 Realtime 仍會更新）
     const timer = setInterval(reload, 20000);
-    // 即時訂閱：此主題有新留言就立刻重抓
+    // 即時訂閱：此主題有新增／修改留言就立刻重抓
     const channel = supabase
       .channel(`topic_posts:${topic.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "topic_posts", filter: `topic_id=eq.${topic.id}` }, () => { reload(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "topic_posts", filter: `topic_id=eq.${topic.id}` }, () => { reload(); })
       .subscribe();
     return () => { clearInterval(timer); supabase.removeChannel(channel); };
   }, [reload, topic.id]);
@@ -88,6 +94,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
     setSubmitting(false);
     if (!created) { setError("送出失敗，請稍後再試（可能是資料表尚未建立）"); return; }
     setPosts((prev) => [...prev, created]);
+    setMyPostIds((prev) => new Set(prev).add(created.id));
     setContent("");
   }
 
@@ -108,7 +115,71 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
     setReplyBusy(null);
     if (!created) return;
     setPosts((prev) => [...prev, created]);
+    setMyPostIds((prev) => new Set(prev).add(created.id));
     setReplyDrafts((prev) => ({ ...prev, [parentId]: "" }));
+  }
+
+  function startEdit(p: TopicPost) {
+    setEditingId(p.id);
+    setEditDraft(p.content);
+    setEditError("");
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    if (!editDraft.trim()) { setEditError("留言不能是空的喔"); return; }
+    setEditBusy(true);
+    setEditError("");
+    try {
+      const updated = await updateTopicPost(editingId, editDraft);
+      setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      setEditingId(null);
+    } catch {
+      setEditError("儲存失敗，請稍後再試");
+    } finally {
+      setEditBusy(false);
+    }
+  }
+
+  // 時間＋「已編輯」標記＋自己留言的「編輯」按鈕
+  function renderMeta(p: TopicPost) {
+    return (
+      <span className="ml-auto flex items-center gap-2">
+        {myPostIds.has(p.id) && editingId !== p.id && (
+          <button type="button" onClick={() => startEdit(p)}
+            className="flex items-center gap-0.5 text-[#007A87] hover:text-[#00555E]">
+            <Pencil size={10} />編輯
+          </button>
+        )}
+        <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}{p.updatedAt && <span title={`修改於 ${fmtTime(p.updatedAt)}`}>・已編輯</span>}</span>
+      </span>
+    );
+  }
+
+  // 內文；編輯中改成輸入框。Enter 只換行、要按「儲存」才會送出，避免又不小心送出
+  function renderContent(p: TopicPost) {
+    if (editingId !== p.id) {
+      return <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap"><Linkify text={p.content} /></p>;
+    }
+    return (
+      <div>
+        <textarea rows={3} value={editDraft} autoFocus
+          onChange={(e) => { setEditDraft(e.target.value); if (editError) setEditError(""); }}
+          onKeyDown={(e) => { if (e.key === "Escape") setEditingId(null); }}
+          className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-y" />
+        <div className="flex items-center justify-end gap-2 mt-1.5">
+          <span className="mr-auto text-xs text-[#AE1914]">{editError}</span>
+          <button type="button" onClick={() => setEditingId(null)} disabled={editBusy}
+            className="text-xs px-3 py-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F5F5F5]">
+            取消
+          </button>
+          <button type="button" onClick={saveEdit} disabled={editBusy || !editDraft.trim()}
+            className="text-xs px-3 py-1.5 rounded-lg bg-[#007A87] text-white font-semibold hover:bg-[#00555E] disabled:opacity-40">
+            {editBusy ? "儲存中…" : "儲存"}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const topLevel = posts.filter((p) => !p.parentId);
@@ -163,9 +234,9 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
               <div key={p.id} className="bg-white border border-[#E0E0E0]/80 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-1.5 text-xs text-[#9E9E9E]">
                   <PostAuthor p={p} />
-                  <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}</span>
+                  {renderMeta(p)}
                 </div>
-                <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap"><Linkify text={p.content} /></p>
+                {renderContent(p)}
 
                 {/* 回覆串 */}
                 {replies.length > 0 && (
@@ -174,9 +245,9 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
                       <div key={r.id}>
                         <div className="flex items-center gap-2 mb-1 text-xs text-[#9E9E9E]">
                           <PostAuthor p={r} />
-                          <span className="ml-auto flex items-center gap-1"><Clock size={10} />{fmtTime(r.createdAt)}</span>
+                          {renderMeta(r)}
                         </div>
-                        <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap"><Linkify text={r.content} /></p>
+                        {renderContent(r)}
                       </div>
                     ))}
                   </div>

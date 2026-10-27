@@ -33,6 +33,7 @@ create table if not exists public.topic_posts (
 -- 若你先前已建過 topic_posts，補上新欄位（可安全重複執行）：
 alter table public.topic_posts add column if not exists parent_id text references public.topic_posts(id) on delete cascade;
 alter table public.topic_posts add column if not exists is_staff boolean not null default false;
+alter table public.topic_posts add column if not exists updated_at timestamptz;  -- 有值 = 發表後被作者修改過
 
 create index if not exists topic_posts_topic_id_idx on public.topic_posts (topic_id);
 create index if not exists topics_created_at_idx on public.topics (created_at desc);
@@ -55,3 +56,7 @@ drop policy if exists "topics_delete_anon" on public.topics;
 create policy "topics_delete_anon" on public.topics for delete using (true);
 drop policy if exists "topic_posts_delete_anon" on public.topic_posts;
 create policy "topic_posts_delete_anon" on public.topic_posts for delete using (true);
+
+-- 留言作者可修改自己的留言（前台只對本機發出的留言顯示「編輯」）
+drop policy if exists "topic_posts_update_anon" on public.topic_posts;
+create policy "topic_posts_update_anon" on public.topic_posts for update using (true) with check (true);

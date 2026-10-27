@@ -21,6 +21,7 @@ export interface TopicPost {
   isStaff: boolean;
   content: string;
   createdAt: string;
+  updatedAt: string | null; // 有值 = 發表後曾被作者修改過
 }
 
 export interface TopicStat {
@@ -51,7 +52,27 @@ function postFromDb(row: Record<string, unknown>): TopicPost {
     isStaff: (row.is_staff as boolean) ?? false,
     content: (row.content as string) ?? "",
     createdAt: row.created_at as string,
+    updatedAt: (row.updated_at as string) ?? null,
   };
+}
+
+// 記住「這台瀏覽器發出的留言」，只有這些留言會出現「編輯」按鈕（沒有帳號系統，只能靠本機紀錄）
+const MY_POSTS_KEY = "ai-wish-my-posts";
+
+export function getMyPostIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(MY_POSTS_KEY);
+    if (raw) return new Set(JSON.parse(raw) as string[]);
+  } catch {}
+  return new Set();
+}
+
+function rememberMyPost(id: string): void {
+  try {
+    const ids = getMyPostIds();
+    ids.add(id);
+    localStorage.setItem(MY_POSTS_KEY, JSON.stringify([...ids]));
+  } catch {}
 }
 
 export async function getTopics(): Promise<Topic[]> {
@@ -184,5 +205,18 @@ export async function addTopicPost(params: {
   };
   const { data, error } = await supabase.from("topic_posts").insert(insertData).select().single();
   if (error) { console.error("[topics.addTopicPost]", error); return null; }
+  if (data) rememberMyPost(data.id as string);
   return data ? postFromDb(data) : null;
+}
+
+// 修改留言內容並確認真的改到（RLS 擋更新時不會回 error，只會 0 筆）
+export async function updateTopicPost(id: string, content: string): Promise<TopicPost> {
+  const { data, error } = await supabase
+    .from("topic_posts")
+    .update({ content: content.trim(), updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select();
+  if (error) { console.error("[topics.updateTopicPost]", error); throw error; }
+  if (!data || data.length === 0) throw new Error("修改未生效（可能是修改權限未開）");
+  return postFromDb(data[0]);
 }
