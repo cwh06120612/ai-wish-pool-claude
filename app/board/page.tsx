@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StarRating } from "@/components/ui/star-rating";
 import { DepartmentSelector } from "@/components/department-selector";
 import { Search, ThumbsUp, Clock, MapPin, User, ChevronRight, Check, Sparkles, X, SlidersHorizontal, MessageSquareHeart, Quote, Send, MessagesSquare, CircleSlash } from "lucide-react";
+import { Hint } from "@/components/ui/hint";
 
 function getPersonalInfo() {
   try {
@@ -336,7 +337,7 @@ function BoardCard({ item, isLiked, onClick }: { item: Submission; isLiked: bool
         <div className="mb-2.5 min-h-[40px]">
           <h3 className="text-sm font-semibold text-[#2D2D2D] leading-snug line-clamp-2 group-hover:text-[#007A87] transition-colors">
             {/* 煩人程度用色點標記（中間調，滑過看說明）*/}
-            <span className={`inline-block w-2 h-2 rounded-full mr-1.5 align-middle ${st.dot}`} title={item.annoyanceLevel} />
+            <Hint text={item.annoyanceLevel} className="inline-block mr-1.5 align-middle"><span className={`block w-2 h-2 rounded-full ${st.dot}`} /></Hint>
             {item.problemTitle}
           </h3>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Hint } from "@/components/ui/hint";
 
 interface HorizontalBarChartProps {
   data: { label: string; count: number }[];
@@ -22,9 +23,9 @@ export function HorizontalBarChart({
       {items.map((item, i) => (
         <div key={i}>
           <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-[#616161] truncate flex-1 mr-2" title={item.label} style={{ maxWidth: `${yAxisWidth}px` }}>
+            <Hint text={item.label} className="text-xs text-[#616161] truncate flex-1 mr-2" style={{ maxWidth: `${yAxisWidth}px` }}>
               {item.label}
-            </span>
+            </Hint>
             <span className="text-xs font-bold text-[#2D2D2D] flex-shrink-0">{item.count}</span>
           </div>
           <div className="h-2.5 bg-[#F0F4F4] rounded-full overflow-hidden">

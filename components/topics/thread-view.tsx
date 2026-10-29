@@ -7,6 +7,7 @@ import { deptLast, identityIsSet, type Identity } from "@/lib/identity";
 import { IdentityBar } from "@/components/topics/identity-bar";
 import { MessageSquare, ArrowLeft, Clock, User, Send, Crown, Link2, Pencil, ImagePlus } from "lucide-react";
 import { Linkify } from "@/components/ui/linkify";
+import { Hint } from "@/components/ui/hint";
 import { PostImages, PendingImages } from "@/components/topics/post-images";
 import { toPendingImages, revokePending, uploadTopicImages, MAX_IMAGES_PER_POST, type PendingImage } from "@/lib/topic-images";
 
@@ -188,12 +189,14 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   function renderImagePicker(key: string, small?: boolean) {
     const full = (pendingImages[key] ?? []).length >= MAX_IMAGES_PER_POST;
     return (
-      <label title={full ? `每則最多 ${MAX_IMAGES_PER_POST} 張圖片` : "附加圖片（也可以直接貼上截圖）"}
-        className={`flex-shrink-0 flex items-center gap-1 rounded-lg border border-[#E0E0E0] text-[#616161] transition-colors ${small ? "text-xs px-2.5 py-2" : "text-sm px-3 py-2"} ${!canPost || full ? "opacity-40 pointer-events-none" : "cursor-pointer hover:border-[#BE8B55]/60 hover:text-[#8C6A3F]"}`}>
+      <Hint text={full ? `每則最多 ${MAX_IMAGES_PER_POST} 張圖片` : "附加圖片（也可以直接貼上截圖）"} className="flex-shrink-0 flex">
+      <label
+        className={`flex items-center gap-1 rounded-lg border border-[#E0E0E0] text-[#616161] transition-colors ${small ? "text-xs px-2.5 py-2" : "text-sm px-3 py-2"} ${!canPost || full ? "opacity-40 pointer-events-none" : "cursor-pointer hover:border-[#BE8B55]/60 hover:text-[#8C6A3F]"}`}>
         <ImagePlus size={small ? 13 : 14} />{!small && "圖片"}
         <input type="file" accept="image/*" multiple className="hidden" disabled={!canPost || full}
           onChange={(e) => { addImages(key, Array.from(e.target.files ?? [])); e.target.value = ""; }} />
       </label>
+      </Hint>
     );
   }
 
@@ -230,7 +233,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
             <Pencil size={10} />編輯
           </button>
         )}
-        <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}{p.updatedAt && <span title={`修改於 ${fmtTime(p.updatedAt)}`}>・已編輯</span>}</span>
+        <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}{p.updatedAt && <Hint text={`修改於 ${fmtTime(p.updatedAt)}`}>・已編輯</Hint>}</span>
       </span>
     );
   }
