@@ -471,7 +471,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
               </button>
               <button type="button" onClick={() => confirmDelete(deleteTarget.id)} disabled={deleteBusy}
                 className="text-sm px-4 py-2 rounded-lg bg-[#AE1914] text-white font-semibold hover:bg-[#8C1915] disabled:opacity-50 transition-colors">
-                {deleteBusy ? "刪除中…" : "刪除"}
+                刪除
               </button>
             </div>
           </div>
