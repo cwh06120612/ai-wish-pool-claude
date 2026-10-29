@@ -267,16 +267,16 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
           ) : (
             <>
               <button type="button" onClick={() => startEdit(p)}
-                className="flex items-center gap-0.5 text-[#007A87] hover:text-[#00555E]">
+                className="flex items-center gap-0.5 px-2 py-0.5 rounded-md border border-[#007A87]/30 bg-[#EFF7F8] text-[#007A87] hover:bg-[#B5E1E5]/50 hover:text-[#00555E] transition-colors">
                 <Pencil size={10} />編輯
               </button>
               {hasReplies ? (
-                <Hint text="已有人回覆，無法刪除" className="flex items-center gap-0.5 text-[#BDBDBD] cursor-not-allowed">
+                <Hint text="已有人回覆，無法刪除" className="flex items-center gap-0.5 px-2 py-0.5 rounded-md border border-[#E0E0E0] bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed">
                   <Trash2 size={10} />刪除
                 </Hint>
               ) : (
                 <button type="button" onClick={() => { setConfirmDeleteId(p.id); setDeleteErrorId(null); }}
-                  className="flex items-center gap-0.5 text-[#9E9E9E] hover:text-[#AE1914]">
+                  className="flex items-center gap-0.5 px-2 py-0.5 rounded-md border border-[#AE1914]/30 bg-[#EBCDCC]/30 text-[#AE1914] hover:bg-[#EBCDCC]/60 transition-colors">
                   <Trash2 size={10} />刪除
                 </button>
               )}
