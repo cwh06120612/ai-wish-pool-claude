@@ -63,7 +63,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   const [editError, setEditError] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
-  const [deleteErrorId, setDeleteErrorId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
   // 待上傳的附圖：key 為 "main"（主留言框）或被回覆留言的 id
   const [pendingImages, setPendingImages] = useState<Record<string, PendingImage[]>>({});
   const [replyErrors, setReplyErrors] = useState<Record<string, string>>({});
@@ -228,17 +228,29 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
 
   async function confirmDelete(id: string) {
     setDeleteBusy(true);
-    setDeleteErrorId(null);
+    setDeleteError("");
     try {
       await deleteTopicPost(id);
       setPosts((prev) => prev.filter((p) => p.id !== id && p.parentId !== id));
       setConfirmDeleteId(null);
     } catch {
-      setDeleteErrorId(id);
+      setDeleteError("刪除失敗，請稍後再試");
     } finally {
       setDeleteBusy(false);
     }
   }
+
+  function closeDeleteDialog() {
+    if (!deleteBusy) setConfirmDeleteId(null);
+  }
+
+  // 刪除確認視窗開著時，按 Esc 關閉
+  useEffect(() => {
+    if (!confirmDeleteId) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !deleteBusy) setConfirmDeleteId(null); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [confirmDeleteId, deleteBusy]);
 
   // 編輯時不能把文字清空；只有原本就是純圖片的留言，文字可以維持空白
   function clearsText(p: TopicPost) {
@@ -252,19 +264,6 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
     return (
       <span className="ml-auto flex items-center gap-2">
         {myPostIds.has(p.id) && editingId !== p.id && (
-          confirmDeleteId === p.id ? (
-            <span className="flex items-center gap-1">
-              <span className="text-[#AE1914]">{deleteErrorId === p.id ? "刪除失敗，請稍後再試" : "確定刪除這則留言？"}</span>
-              <button type="button" onClick={() => confirmDelete(p.id)} disabled={deleteBusy}
-                className="px-2 py-0.5 rounded-md bg-[#AE1914] text-white hover:bg-[#8C1915] disabled:opacity-50">
-                {deleteBusy ? "刪除中…" : "刪除"}
-              </button>
-              <button type="button" onClick={() => setConfirmDeleteId(null)} disabled={deleteBusy}
-                className="px-2 py-0.5 rounded-md border border-[#E0E0E0] text-[#616161] hover:bg-[#F5F5F5]">
-                取消
-              </button>
-            </span>
-          ) : (
             <>
               {/* 只放圖示，滑過顯示文字提示 */}
               <Hint text="編輯" className="flex">
@@ -279,14 +278,13 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
                 </Hint>
               ) : (
                 <Hint text="刪除" className="flex">
-                  <button type="button" onClick={() => { setConfirmDeleteId(p.id); setDeleteErrorId(null); }} aria-label="刪除"
+                  <button type="button" onClick={() => { setConfirmDeleteId(p.id); setDeleteError(""); }} aria-label="刪除"
                     className="grid place-items-center w-6 h-6 rounded-md border border-[#AE1914]/30 bg-[#EBCDCC]/30 text-[#AE1914] hover:bg-[#EBCDCC]/60 transition-colors">
                     <Trash2 size={12} />
                   </button>
                 </Hint>
               )}
             </>
-          )
         )}
         <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}{p.updatedAt && <Hint text={`修改於 ${fmtTime(p.updatedAt)}`}>・已編輯</Hint>}</span>
       </span>
@@ -326,6 +324,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   }
 
   const topLevel = posts.filter((p) => !p.parentId);
+  const deleteTarget = confirmDeleteId ? posts.find((p) => p.id === confirmDeleteId) ?? null : null;
   const repliesByParent = posts.reduce<Record<string, TopicPost[]>>((acc, p) => {
     if (p.parentId) (acc[p.parentId] = acc[p.parentId] ?? []).push(p);
     return acc;
@@ -446,6 +445,38 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
           </button>
         </div>
       </div>
+
+      {/* 刪除確認視窗 */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" role="dialog" aria-modal="true">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeDeleteDialog} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="grid place-items-center w-9 h-9 rounded-full bg-[#EBCDCC]/50 text-[#AE1914] flex-shrink-0"><Trash2 size={16} /></span>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-[#2D2D2D]">確定刪除這則留言？</h3>
+                <p className="text-xs text-[#9E9E9E] mt-1">刪除後無法復原，附的圖片也會一起刪除。</p>
+              </div>
+            </div>
+            {(deleteTarget.content || deleteTarget.imageUrls.length > 0) && (
+              <div className="text-xs text-[#616161] bg-[#F5F5F5] rounded-lg px-3 py-2 mb-4 line-clamp-3 whitespace-pre-wrap">
+                {deleteTarget.content || `（${deleteTarget.imageUrls.length} 張圖片）`}
+              </div>
+            )}
+            {deleteError && <p className="text-xs text-[#AE1914] mb-3">{deleteError}</p>}
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={closeDeleteDialog} disabled={deleteBusy}
+                className="text-sm px-4 py-2 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F5F5F5] disabled:opacity-50 transition-colors">
+                取消
+              </button>
+              <button type="button" onClick={() => confirmDelete(deleteTarget.id)} disabled={deleteBusy}
+                className="text-sm px-4 py-2 rounded-lg bg-[#AE1914] text-white font-semibold hover:bg-[#8C1915] disabled:opacity-50 transition-colors">
+                {deleteBusy ? "刪除中…" : "刪除"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

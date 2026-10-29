@@ -30,7 +30,8 @@ export function Hint({ text, children, className, style }: {
   return (
     <span ref={ref} className={className} style={style}
       onMouseEnter={show} onMouseLeave={() => setPos(null)}
-      onFocus={show} onBlur={() => setPos(null)}>
+      onFocus={show} onBlur={() => setPos(null)}
+      onClick={() => setPos(null)}>
       {children}
       {pos && createPortal(
         <span role="tooltip" style={{ left: pos.x, top: pos.y - 6 }}
