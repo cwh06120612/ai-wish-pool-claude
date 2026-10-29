@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI 許願池
 
-## Getting Started
+豐譽內部的 AI 需求收集站：同仁提出工作上的困擾（許願），大家在公告欄按「我也有這個困擾」、
+在主題討論交流，數位創新處評估處理後，成果放在成果看板讓同仁評論。
 
-First, run the development server:
+Next.js（App Router）前端，資料與圖片存在 Supabase（資料庫＋Storage），目前部署在 Vercel。
+沒有登入系統：同仁的姓名／部門存在瀏覽器本機，後台用密碼進入。
+
+> **這個 repo 是從個人帳號的 [cwh06120612/ai-wish-pool-claude](https://github.com/cwh06120612/ai-wish-pool-claude) 搬過來的**（2026-10-29），
+> 完整的 commit 歷程都在。Vercel 目前還接著舊 repo，改接與換公司網域的步驟見 **[部署.md](部署.md)**。
+
+## 文件
+
+| 文件 | 內容 |
+| --- | --- |
+| [docs/功能說明.md](docs/功能說明.md) | 各專區用途、用字定位、資料表、需要跑的 SQL |
+| [docs/更新紀錄.md](docs/更新紀錄.md) | 每次改動的紀錄（給同仁看得懂的說法） |
+| [部署.md](部署.md) | 搬遷進度、Vercel 改接、換公司網域、Supabase |
+| [AGENTS.md](AGENTS.md) | 給 AI 助手的規則（改功能要同步更新 docs） |
+
+## 跑起來
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+# 建 .env.local，填兩個值（Supabase 專案 → Settings → API）：
+#   NEXT_PUBLIC_SUPABASE_URL=https://<專案代號>.supabase.co
+#   NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon public key>
+npm run dev               # http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+正式版：
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build && npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 資料庫
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+建表與權限都在 [sql/](sql/)，在 Supabase 的 SQL Editor 執行。哪幾支要跑、順序與注意事項見
+[docs/功能說明.md](docs/功能說明.md) 的「部署 / 設定注意事項」。
