@@ -306,7 +306,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
         <textarea rows={3} value={editDraft} autoFocus
           onChange={(e) => { setEditDraft(e.target.value); if (editError) setEditError(""); }}
           onKeyDown={(e) => { if (e.key === "Escape") setEditingId(null); }}
-          className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-y" />
+          className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-none" />
         <div className="flex items-center justify-end gap-2 mt-1.5">
           <span className="mr-auto text-xs text-[#AE1914]">{clearsText(p) ? "留言內容不能清空" : editError}</span>
           <button type="button" onClick={() => setEditingId(null)} disabled={editBusy}
