@@ -266,19 +266,24 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
             </span>
           ) : (
             <>
-              <button type="button" onClick={() => startEdit(p)}
-                className="flex items-center gap-0.5 px-2 py-0.5 rounded-md border border-[#007A87]/30 bg-[#EFF7F8] text-[#007A87] hover:bg-[#B5E1E5]/50 hover:text-[#00555E] transition-colors">
-                <Pencil size={10} />編輯
-              </button>
+              {/* 只放圖示，滑過顯示文字提示 */}
+              <Hint text="編輯" className="flex">
+                <button type="button" onClick={() => startEdit(p)} aria-label="編輯"
+                  className="grid place-items-center w-6 h-6 rounded-md border border-[#007A87]/30 bg-[#EFF7F8] text-[#007A87] hover:bg-[#B5E1E5]/50 hover:text-[#00555E] transition-colors">
+                  <Pencil size={12} />
+                </button>
+              </Hint>
               {hasReplies ? (
-                <Hint text="已有人回覆，無法刪除" className="flex items-center gap-0.5 px-2 py-0.5 rounded-md border border-[#E0E0E0] bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed">
-                  <Trash2 size={10} />刪除
+                <Hint text="已有人回覆，無法刪除" className="grid place-items-center w-6 h-6 rounded-md border border-[#E0E0E0] bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed">
+                  <Trash2 size={12} />
                 </Hint>
               ) : (
-                <button type="button" onClick={() => { setConfirmDeleteId(p.id); setDeleteErrorId(null); }}
-                  className="flex items-center gap-0.5 px-2 py-0.5 rounded-md border border-[#AE1914]/30 bg-[#EBCDCC]/30 text-[#AE1914] hover:bg-[#EBCDCC]/60 transition-colors">
-                  <Trash2 size={10} />刪除
-                </button>
+                <Hint text="刪除" className="flex">
+                  <button type="button" onClick={() => { setConfirmDeleteId(p.id); setDeleteErrorId(null); }} aria-label="刪除"
+                    className="grid place-items-center w-6 h-6 rounded-md border border-[#AE1914]/30 bg-[#EBCDCC]/30 text-[#AE1914] hover:bg-[#EBCDCC]/60 transition-colors">
+                    <Trash2 size={12} />
+                  </button>
+                </Hint>
               )}
             </>
           )
