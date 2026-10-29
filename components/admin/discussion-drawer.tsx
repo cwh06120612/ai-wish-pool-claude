@@ -686,7 +686,6 @@ export function DiscussionDrawer({
           </div>
           {actionError && <p className="mt-2 text-xs text-[#AE1914]">{actionError}</p>}
           {sendError && <p className="mt-2 text-xs text-[#AE1914]">{sendError}</p>}
-          {sending && <p className="mt-2 text-xs text-[#6B7280]">留言送出中...</p>}
         </div>
       </div>
     </div>

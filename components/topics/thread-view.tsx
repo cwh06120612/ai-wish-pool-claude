@@ -315,7 +315,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
           </button>
           <button type="button" onClick={saveEdit} disabled={editBusy || clearsText(p)}
             className="text-xs px-3 py-1.5 rounded-lg bg-[#007A87] text-white font-semibold hover:bg-[#00555E] disabled:opacity-40">
-            {editBusy ? "儲存中…" : "儲存"}
+            儲存
           </button>
         </div>
         <PostImages urls={p.imageUrls} />
@@ -410,7 +410,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
                     {renderImagePicker(p.id, true)}
                     <button type="button" onClick={() => submitReply(p.id)} disabled={replyBusy === p.id || (!(replyDrafts[p.id] ?? "").trim() && !(pendingImages[p.id] ?? []).length) || !canPost}
                       className="flex-shrink-0 flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#BE8B55] text-white font-semibold hover:bg-[#8C6A3F] disabled:opacity-40 transition-colors">
-                      <Send size={12} />{replyBusy === p.id ? "…" : "送出"}
+                      <Send size={12} />送出
                     </button>
                   </div>
                   {replyErrors[p.id] && <p className="text-xs text-[#AE1914] mt-1">{replyErrors[p.id]}</p>}
@@ -441,7 +441,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
           {renderImagePicker("main")}
           <button type="button" onClick={handleSubmit} disabled={submitting || composing || !canPost}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#BE8B55] text-white hover:bg-[#8C6A3F] transition-colors disabled:opacity-50">
-            <Send size={13} />{submitting ? "送出中…" : "送出留言"}
+            <Send size={13} />送出留言
           </button>
         </div>
       </div>

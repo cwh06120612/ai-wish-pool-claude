@@ -132,7 +132,7 @@ function NewTopicModal({ identity, staff, onClose, onCreated, onIdentityChange }
           {error && <p className="text-xs text-[#AE1914]">{error}</p>}
           <button type="button" onClick={handleSubmit} disabled={submitting || composing}
             className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
-            <Plus size={14} />{submitting ? "建立中…" : "建立主題"}
+            <Plus size={14} />建立主題
           </button>
         </div>
       </div>

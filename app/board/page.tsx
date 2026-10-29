@@ -161,7 +161,7 @@ function FeedbackSection({ submissionId }: { submissionId: string }) {
             <span className="text-xs text-[#AE1914]">{error}</span>
             <button type="button" onClick={handleSubmit} disabled={submitting || composing}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
-              <Send size={12} />{submitting ? "送出中…" : "送出評論"}
+              <Send size={12} />送出評論
             </button>
           </div>
         </div>
@@ -211,7 +211,7 @@ function DiscussNeedButton({ item }: { item: Submission }) {
   return (
     <button type="button" onClick={go} disabled={busy}
       className="inline-flex items-center gap-1.5 mt-2.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#007A87] text-white hover:bg-[#00555E] transition-colors disabled:opacity-50">
-      <MessagesSquare size={13} />{busy ? "開啟討論中…" : "討論這則需求"}
+      <MessagesSquare size={13} />討論這則需求
     </button>
   );
 }
