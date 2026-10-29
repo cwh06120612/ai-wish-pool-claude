@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { getTopicPosts, addTopicPost, updateTopicPost, getMyPostIds, type Topic, type TopicPost } from "@/lib/topics";
+import { getTopicPosts, addTopicPost, updateTopicPost, deleteTopicPost, getMyPostIds, type Topic, type TopicPost } from "@/lib/topics";
 import { supabase } from "@/lib/supabase";
 import { deptLast, identityIsSet, type Identity } from "@/lib/identity";
 import { IdentityBar } from "@/components/topics/identity-bar";
-import { MessageSquare, ArrowLeft, Clock, User, Send, Crown, Link2, Pencil, ImagePlus } from "lucide-react";
+import { MessageSquare, ArrowLeft, Clock, User, Send, Crown, Link2, Pencil, ImagePlus, Trash2 } from "lucide-react";
 import { Linkify } from "@/components/ui/linkify";
 import { Hint } from "@/components/ui/hint";
 import { PostImages, PendingImages } from "@/components/topics/post-images";
@@ -61,6 +61,9 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   const [editDraft, setEditDraft] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [editError, setEditError] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteErrorId, setDeleteErrorId] = useState<string | null>(null);
   // 待上傳的附圖：key 為 "main"（主留言框）或被回覆留言的 id
   const [pendingImages, setPendingImages] = useState<Record<string, PendingImage[]>>({});
   const [replyErrors, setReplyErrors] = useState<Record<string, string>>({});
@@ -209,7 +212,7 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   async function saveEdit() {
     if (!editingId) return;
     const editing = posts.find((p) => p.id === editingId);
-    if (!editDraft.trim() && !editing?.imageUrls.length) { setEditError("留言不能是空的喔"); return; }
+    if (editing && clearsText(editing)) return;
     setEditBusy(true);
     setEditError("");
     try {
@@ -223,15 +226,62 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
     }
   }
 
-  // 時間＋「已編輯」標記＋自己留言的「編輯」按鈕
+  async function confirmDelete(id: string) {
+    setDeleteBusy(true);
+    setDeleteErrorId(null);
+    try {
+      await deleteTopicPost(id);
+      setPosts((prev) => prev.filter((p) => p.id !== id && p.parentId !== id));
+      setConfirmDeleteId(null);
+    } catch {
+      setDeleteErrorId(id);
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
+  // 編輯時不能把文字清空；只有原本就是純圖片的留言，文字可以維持空白
+  function clearsText(p: TopicPost) {
+    return !editDraft.trim() && (p.content.trim() !== "" || p.imageUrls.length === 0);
+  }
+
+  // 時間＋「已編輯」標記＋自己留言的「編輯」「刪除」按鈕
   function renderMeta(p: TopicPost) {
+    // 主留言刪掉時底下別人的回覆會一起被刪，所以已有回覆就不能刪
+    const hasReplies = posts.some((x) => x.parentId === p.id);
     return (
       <span className="ml-auto flex items-center gap-2">
         {myPostIds.has(p.id) && editingId !== p.id && (
-          <button type="button" onClick={() => startEdit(p)}
-            className="flex items-center gap-0.5 text-[#007A87] hover:text-[#00555E]">
-            <Pencil size={10} />編輯
-          </button>
+          confirmDeleteId === p.id ? (
+            <span className="flex items-center gap-1">
+              <span className="text-[#AE1914]">{deleteErrorId === p.id ? "刪除失敗，請稍後再試" : "確定刪除這則留言？"}</span>
+              <button type="button" onClick={() => confirmDelete(p.id)} disabled={deleteBusy}
+                className="px-2 py-0.5 rounded-md bg-[#AE1914] text-white hover:bg-[#8C1915] disabled:opacity-50">
+                {deleteBusy ? "刪除中…" : "刪除"}
+              </button>
+              <button type="button" onClick={() => setConfirmDeleteId(null)} disabled={deleteBusy}
+                className="px-2 py-0.5 rounded-md border border-[#E0E0E0] text-[#616161] hover:bg-[#F5F5F5]">
+                取消
+              </button>
+            </span>
+          ) : (
+            <>
+              <button type="button" onClick={() => startEdit(p)}
+                className="flex items-center gap-0.5 text-[#007A87] hover:text-[#00555E]">
+                <Pencil size={10} />編輯
+              </button>
+              {hasReplies ? (
+                <Hint text="已有人回覆，無法刪除" className="flex items-center gap-0.5 text-[#BDBDBD] cursor-not-allowed">
+                  <Trash2 size={10} />刪除
+                </Hint>
+              ) : (
+                <button type="button" onClick={() => { setConfirmDeleteId(p.id); setDeleteErrorId(null); }}
+                  className="flex items-center gap-0.5 text-[#9E9E9E] hover:text-[#AE1914]">
+                  <Trash2 size={10} />刪除
+                </button>
+              )}
+            </>
+          )
         )}
         <span className="flex items-center gap-1"><Clock size={10} />{fmtTime(p.createdAt)}{p.updatedAt && <Hint text={`修改於 ${fmtTime(p.updatedAt)}`}>・已編輯</Hint>}</span>
       </span>
@@ -255,12 +305,12 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
           onKeyDown={(e) => { if (e.key === "Escape") setEditingId(null); }}
           className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#007A87]/30 resize-y" />
         <div className="flex items-center justify-end gap-2 mt-1.5">
-          <span className="mr-auto text-xs text-[#AE1914]">{editError}</span>
+          <span className="mr-auto text-xs text-[#AE1914]">{clearsText(p) ? "留言內容不能清空" : editError}</span>
           <button type="button" onClick={() => setEditingId(null)} disabled={editBusy}
             className="text-xs px-3 py-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F5F5F5]">
             取消
           </button>
-          <button type="button" onClick={saveEdit} disabled={editBusy || (!editDraft.trim() && p.imageUrls.length === 0)}
+          <button type="button" onClick={saveEdit} disabled={editBusy || clearsText(p)}
             className="text-xs px-3 py-1.5 rounded-lg bg-[#007A87] text-white font-semibold hover:bg-[#00555E] disabled:opacity-40">
             {editBusy ? "儲存中…" : "儲存"}
           </button>

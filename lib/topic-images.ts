@@ -53,6 +53,15 @@ async function uploadOne(topicId: string, file: File): Promise<string> {
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
+// 刪掉圖片檔（留言被刪時呼叫）。失敗只記 log，不擋刪留言本身
+export async function deleteTopicImages(urls: string[]): Promise<void> {
+  const marker = `/object/public/${BUCKET}/`;
+  const paths = urls.map((u) => u.split(marker)[1]).filter(Boolean).map((p) => decodeURIComponent(p));
+  if (paths.length === 0) return;
+  const { error } = await supabase.storage.from(BUCKET).remove(paths);
+  if (error) console.error("[topic-images.delete]", error);
+}
+
 export async function uploadTopicImages(topicId: string, images: PendingImage[]): Promise<string[]> {
   return Promise.all(images.map((img) => uploadOne(topicId, img.file)));
 }

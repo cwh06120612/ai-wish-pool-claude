@@ -17,3 +17,6 @@ drop policy if exists "topic_images_select_anon" on storage.objects;
 create policy "topic_images_select_anon" on storage.objects for select using (bucket_id = 'topic-images');
 drop policy if exists "topic_images_insert_anon" on storage.objects;
 create policy "topic_images_insert_anon" on storage.objects for insert with check (bucket_id = 'topic-images');
+-- 刪留言時一併刪掉附圖檔（作者自刪、後台刪除都會用到）
+drop policy if exists "topic_images_delete_anon" on storage.objects;
+create policy "topic_images_delete_anon" on storage.objects for delete using (bucket_id = 'topic-images');

@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import type { Status } from "@/types/submission";
+import { deleteTopicImages } from "./topic-images";
 
 export interface Topic {
   id: string;
@@ -181,10 +182,14 @@ export async function deleteTopic(id: string): Promise<void> {
   if (!data || data.length === 0) throw new Error("刪除未生效（可能是刪除權限未開）");
 }
 
+// 刪留言時，底下的回覆會被 DB cascade 一起刪掉；這些留言的附圖檔也一併清掉
 export async function deleteTopicPost(id: string): Promise<void> {
+  const { data: withImages } = await supabase.from("topic_posts").select("image_urls").or(`id.eq.${id},parent_id.eq.${id}`);
   const { data, error } = await supabase.from("topic_posts").delete().eq("id", id).select("id");
   if (error) { console.error("[topics.deleteTopicPost]", error); throw error; }
   if (!data || data.length === 0) throw new Error("刪除未生效（可能是刪除權限未開）");
+  const urls = (withImages ?? []).flatMap((r) => (r.image_urls as string[] | null) ?? []);
+  await deleteTopicImages(urls);
 }
 
 export async function addTopicPost(params: {
