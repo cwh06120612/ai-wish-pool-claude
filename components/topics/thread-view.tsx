@@ -5,8 +5,10 @@ import { getTopicPosts, addTopicPost, updateTopicPost, getMyPostIds, type Topic,
 import { supabase } from "@/lib/supabase";
 import { deptLast, identityIsSet, type Identity } from "@/lib/identity";
 import { IdentityBar } from "@/components/topics/identity-bar";
-import { MessageSquare, ArrowLeft, Clock, User, Send, Crown, Link2, Pencil } from "lucide-react";
+import { MessageSquare, ArrowLeft, Clock, User, Send, Crown, Link2, Pencil, ImagePlus } from "lucide-react";
 import { Linkify } from "@/components/ui/linkify";
+import { PostImages, PendingImages } from "@/components/topics/post-images";
+import { toPendingImages, revokePending, uploadTopicImages, MAX_IMAGES_PER_POST, type PendingImage } from "@/lib/topic-images";
 
 function StaffBadge() {
   return <span className="inline-flex items-center gap-0.5 text-xs font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={10} />數位創新處</span>;
@@ -58,6 +60,9 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   const [editDraft, setEditDraft] = useState("");
   const [editBusy, setEditBusy] = useState(false);
   const [editError, setEditError] = useState("");
+  // 待上傳的附圖：key 為 "main"（主留言框）或被回覆留言的 id
+  const [pendingImages, setPendingImages] = useState<Record<string, PendingImage[]>>({});
+  const [replyErrors, setReplyErrors] = useState<Record<string, string>>({});
 
   const canPost = staff.isStaff || identityIsSet(identity);
 
@@ -81,12 +86,22 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   async function handleSubmit() {
     if (composing) return;
     if (!canPost) { setError("請先在上方設定你的部門與姓名"); return; }
-    if (!content.trim()) { setError("留言不能是空的喔"); return; }
+    const images = pendingImages.main ?? [];
+    if (!content.trim() && images.length === 0) { setError("留言不能是空的喔"); return; }
     setSubmitting(true);
     setError("");
+    let imageUrls: string[] = [];
+    try {
+      imageUrls = await uploadTopicImages(topic.id, images);
+    } catch {
+      setSubmitting(false);
+      setError("圖片上傳失敗，請稍後再試（可能是圖片儲存空間尚未設定）");
+      return;
+    }
     const created = await addTopicPost({
       topicId: topic.id,
       content,
+      imageUrls,
       isStaff: staff.isStaff,
       authorName: staff.isStaff ? staff.name : identity.name.trim(),
       authorDept: staff.isStaff ? "" : identity.deptPath.join(" > "),
@@ -96,27 +111,90 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
     setPosts((prev) => [...prev, created]);
     setMyPostIds((prev) => new Set(prev).add(created.id));
     setContent("");
+    clearImages("main");
   }
 
   async function submitReply(parentId: string) {
     if (composingReplyId === parentId) return;
     if (!canPost) return;
     const text = (replyDrafts[parentId] ?? "").trim();
-    if (!text) return;
+    const images = pendingImages[parentId] ?? [];
+    if (!text && images.length === 0) return;
     setReplyBusy(parentId);
+    setReplyError(parentId, "");
+    let imageUrls: string[] = [];
+    try {
+      imageUrls = await uploadTopicImages(topic.id, images);
+    } catch {
+      setReplyBusy(null);
+      setReplyError(parentId, "圖片上傳失敗，請稍後再試");
+      return;
+    }
     const created = await addTopicPost({
       topicId: topic.id,
       content: text,
+      imageUrls,
       parentId,
       isStaff: staff.isStaff,
       authorName: staff.isStaff ? staff.name : identity.name.trim(),
       authorDept: staff.isStaff ? "" : identity.deptPath.join(" > "),
     });
     setReplyBusy(null);
-    if (!created) return;
+    if (!created) { setReplyError(parentId, "送出失敗，請稍後再試"); return; }
     setPosts((prev) => [...prev, created]);
     setMyPostIds((prev) => new Set(prev).add(created.id));
     setReplyDrafts((prev) => ({ ...prev, [parentId]: "" }));
+    clearImages(parentId);
+  }
+
+  function setReplyError(parentId: string, msg: string) {
+    setReplyErrors((prev) => ({ ...prev, [parentId]: msg }));
+  }
+
+  // 加入附圖（選檔或貼上），超過張數上限的部分不收
+  function addImages(key: string, files: File[]) {
+    const incoming = toPendingImages(files);
+    if (incoming.length === 0) return;
+    const current = pendingImages[key] ?? [];
+    const room = Math.max(MAX_IMAGES_PER_POST - current.length, 0);
+    const accepted = incoming.slice(0, room);
+    revokePending(incoming.slice(room));
+    const msg = accepted.length < incoming.length ? `每則最多 ${MAX_IMAGES_PER_POST} 張圖片` : "";
+    if (key === "main") setError(msg); else setReplyError(key, msg);
+    if (accepted.length > 0) setPendingImages((prev) => ({ ...prev, [key]: [...(prev[key] ?? []), ...accepted] }));
+  }
+
+  function removeImage(key: string, id: string) {
+    const target = (pendingImages[key] ?? []).find((img) => img.id === id);
+    if (target) revokePending([target]);
+    setPendingImages((prev) => ({ ...prev, [key]: (prev[key] ?? []).filter((img) => img.id !== id) }));
+  }
+
+  function clearImages(key: string) {
+    revokePending(pendingImages[key] ?? []);
+    setPendingImages((prev) => ({ ...prev, [key]: [] }));
+  }
+
+  // 在輸入框貼上截圖時直接當附圖
+  function handlePaste(key: string, e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const files = Array.from(e.clipboardData.files);
+    if (files.some((f) => f.type.startsWith("image/"))) {
+      e.preventDefault();
+      addImages(key, files);
+    }
+  }
+
+  // 選圖按鈕（label 包住隱藏的 file input）
+  function renderImagePicker(key: string, small?: boolean) {
+    const full = (pendingImages[key] ?? []).length >= MAX_IMAGES_PER_POST;
+    return (
+      <label title={full ? `每則最多 ${MAX_IMAGES_PER_POST} 張圖片` : "附加圖片（也可以直接貼上截圖）"}
+        className={`flex-shrink-0 flex items-center gap-1 rounded-lg border border-[#E0E0E0] text-[#616161] transition-colors ${small ? "text-xs px-2.5 py-2" : "text-sm px-3 py-2"} ${!canPost || full ? "opacity-40 pointer-events-none" : "cursor-pointer hover:border-[#BE8B55]/60 hover:text-[#8C6A3F]"}`}>
+        <ImagePlus size={small ? 13 : 14} />{!small && "圖片"}
+        <input type="file" accept="image/*" multiple className="hidden" disabled={!canPost || full}
+          onChange={(e) => { addImages(key, Array.from(e.target.files ?? [])); e.target.value = ""; }} />
+      </label>
+    );
   }
 
   function startEdit(p: TopicPost) {
@@ -127,7 +205,8 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
 
   async function saveEdit() {
     if (!editingId) return;
-    if (!editDraft.trim()) { setEditError("留言不能是空的喔"); return; }
+    const editing = posts.find((p) => p.id === editingId);
+    if (!editDraft.trim() && !editing?.imageUrls.length) { setEditError("留言不能是空的喔"); return; }
     setEditBusy(true);
     setEditError("");
     try {
@@ -159,7 +238,12 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
   // 內文；編輯中改成輸入框。Enter 只換行、要按「儲存」才會送出，避免又不小心送出
   function renderContent(p: TopicPost) {
     if (editingId !== p.id) {
-      return <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap"><Linkify text={p.content} /></p>;
+      return (
+        <>
+          {p.content && <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap"><Linkify text={p.content} /></p>}
+          <PostImages urls={p.imageUrls} />
+        </>
+      );
     }
     return (
       <div>
@@ -173,11 +257,12 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
             className="text-xs px-3 py-1.5 rounded-lg border border-[#E0E0E0] text-[#616161] hover:bg-[#F5F5F5]">
             取消
           </button>
-          <button type="button" onClick={saveEdit} disabled={editBusy || !editDraft.trim()}
+          <button type="button" onClick={saveEdit} disabled={editBusy || (!editDraft.trim() && p.imageUrls.length === 0)}
             className="text-xs px-3 py-1.5 rounded-lg bg-[#007A87] text-white font-semibold hover:bg-[#00555E] disabled:opacity-40">
             {editBusy ? "儲存中…" : "儲存"}
           </button>
         </div>
+        <PostImages urls={p.imageUrls} />
       </div>
     );
   }
@@ -255,19 +340,23 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
 
                 {/* 回覆框（直接顯示；身分用上方設定的統一身分）*/}
                 <div className="mt-3 pl-3 border-l-2 border-[#BE8B55]/60">
+                  <PendingImages images={pendingImages[p.id] ?? []} onRemove={(id) => removeImage(p.id, id)} />
                   <div className="flex items-end gap-2">
                     <textarea rows={1} value={replyDrafts[p.id] ?? ""} disabled={!canPost}
                       onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [p.id]: e.target.value }))}
                       onCompositionStart={() => setComposingReplyId(p.id)}
                       onCompositionEnd={(e) => { setComposingReplyId(null); const v = e.currentTarget.value; setReplyDrafts((prev) => ({ ...prev, [p.id]: v })); }}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && composingReplyId !== p.id && !e.nativeEvent.isComposing) { e.preventDefault(); submitReply(p.id); } }}
+                      onPaste={(e) => handlePaste(p.id, e)}
                       placeholder={!canPost ? "請先在上方設定身分" : staff.isStaff ? "以數位創新處身分回覆…（Enter 送出）" : "回覆這則留言…（Enter 送出）"}
                       className="flex-1 text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none disabled:bg-[#F5F5F5]" />
-                    <button type="button" onClick={() => submitReply(p.id)} disabled={replyBusy === p.id || !(replyDrafts[p.id] ?? "").trim() || !canPost}
+                    {renderImagePicker(p.id, true)}
+                    <button type="button" onClick={() => submitReply(p.id)} disabled={replyBusy === p.id || (!(replyDrafts[p.id] ?? "").trim() && !(pendingImages[p.id] ?? []).length) || !canPost}
                       className="flex-shrink-0 flex items-center gap-1 text-xs px-3 py-2 rounded-lg bg-[#BE8B55] text-white font-semibold hover:bg-[#8C6A3F] disabled:opacity-40 transition-colors">
                       <Send size={12} />{replyBusy === p.id ? "…" : "送出"}
                     </button>
                   </div>
+                  {replyErrors[p.id] && <p className="text-xs text-[#AE1914] mt-1">{replyErrors[p.id]}</p>}
                 </div>
               </div>
             );
@@ -286,10 +375,13 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
           onCompositionStart={() => setComposing(true)}
           onCompositionEnd={(e) => { setComposing(false); setContent(e.currentTarget.value); }}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !composing && !e.nativeEvent.isComposing) { e.preventDefault(); handleSubmit(); } }}
-          placeholder={!canPost ? "請先在上方設定你的部門與姓名，即可留言" : "分享你在使用上的問題、心得或建議…（Enter 送出、Shift+Enter 換行）"}
+          onPaste={(e) => handlePaste("main", e)}
+          placeholder={!canPost ? "請先在上方設定你的部門與姓名，即可留言" : "分享你在使用上的問題、心得或建議…（Enter 送出、Shift+Enter 換行，可直接貼上截圖）"}
           className="w-full text-sm border border-[#E0E0E0] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#BE8B55]/40 resize-none mb-2 disabled:bg-[#F5F5F5]" />
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-[#AE1914]">{error}</span>
+        <PendingImages images={pendingImages.main ?? []} onRemove={(id) => removeImage("main", id)} />
+        <div className="flex items-center gap-2">
+          <span className="mr-auto text-xs text-[#AE1914]">{error}</span>
+          {renderImagePicker("main")}
           <button type="button" onClick={handleSubmit} disabled={submitting || composing || !canPost}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#BE8B55] text-white hover:bg-[#8C6A3F] transition-colors disabled:opacity-50">
             <Send size={13} />{submitting ? "送出中…" : "送出留言"}

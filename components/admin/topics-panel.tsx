@@ -5,6 +5,7 @@ import {
   getTopics, getTopicStats, getTopicPosts, deleteTopic, deleteTopicPost,
   type Topic, type TopicPost, type TopicStat,
 } from "@/lib/topics";
+import { PostImages } from "@/components/topics/post-images";
 import { Trash2, ChevronDown, ChevronRight, MessagesSquare, MessageSquare, Clock, CornerDownRight, Crown } from "lucide-react";
 
 function fmtTime(iso: string) {
@@ -152,7 +153,8 @@ export function TopicsPanel({ canEdit }: { canEdit: boolean }) {
                               {p.isStaff && <span className="inline-flex items-center gap-0.5 text-[9px] font-medium text-[#00555E] bg-[#B5E1E5]/40 px-1.5 py-0.5 rounded-full"><Crown size={9} />數位創新處</span>}
                               <span className="ml-auto">{fmtTime(p.createdAt)}</span>
                             </div>
-                            <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>
+                            {p.content && <p className="text-sm text-[#2D2D2D] leading-relaxed whitespace-pre-wrap">{p.content}</p>}
+                            <PostImages urls={p.imageUrls} />
                           </div>
                           {canEdit && (
                             confirmPost === p.id ? (

@@ -22,6 +22,7 @@ export interface TopicPost {
   content: string;
   createdAt: string;
   updatedAt: string | null; // 有值 = 發表後曾被作者修改過
+  imageUrls: string[];
 }
 
 export interface TopicStat {
@@ -53,6 +54,7 @@ function postFromDb(row: Record<string, unknown>): TopicPost {
     content: (row.content as string) ?? "",
     createdAt: row.created_at as string,
     updatedAt: (row.updated_at as string) ?? null,
+    imageUrls: (row.image_urls as string[]) ?? [],
   };
 }
 
@@ -188,6 +190,7 @@ export async function deleteTopicPost(id: string): Promise<void> {
 export async function addTopicPost(params: {
   topicId: string;
   content: string;
+  imageUrls?: string[];
   parentId?: string | null;
   isStaff?: boolean;
   authorName?: string;
@@ -200,6 +203,8 @@ export async function addTopicPost(params: {
     parent_id: params.parentId ?? null,
     is_staff: params.isStaff ?? false,
     content: params.content.trim(),
+    // 沒附圖就不送這個欄位，sql/topic-images.sql 還沒跑時純文字留言照常可用
+    ...(params.imageUrls?.length ? { image_urls: params.imageUrls } : {}),
     author_name: params.authorName?.trim() || "匿名同仁",
     author_dept: params.authorDept?.trim() || "",
   };
