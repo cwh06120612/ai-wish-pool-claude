@@ -259,8 +259,12 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
 
   // 時間＋「已編輯」標記＋自己留言的「編輯」「刪除」按鈕
   function renderMeta(p: TopicPost) {
-    // 主留言刪掉時底下別人的回覆會一起被刪，所以已有回覆就不能刪
-    const hasReplies = posts.some((x) => x.parentId === p.id);
+    // 不能刪的情況：
+    // - 主留言已有回覆：刪掉時底下別人的回覆會一起被刪
+    // - 回覆只有一層，後面的回覆可能是在回這一則，所以只有最新一則回覆能刪
+    const blockedReason = !p.parentId
+      ? (posts.some((x) => x.parentId === p.id) ? "已有人回覆，無法刪除" : "")
+      : (posts.some((x) => x.parentId === p.parentId && x.createdAt > p.createdAt) ? "後面已有新的回覆，只能刪除最新一則" : "");
     return (
       <span className="ml-auto flex items-center gap-2">
         {myPostIds.has(p.id) && editingId !== p.id && (
@@ -272,8 +276,8 @@ export function ThreadView({ topic, identity, staff, onIdentityChange, onBack }:
                   <Pencil size={12} />
                 </button>
               </Hint>
-              {hasReplies ? (
-                <Hint text="已有人回覆，無法刪除" className="grid place-items-center w-6 h-6 rounded-md border border-[#E0E0E0] bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed">
+              {blockedReason ? (
+                <Hint text={blockedReason} className="grid place-items-center w-6 h-6 rounded-md border border-[#E0E0E0] bg-[#F5F5F5] text-[#BDBDBD] cursor-not-allowed">
                   <Trash2 size={12} />
                 </Hint>
               ) : (
