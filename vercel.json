@@ -1,7 +1,12 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/",
+      "destination": "https://aiwish.fengyu.com.tw/",
+      "permanent": false
+    },
+    {
+      "source": "/:path+",
       "destination": "https://aiwish.fengyu.com.tw/",
       "permanent": false
     }
