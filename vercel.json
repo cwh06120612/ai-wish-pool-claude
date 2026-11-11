@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "destination": "https://aiwish.fengyu.com.tw/",
+      "permanent": false
+    }
+  ]
+}
